@@ -1,0 +1,18 @@
+<package>
+  <description brief="multi_agent_planner">
+
+     multi_agent_planner
+
+  </description>
+  <author>Siddharth Swaminathan</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/multi_agent_planner</url>
+  <depend package="sbpl"/>
+  <depend package="sbpl_manipulation_components"/>
+
+  <export>
+      <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lmulti_agent_planner"/>
+  </export>
+
+</package>
