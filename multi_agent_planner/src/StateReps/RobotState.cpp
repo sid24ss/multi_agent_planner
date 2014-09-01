@@ -7,11 +7,11 @@
 
 using namespace multi_agent_planner;
 
-bool RobotState::operator==(const RobotState& other){
+bool RobotState::operator==(const RobotState& other) const {
     return m_cont_robot_state == other.getContRobotState();
 }
 
-bool RobotState::operator!=(const RobotState& other){
+bool RobotState::operator!=(const RobotState& other) const {
     return !(*this == other);
 }
 
@@ -41,10 +41,18 @@ void RobotState::printToInfo(char* log_level) const {
                                 m_cont_robot_state.y());
 }
 
-void RobotState::visualize(int hue){
+void RobotState::visualize(bool leader = false){
     // TODO
     // visualizer::visualizeFootprint(x, y) -> this should just take care of
     // visualizing the robot.
     // which means that the footprint must be configured somewher globally and
     // the visualizer should be aware of it.
+}
+
+std::vector<DiscRobotState> RobotState::getDiscStates(std::vector<RobotState> robot_states) {
+    std::vector<DiscRobotState> disc_states;
+    for (auto& state : robot_states) {
+        disc_states.push_back(state.getDiscRobotState());
+    }
+    return disc_states;
 }

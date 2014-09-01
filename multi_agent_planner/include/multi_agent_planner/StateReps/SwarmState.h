@@ -9,8 +9,8 @@ namespace multi_agent_planner {
             
             // equality of SwarmStates is defined as:
             //          same coordinates for all robots.
-            bool operator==(const SwarmState& other);
-            bool operator!=(const SwarmState& other);
+            bool operator==(const SwarmState& other) const;
+            bool operator!=(const SwarmState& other) const;
 
             static bool isDiscreteEqual(const SwarmState& first,
                                         const SwarmState& second);
@@ -20,6 +20,9 @@ namespace multi_agent_planner {
 
             void printToDebug(char* logger) const ;
             void printContToDebug(char* logger) const ;
+
+            std::vector<int> coords() const;
+            void coords(std::vector<int> coords);
 
         private:
             std::vector<RobotState> m_robots_pose;

@@ -24,13 +24,11 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #common commands for building c++ executables and libraries
 rosbuild_add_library(multi_agent_planner 
-											# src/StateReps/RobotState.cpp
-                                            # src/StateReps/ContArmState.cpp
-                                            # src/StateReps/ContBaseState.cpp
-                                            # src/StateReps/DiscBaseState.cpp
-                                            # src/StateReps/DiscObjectState.cpp
-                                            # src/StateReps/ContObjectState.cpp
-                                            # src/StateReps/GraphState.cpp
+											src/StateReps/RobotState.cpp
+                                            src/StateReps/ContRobotState.cpp
+                                            src/StateReps/DiscRobotState.cpp
+                                            src/StateReps/GraphState.cpp
+                                            src/StateReps/SwarmState.cpp
                                             # src/StateReps/GoalState.cpp
                                             
                                             # src/MotionPrimitives/ArmMotionPrimitive.cpp
