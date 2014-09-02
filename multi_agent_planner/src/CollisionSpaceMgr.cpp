@@ -8,30 +8,10 @@
 #include <Eigen/Core>
 
 using namespace multi_agent_planner;
-using namespace pr2_collision_checker;
 using namespace boost;
-using namespace std;
 
-CollisionSpaceMgr::CollisionSpaceMgr(SBPLArmModelPtr right_arm,
-                                     SBPLArmModelPtr left_arm){
-    m_cspace = make_shared<PR2CollisionSpace>(right_arm,
-                                              left_arm,
-                                              m_occupancy_grid);
-    if (!m_cspace->init()){
-        ROS_ERROR("cspace failed to initialize! Exiting.");
-        exit(1);
-    }
-    ROS_DEBUG_NAMED(INIT_LOG, "Launched collision space manager");
-    // geometry_msgs::Pose pose;
-    // pose.position.x = 0.20;
-    // pose.position.y = 0;
-    // pose.position.z = 0;
-
-    // pose.orientation.x = 0;
-    // pose.orientation.y = 0;
-    // pose.orientation.z = 0;
-    // pose.orientation.w = 1;
-}
+CollisionSpaceMgr::CollisionSpaceMgr(const RobotDescriptionParams& params)
+    : m_robot_radius (params.robot_radius) { }
 
 /*! \brief Updates the internal collision map of the collision checker.
  */
@@ -47,12 +27,10 @@ void CollisionSpaceMgr::updateMap(const arm_navigation_msgs::CollisionMap& map){
     m_occupancy_grid->addPointsToField(points);
 }
 
-
 bool CollisionSpaceMgr::loadMap(const vector<Eigen::Vector3d>& points){
     m_occupancy_grid->addPointsToField(points);
     return true;
 }
-
 
 bool CollisionSpaceMgr::isValid(RobotState& robot_pose){
     vector<double> l_arm;
@@ -128,100 +106,32 @@ bool CollisionSpaceMgr::isValidSuccessor(const GraphState& successor,
     return true;
 }
 
-/*! \brief Given the transition data from a state expansion, this collision
- * checks all continuous, intermediate states.
- *
- * We cannot just collision check the base state stored in RobotState IF the
- * type of motion is a base motion because RobotState only stores the discrete
- * base state. Thus, we need to look at the continuous base state that is also
- * stored in the transition data.
- */
-bool CollisionSpaceMgr::isValidTransitionStates(const TransitionData& t_data){
-    bool onlyBaseMotion = (t_data.motion_type() == MPrim_Types::BASE ||
-                           t_data.motion_type() == MPrim_Types::BASE_ADAPTIVE);
-    // bool onlyArmMotion = (t_data.motion_type() == MPrim_Types::ARM ||
-    //                       t_data.motion_type() == MPrim_Types::ARM_ADAPTIVE);
-    vector<ContBaseState> interp_base_motions;
-    if (onlyBaseMotion){
-        interp_base_motions = t_data.cont_base_interm_steps();
-        assert(interp_base_motions.size() == t_data.interm_robot_steps().size());
-    }
-    int idx = 0;
-    for (auto& robot_state : t_data.interm_robot_steps()){
-        vector<double> r_arm(7), l_arm(7);
-        robot_state.right_arm().getAngles(&r_arm);
-        robot_state.left_arm().getAngles(&l_arm);
-        bool verbose = false;
-        double dist;
-        int debug;
-    
-        // let's check the validity of all intermediate poses
-        if (onlyBaseMotion){
-            BodyPose body_pose = interp_base_motions[idx].body_pose();
-            if (!m_cspace->checkBaseMotion(l_arm, r_arm, body_pose, verbose, dist,
-                debug)){
-                return false;
-            }
-        } else if (t_data.motion_type() == MPrim_Types::ARM) {
-            ROS_DEBUG_NAMED(CSPACE_LOG, "skipping the intermediate points for arms because there are none.");
-        } else if (t_data.motion_type() == MPrim_Types::ARM_ADAPTIVE) {
-            BodyPose body_pose = robot_state.getContBaseState().body_pose();
-            if(!m_cspace->checkArmsMotion(l_arm, r_arm, body_pose, 
-                                                 verbose, dist, debug)) {
-                return false;
-            }
-        } else {
-            throw std::invalid_argument("not a valid motion primitive type");
-        }
-        idx++;
-    }
-    return true;
-}
-
-bool CollisionSpaceMgr::isValidContState(std::vector<double>& l_arm, std::vector<double>&
-    r_arm, const std::vector<double> body){
-    BodyPose body_pose;
-    body_pose.x = body[BodyDOF::X];
-    body_pose.y = body[BodyDOF::Y];
-    body_pose.z = body[BodyDOF::Z];
-    body_pose.theta = body[BodyDOF::THETA];
-    bool verbose = false;
-    int debug;
-    double dist;
-    if(!m_cspace->checkBaseMotion(l_arm, r_arm, body_pose, verbose, dist, debug))
-        return false;
-    return true;
-}
-
 /**
- * \brief visualizes the object attached to the robot.
+ * @brief checks for validity of the robot state
+ * @details assumes that the robot is a simple sphere, for now. Checks the
+ * validity of the continuous state.
  * 
+ * @param robot_state The robot state to check collision for.
+ * @return true if there is NO collision. false if it collides.
  */
- void CollisionSpaceMgr::visualizeAttachedObject(RobotState& robot_state,
-    int hue){
-    vector<double> t1, t2;
-    robot_state.right_arm().getAngles(&t2);
-    robot_state.left_arm().getAngles(&t1);
-    BodyPose bp = robot_state.base_state().getBodyPose();
-    std::vector<std::vector<double> > spheres;
-    m_cspace->getAttachedObjectSpheres(t1, t2, bp, spheres);
-    stringstream ss;
-    ss << "attached_object_" << hue;
-    Visualizer::pviz->visualizeSpheres(spheres, hue, ss.str(), .04);
-}
+bool CollisionSpaceMgr::checkCollision(const RobotState& robot_state)
+{
+    assert(m_robot_radius > 0);
 
-void CollisionSpaceMgr::attachCube(std::string name, std::string reference_frame,
-                geometry_msgs::Pose relative_pose, double dim_x, double dim_y,
-                double dim_z) {
-    m_cspace->attachCube(name, reference_frame, relative_pose,
-        dim_x,dim_y,dim_z);
-}
+    // get the coordinates
+    DiscRobotState disc_robot_state = robot_state.getDiscRobotState();
+    int x_i = disc_robot_state.x();
+    int y_i = disc_robot_state.y();
+    int z_i = 0;
 
-void CollisionSpaceMgr::visualizeCollisionModel(RobotState& robot_state) {
-    std::vector<double> l_arm, r_arm;
-    robot_state.right_arm().getAngles(&r_arm);
-    robot_state.left_arm().getAngles(&l_arm);
-    BodyPose body_pose = robot_state.base_state().getBodyPose();
-    m_cspace->visualizeRobotCollisionModel(r_arm, l_arm, body_pose,
-        "collision_model", 42);
+    // check if it is within bounds
+    if (!m_occupancy_grid->isInBounds(x_i, y_i, z_i))
+        return false;
+
+    // check if it is in collision
+    // NOTE: assumes that the robot is a simple sphere with radius m_robot_radius (
+    // this was set from the param server in the constructor)
+    // TODO : Extent to collision check various footprints
+    if (m_occupancy_grid->getDistance(x_i, y_i, z_i) <= m_robot_radius)
+        return false;
 }

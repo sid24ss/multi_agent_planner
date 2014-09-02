@@ -27,10 +27,12 @@ namespace multi_agent_planner {
             void updateStateFromSwarmState();
             void updateSwarmStateFromGraphState();
 
+            std::vector<int> getCoords() const { return m_coords; };
+
         private:
             int m_id;
             SwarmState m_swarm_state;
             std::vector<int> m_coords;
     };
-    typedef boost::shared_ptr<GraphState> GraphStatePtr;
+    typedef std::shared_ptr<GraphState> GraphStatePtr;
 };

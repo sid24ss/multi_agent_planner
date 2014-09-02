@@ -1,5 +1,6 @@
 #include <multi_agent_planner/StateReps/GraphState.h>
 #include <multi_agent_planner/Constants.h>
+#include <multi_agent_planner/Utilities.h>
 #include <boost/scoped_ptr.hpp>
 
 using namespace multi_agent_planner;
@@ -30,9 +31,8 @@ bool GraphState::applyMPrim(const GraphStateMotion& mprim){
 }
 
 void GraphState::printToDebug(char* logger) const {
-    for (auto& c : m_coords) {
-        ROS_DEBUG_NAMED(logger, "%d ", c);
-    }
+    auto str = vectorToString(m_coords);
+    ROS_DEBUG_NAMED(logger, "%s", str.c_str());
 }
 
 // void GraphState::printContToDebug(char* logger) const {

@@ -60,7 +60,7 @@ rosbuild_add_library(multi_agent_planner
                                             src/OccupancyGridUser.cpp
                                             # src/CollisionSpaceMgr.cpp
                                             src/ParameterCatalog.cpp
-                                            # src/HashManager.cpp
+                                            src/HashManager.cpp
                                             # src/TransitionData.cpp
                                             # src/Visualizer.cpp
                                             # src/PathPostProcessor.cpp

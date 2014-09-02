@@ -1,13 +1,14 @@
-#include <monolithic_pr2_planner/HashManager.h>
-#include <monolithic_pr2_planner/StateReps/DiscObjectState.h>
-#include <monolithic_pr2_planner/StateReps/ContArmState.h>
+#include <multi_agent_planner/HashManager.h>
+#include <multi_agent_planner/Utilities.h>
 #include <boost/foreach.hpp>
 #include <stdexcept>
+#include <vector>
+#include <sstream>
 #include <assert.h>
 
 #define HASH_TABLE_SIZE (32*1024)
 #define NUMOFINDICES_STATEID2IND 2
-using namespace monolithic_pr2_planner;
+using namespace multi_agent_planner;
 
 HashManager::HashManager(std::vector<int*>* stateID2Mapping) : 
     m_stateID2Mapping(stateID2Mapping),
@@ -31,7 +32,7 @@ unsigned int HashManager::intHash(unsigned int key){
 unsigned int HashManager::hash(const GraphStatePtr& graph_state){
     int val = 0;
     int counter = 0;
-    vector<int> coords = graph_state->getCoords();
+    std::vector<int> coords = graph_state->getCoords();
     for (auto coord_value : coords){
         val += coord_value << counter;
         counter++;
@@ -51,21 +52,9 @@ unsigned int HashManager::getStateID(const GraphStatePtr& graph_state){
     if (exists(graph_state, id)){
         return id;
     }
-    std::vector<int> tmp = graph_state->getCoords();
-    ROS_ERROR("Can't find state %d in hashmanager! %d %d %d %d %d %d %d %d %d %d %d %d",
-              graph_state->id(),
-              tmp[0],
-              tmp[1],
-              tmp[2],
-              tmp[3],
-              tmp[4],
-              tmp[5],
-              tmp[6],
-              tmp[7],
-              tmp[8],
-              tmp[9],
-              tmp[10],
-              tmp[11]);
+    auto str = vectorToString(graph_state->getCoords());
+    ROS_ERROR("Cannot find state in heap!\n %s", str.c_str());
+
     graph_state->printToDebug(HASH_LOG);
     unsigned int bin_idx = hash(graph_state);
     ROS_ERROR("bin_idx %u has %lu items", bin_idx, 

@@ -1,9 +1,10 @@
 #pragma once
-#include <monolithic_pr2_planner/StateReps/GraphState.h>
+#include <multi_agent_planner/StateReps/GraphState.h>
+#include <multi_agent_planner/LoggerNames.h>
 #include <vector>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
-namespace monolithic_pr2_planner {
+namespace multi_agent_planner {
     /*! \brief Contains functions for creating and getting graph states used by
      * the environment and SBPL planner.
      */
@@ -24,5 +25,5 @@ namespace monolithic_pr2_planner {
             std::vector<GraphStatePtr> m_state_id_to_graph_table;
             std::vector<std::vector<GraphStatePtr> > m_coord_to_state_id_table;
     };
-    typedef boost::shared_ptr<HashManager> HashManagerPtr;
+    typedef std::shared_ptr<HashManager> HashManagerPtr;
 }
