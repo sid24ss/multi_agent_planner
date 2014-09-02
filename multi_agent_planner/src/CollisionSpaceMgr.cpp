@@ -32,78 +32,26 @@ bool CollisionSpaceMgr::loadMap(const vector<Eigen::Vector3d>& points){
     return true;
 }
 
-bool CollisionSpaceMgr::isValid(RobotState& robot_pose){
-    vector<double> l_arm;
-    vector<double> r_arm;
-    robot_pose.left_arm().getAngles(&l_arm);
-    robot_pose.right_arm().getAngles(&r_arm);
-    DiscBaseState discbody_pose = robot_pose.base_state();
-    BodyPose body_pose = robot_pose.base_state().getBodyPose();
-
-    double dist_temp;
-    int debug_code;
-    ROS_DEBUG_NAMED(CSPACE_LOG, "collision checking pose");
-    ROS_DEBUG_NAMED(CSPACE_LOG, "body pose is %f %f %f", body_pose.x, 
-                                body_pose.y, body_pose.z);
-    robot_pose.printToDebug(CSPACE_LOG);
-    // Visualizer::pviz->visualizeRobot(r_arm, l_arm, body_pose, 150, 
-                                    // std::string("planner"), 0);
-    return m_cspace->checkAllMotion(l_arm, r_arm, body_pose, false, dist_temp, 
-                                    debug_code);
+bool CollisionSpaceMgr::isValid(const RobotState& robot_pose) const {
+    return checkCollision(robot_pose);
 }
 
-bool CollisionSpaceMgr::isValid(ContBaseState& base, RightContArmState& r_arm, 
-                                LeftContArmState& l_arm){
-    vector<double> l_arm_v;
-    vector<double> r_arm_v;
-    l_arm.getAngles(&l_arm_v);
-    r_arm.getAngles(&r_arm_v);
-    double dist_temp;
-    int debug_code;
-    BodyPose bp = base.body_pose();
-    return m_cspace->checkAllMotion(l_arm_v, r_arm_v, bp, false, dist_temp, 
-                                    debug_code);
-}
-
-/*! \brief Given the transition data from a state expansion, this does a smart
- * collision check on the successor.
- *
- * If the motion primitive that generated this successor only moves the base,
- * then we don't need to collision check the arms against each other. If only
- * the arm moves, then we don't need to collision check the base for anything.
- *
- * TODO bounds check spine, bounds check base
- */
-bool CollisionSpaceMgr::isValidSuccessor(const GraphState& successor,
-                                         const TransitionData& t_data){
-    RobotState pose = successor.robot_pose();
-    vector<double> r_arm(7), l_arm(7);
-    pose.right_arm().getAngles(&r_arm);
-    pose.left_arm().getAngles(&l_arm);
-    BodyPose body_pose = pose.base_state().getBodyPose();
-    bool verbose = false;
-    double dist;
-    int debug;
-
-    bool onlyBaseMotion = (t_data.motion_type() == MPrim_Types::BASE ||
-                           t_data.motion_type() == MPrim_Types::BASE_ADAPTIVE);
-    bool onlyArmMotion = (t_data.motion_type() == MPrim_Types::ARM ||
-                          t_data.motion_type() == MPrim_Types::ARM_ADAPTIVE);
-    if (onlyBaseMotion){
-        return m_cspace->checkBaseMotion(l_arm, r_arm, body_pose, verbose, dist,
-                                         debug);
-    } else if (onlyArmMotion){
-        bool isvalid = m_cspace->checkArmsMotion(l_arm, r_arm, body_pose, 
-                                                 verbose, dist, debug);
-        return isvalid;
-    } else if (t_data.motion_type() == MPrim_Types::TORSO){
-        return m_cspace->checkSpineMotion(l_arm, r_arm, body_pose, verbose, 
-                                          dist, debug);
-    } else {
-        throw std::invalid_argument("not a valid motion primitive type");
+bool CollisionSpaceMgr::isValid(const SwarmState& swarm_state) const {
+    for (auto& robot_state : swarm_state.robots_pose()) {
+        if (!isValid(robot_state))
+            return false;
     }
-
     return true;
+}
+
+/**
+ * @brief checks collision on the successor state
+ */
+
+// TODO : Smart TransitionData where you keep a track of which robots moved, so
+// that you don't have to collision check the whole swarm.
+bool CollisionSpaceMgr::isValidSuccessor(const GraphState& successor) const {
+    return isValid(successor.swarm_state());
 }
 
 /**

@@ -27,6 +27,8 @@ bool GraphState::operator!=(const GraphState& other) const {
  */
 bool GraphState::applyMPrim(const GraphStateMotion& mprim){
     // the mprim is a vector of size ROBOT_DOF * NUM_ROBOTS
+    // TODO
+    updateSwarmStateFromGraphState();
     return true;
 }
 
@@ -36,7 +38,6 @@ void GraphState::printToDebug(char* logger) const {
 }
 
 // void GraphState::printContToDebug(char* logger) const {
-
 // }
 
 void GraphState::updateStateFromSwarmState() {
