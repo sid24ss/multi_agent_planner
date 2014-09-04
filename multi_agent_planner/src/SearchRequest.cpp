@@ -1,9 +1,9 @@
-#include <monolithic_pr2_planner/SearchRequest.h>
-#include <monolithic_pr2_planner/StateReps/DiscObjectState.h>
-#include <monolithic_pr2_planner/LoggerNames.h>
-#include <monolithic_pr2_planner/Constants.h>
+#include <multi_agent_planner/SearchRequest.h>
+#include <multi_agent_planner/StateReps/DiscObjectState.h>
+#include <multi_agent_planner/LoggerNames.h>
+#include <multi_agent_planner/Constants.h>
 
-using namespace monolithic_pr2_planner;
+using namespace multi_agent_planner;
 
 SearchRequest::SearchRequest(SearchRequestParamsPtr params){
     m_params = params;

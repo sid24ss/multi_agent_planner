@@ -18,7 +18,7 @@ namespace multi_agent_planner {
         public:
             CollisionSpaceMgr(const RobotDescriptionParams& params);
             bool isValid(const RobotState& robot_state) const;
-            bool isValid(const SwarmStatee& swarm_state) const;
+            bool isValid(const SwarmState& swarm_state) const;
             bool isValidSuccessor(const GraphState& successor) const;
 
             void updateMap(const arm_navigation_msgs::CollisionMap& map);
@@ -26,7 +26,7 @@ namespace multi_agent_planner {
 
         private:
             double m_robot_radius;
-            bool checkCollision(const RobotState& robot_state);
+            bool checkCollision(const RobotState& robot_state) const;
     };
     typedef std::shared_ptr<CollisionSpaceMgr> CSpaceMgrPtr;
 }

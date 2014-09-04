@@ -28,6 +28,8 @@ bool GraphState::operator!=(const GraphState& other) const {
 bool GraphState::applyMPrim(const GraphStateMotion& mprim){
     // the mprim is a vector of size ROBOT_DOF * NUM_ROBOTS
     // TODO
+    // this should not be called just yet.
+    assert(false);
     updateSwarmStateFromGraphState();
     return true;
 }
@@ -36,6 +38,11 @@ void GraphState::printToDebug(char* logger) const {
     auto str = vectorToString(m_coords);
     ROS_DEBUG_NAMED(logger, "%s", str.c_str());
 }
+
+void GraphState::swarm_state(SwarmState swarm_state) {
+    m_swarm_state = swarm_state;
+    updateStateFromSwarmState();
+};
 
 // void GraphState::printContToDebug(char* logger) const {
 // }

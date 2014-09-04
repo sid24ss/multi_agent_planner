@@ -20,12 +20,14 @@ namespace multi_agent_planner {
             void printToInfo(char* log_level) const;
             void printToFile(FILE *& path) const;
 
-            void visualize(bool leader);
+            void visualize(bool leader) const;
 
             static std::vector<DiscRobotState> getDiscStates(
                 std::vector<RobotState> robot_states);
 
-            // TODO : Do we need an interpolate function?
+            static bool interpolate(const RobotState& start, const RobotState& end,
+                            int num_interp_steps,
+                            std::vector<RobotState>& interm_robot_steps);
 
         private:
             ContRobotState m_cont_robot_state;

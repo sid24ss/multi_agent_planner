@@ -21,6 +21,7 @@ namespace multi_agent_planner {
     };
 
     typedef struct {
+        double env_resolution;
         std::string motion_primitive_file;
         double nominal_vel; // m/s
     } MotionPrimitiveParams;

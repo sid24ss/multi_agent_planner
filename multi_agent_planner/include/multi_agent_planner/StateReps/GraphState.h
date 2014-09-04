@@ -17,12 +17,14 @@ namespace multi_agent_planner {
             void id(int id) { m_id = id; };
 
             SwarmState swarm_state() const { return m_swarm_state; };
-            void swarm_state(SwarmState swarm_state) { m_swarm_state = swarm_state; };
+            void swarm_state(SwarmState swarm_state);
 
             bool applyMPrim(const GraphStateMotion& mprim);
 
             void printToDebug(char* logger) const ;
             // void printContToDebug(char* logger) const ;
+
+            void setLeader(int l) { m_swarm_state.setLeader(l); }
 
             void updateStateFromSwarmState();
             void updateSwarmStateFromGraphState();

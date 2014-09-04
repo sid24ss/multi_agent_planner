@@ -1,4 +1,5 @@
 #pragma once
+#include <multi_agent_planner/StateReps/SwarmState.h>
 
 namespace multi_agent_planner {
     typedef std::vector<std::vector<double> > IntermSteps;
@@ -12,26 +13,18 @@ namespace multi_agent_planner {
     class TransitionData {
         public:
             TransitionData(){};
-            void successor_id(int id){ m_successor_id = id; };
-            int successor_id(){ return m_successor_id; };
-            void motion_type(int mt){ m_motion_type = mt; };
-            int motion_type() const { return m_motion_type; };
+            // void successor_id(int id){ m_successor_id = id; };
+            // int successor_id(){ return m_successor_id; };
 
-            void interm_robot_steps(std::vector<RobotState> steps){ m_robot_interm_steps = steps; };
-            std::vector<RobotState> interm_robot_steps() const { return m_robot_interm_steps; };
-
-            void cont_base_interm_steps(std::vector<ContBaseState> steps){ m_cont_base_interm_steps = steps; };
-            std::vector<ContBaseState> cont_base_interm_steps() const { return m_cont_base_interm_steps; };
+            void interm_swarm_steps(std::vector<SwarmState> steps){ m_swarm_interm_steps = steps; };
+            std::vector<SwarmState> interm_swarm_steps() const { return m_swarm_interm_steps; };
 
             void cost(int cost){ m_cost = cost; };
             int cost() const { return m_cost; };
         private:
-            int m_successor_id;
+            // int m_successor_id;
             int m_cost;
 
-            IntermSteps m_graph_interm_steps;
-            std::vector<RobotState> m_robot_interm_steps;
-            std::vector<ContBaseState> m_cont_base_interm_steps;
-            int m_motion_type;
+            std::vector<SwarmState> m_swarm_interm_steps;
     };
 }

@@ -1,11 +1,11 @@
 #pragma once
-#include <monolithic_pr2_planner/StateReps/GraphState.h>
-#include <monolithic_pr2_planner/TransitionData.h>
-#include <monolithic_pr2_planner/ParameterCatalog.h>
-#include <monolithic_pr2_planner/Constants.h>
+#include <multi_agent_planner/StateReps/GraphState.h>
+#include <multi_agent_planner/TransitionData.h>
+#include <multi_agent_planner/ParameterCatalog.h>
+#include <multi_agent_planner/Constants.h>
 #include <assert.h>
 
-namespace monolithic_pr2_planner {
+namespace multi_agent_planner {
     /*! \brief Base class for motion primitives. Motion primitives contain user
      * defined motions for generating successors in a search. 
      */
@@ -14,31 +14,45 @@ namespace monolithic_pr2_planner {
             MotionPrimitive();
             void setID(int id) { m_id = id; };
             int getID() const { return m_id; };
+            // both of these are just for the robot state.
             virtual void setIntermSteps(IntermSteps& coord) { m_interm_steps = coord; };
             virtual IntermSteps getIntermSteps(){ return m_interm_steps; };
-            virtual void setEndCoord(GraphStateMotion& coord); 
-            virtual bool apply(const GraphState& graph_state, 
-                               GraphStatePtr& successor,
-                               TransitionData& t_data) = 0;
+
+            virtual bool apply( const GraphState& graph_state, 
+                                int leader_id,
+                                GraphStatePtr& successor,
+                                TransitionData& t_data) = 0;
+            virtual bool applyPolicy( const GraphState& graph_state, 
+                                int leader_id,
+                                GraphStatePtr& successor,
+                                TransitionData& t_data) = 0;
+
+            virtual void computeTData( const GraphState& graph_state, 
+                                int leader_id,
+                                GraphStatePtr& successor,
+                                TransitionData& t_data) = 0;
+            virtual int computePolicyCost(const GraphState& graph_state, 
+                                int leader_id,
+                                GraphStatePtr& successor,
+                                TransitionData& t_data) = 0;
+
             virtual void print() const = 0;
-            virtual int motion_type() const = 0;
-            virtual void computeCost(const MotionPrimitiveParams& params) = 0;
+            virtual void setBaseCost(int cost) { m_base_cost = cost; }
+            virtual int getBaseCost() const { return m_base_cost; }
+
             virtual void printIntermSteps() const;
             virtual void printEndCoord() const;
-            virtual int cost() const { return m_cost; };
-            virtual void setAdditionalCostMult(double cost) { m_additional_cost = cost; };
-            virtual int getAdditionalCostMult() { return m_additional_cost; };
 
-            GraphStateMotion getEndCoord(){ return m_end_coord; };
-
+            virtual void setEndCoord(GraphStateMotion& coord); 
+            GraphStateMotion getEndCoord() const { return m_end_coord; };
         protected:
-            double dist(DiscObjectState s1, DiscObjectState s2);
             int m_id;
-            int m_cost;
-            int m_additional_cost;
+            // base cost for moving just the leader robot
+            int m_base_cost;
+            // policy cost for moving the other robots
             GraphStateMotion m_end_coord;
             IntermSteps m_interm_steps;
 
     };
-    typedef boost::shared_ptr<MotionPrimitive> MotionPrimitivePtr;
+    typedef std::shared_ptr<MotionPrimitive> MotionPrimitivePtr;
 }

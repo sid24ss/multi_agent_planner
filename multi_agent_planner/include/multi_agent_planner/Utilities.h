@@ -24,12 +24,20 @@ void combineVectors(std::vector<T>&& v1, std::vector<T>& v2)
 template <typename T>
 void combineVectors(const std::vector<T>& v1, std::vector<T>& v2)
 {
-    combineVectors(std::vector<T> (v1), v2);
+    combineVectors(std::move(v1), v2);
 }
 
+/**
+ * @brief convert a vector into a string
+ * @details useful for printing vectors out in a single line
+ * 
+ * @param v the vector to convert to a string
+ * @tparam T the type of the vector
+ * @return a std::string representation of the vector, separated by spaces.
+ */
 template <typename T>
 std::string vectorToString(const std::vector<T>& v) {
-    return vectorToString(std::vector<T>(v));
+    return vectorToString(std::move(v));
 }
 
 template <typename T>

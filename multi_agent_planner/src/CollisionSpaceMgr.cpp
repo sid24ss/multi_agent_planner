@@ -27,7 +27,7 @@ void CollisionSpaceMgr::updateMap(const arm_navigation_msgs::CollisionMap& map){
     m_occupancy_grid->addPointsToField(points);
 }
 
-bool CollisionSpaceMgr::loadMap(const vector<Eigen::Vector3d>& points){
+bool CollisionSpaceMgr::loadMap(const std::vector<Eigen::Vector3d>& points){
     m_occupancy_grid->addPointsToField(points);
     return true;
 }
@@ -62,7 +62,7 @@ bool CollisionSpaceMgr::isValidSuccessor(const GraphState& successor) const {
  * @param robot_state The robot state to check collision for.
  * @return true if there is NO collision. false if it collides.
  */
-bool CollisionSpaceMgr::checkCollision(const RobotState& robot_state)
+bool CollisionSpaceMgr::checkCollision(const RobotState& robot_state) const
 {
     assert(m_robot_radius > 0);
 
@@ -82,4 +82,7 @@ bool CollisionSpaceMgr::checkCollision(const RobotState& robot_state)
     // TODO : Extent to collision check various footprints
     if (m_occupancy_grid->getDistance(x_i, y_i, z_i) <= m_robot_radius)
         return false;
+
+    // no collisions!
+    return true;
 }

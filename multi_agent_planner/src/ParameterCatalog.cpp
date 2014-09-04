@@ -17,8 +17,8 @@ void ParameterCatalog::fetch(ros::NodeHandle nh){
     m_nodehandle = nh;
     // TODO clean this up, setmotionprimitive needs to be run before parse
     // stuff!
-    setMotionPrimitiveParams(m_motion_primitive_params);
     setOccupancyGridParams(m_occupancy_grid_params);
+    setMotionPrimitiveParams(m_motion_primitive_params);
     setVisualizationParams(m_visualization_params);
     setRobotDescriptionParams(m_robot_description_params);
     
@@ -28,6 +28,7 @@ void ParameterCatalog::setMotionPrimitiveParams(MotionPrimitiveParams& params){
     setFileNameFromParamServer("planner/motion_primitive_file", 
             &params.motion_primitive_file);
     m_nodehandle.param("planner/nominalvel_mpersecs", params.nominal_vel, 0.5);
+    params.env_resolution = m_occupancy_grid_params.env_resolution;
 }
 
 void ParameterCatalog::setOccupancyGridParams(OccupancyGridParams& params){

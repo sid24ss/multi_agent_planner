@@ -1,147 +1,137 @@
-#include <monolithic_pr2_planner/MotionPrimitives/MotionPrimitivesMgr.h>
-#include <monolithic_pr2_planner/Constants.h>
-#include <boost/foreach.hpp>
+#include <multi_agent_planner/MotionPrimitives/MotionPrimitivesMgr.h>
+#include <multi_agent_planner/Constants.h>
 
-using namespace monolithic_pr2_planner;
-using namespace std;
-using namespace boost;
+using namespace multi_agent_planner;
 
-MotionPrimitivesMgr::MotionPrimitivesMgr(boost::shared_ptr<GoalState>& goal) : m_all_mprims(5){ }
+MotionPrimitivesMgr::MotionPrimitivesMgr(std::shared_ptr<GoalState>& goal)
+    : m_goal(goal) { }
+
+void MotionPrimitivesMgr::setMprimParams(const MotionPrimitiveParams& params) {
+    m_params = params;
+}
+
 
 /*! \brief loads all mprims from configuration. also sets up amps. note that
  * these are not necessarily the exact mprims used during search, because
  * there's a user parameter that selects which mprims to actually use. 
  */
-bool MotionPrimitivesMgr::loadMPrims(const MotionPrimitiveParams& params){
-    m_params = params;
+bool MotionPrimitivesMgr::loadMPrims(){
+    // generate the nav mprims
+    MPrimList nav_mprims;
+    loadNavPrims(nav_mprims);
 
-    MPrimList arm_mprims;
-    m_parser.parseArmMotionPrimitives(params.arm_motion_primitive_file, arm_mprims);
+    m_all_mprims = nav_mprims;
 
-    MPrimList base_mprims;
-    m_parser.parseBaseMotionPrimitives(params.base_motion_primitive_file, base_mprims);
-    ArmAdaptiveMotionPrimitivePtr armAMP = make_shared<ArmAdaptiveMotionPrimitive>();
-    ArmTuckMotionPrimitivePtr tuckAMP = make_shared<ArmTuckMotionPrimitive>();
-    ArmUntuckMotionPrimitivePtr untuckAMP = make_shared<ArmUntuckMotionPrimitive>(true);
-    ArmUntuckMotionPrimitivePtr untuckPartialAMP = make_shared<ArmUntuckMotionPrimitive>(false);
-
-    MPrimList arm_amps;
-    arm_amps.push_back(armAMP);
-    arm_amps.push_back(tuckAMP);
-    arm_amps.push_back(untuckAMP);
-    arm_amps.push_back(untuckPartialAMP);
-
-    MPrimList base_amps;
-    int NEG_TURN = -1;
-    int POS_TURN = 1;
-    BaseAdaptiveMotionPrimitivePtr bamp1 = make_shared<BaseAdaptiveMotionPrimitive>(NEG_TURN);
-    BaseAdaptiveMotionPrimitivePtr bamp2 = make_shared<BaseAdaptiveMotionPrimitive>(POS_TURN);
-    base_amps.push_back(bamp1);
-    base_amps.push_back(bamp2);
-
-    MPrimList torso_mprims;
-    int VERTICAL_UP = 1;
-    int VERTICAL_DOWN = -1;
-    TorsoMotionPrimitivePtr t_mprim1 = make_shared<TorsoMotionPrimitive>(VERTICAL_UP);
-    TorsoMotionPrimitivePtr t_mprim2 = make_shared<TorsoMotionPrimitive>(VERTICAL_DOWN);
-    torso_mprims.push_back(t_mprim1);
-    torso_mprims.push_back(t_mprim2);
-
-    m_all_mprims[MPrim_Types::ARM] = arm_mprims;
-    m_all_mprims[MPrim_Types::BASE] = base_mprims;
-    m_all_mprims[MPrim_Types::TORSO] = torso_mprims;
-    m_all_mprims[MPrim_Types::ARM_ADAPTIVE] = arm_amps;
-    m_all_mprims[MPrim_Types::BASE_ADAPTIVE] = base_amps;
-
-    computeAllMPrimCosts(m_all_mprims);
-
-    loadAllMPrims();
-
-    for (auto& mprim: m_active_mprims){    
+    for (auto& mprim: m_all_mprims){    
         mprim->print();
     }
 
     return true;
 }
 
-void MotionPrimitivesMgr::loadMPrimSet(int planning_mode){
-    m_active_mprims.clear();
-    bool is_arm_only = (planning_mode == PlanningModes::RIGHT_ARM || 
-                        planning_mode == PlanningModes::LEFT_ARM || 
-                        planning_mode == PlanningModes::DUAL_ARM);
-    bool is_mobile = (planning_mode == PlanningModes::RIGHT_ARM_MOBILE || 
-                      planning_mode == PlanningModes::LEFT_ARM_MOBILE || 
-                      planning_mode == PlanningModes::DUAL_ARM_MOBILE);
-    if (planning_mode == PlanningModes::BASE_ONLY){
-        loadBaseOnlyMPrims();
-    } else if (is_arm_only){
-        loadArmOnlyMPrims();
-    } else if (is_mobile){
-        loadAllMPrims();
-    } else {
-        ROS_ERROR("Invalid planning mode!");
-        assert(false);
-    }
-}
+void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
+    const int NUM_DIRS = 16;
+    std::vector<int> dx_(NUM_DIRS, 0), dy_(NUM_DIRS, 0);
+    std::vector<int> dx0intersects_(NUM_DIRS, 0), dy0intersects_(NUM_DIRS, 0);
+    std::vector<int> dx1intersects_(NUM_DIRS, 0), dy1intersects_(NUM_DIRS, 0);
+    std::vector<int> dxy_distance_mm_(NUM_DIRS, 0);
 
-void MotionPrimitivesMgr::combineVectors(const MPrimList& v1, MPrimList& v2){
-    for (auto& mprim : v1){
-        v2.push_back(mprim);
-    }
-}
+    dx_[0] = 1;
+    dy_[0] = 1;
+    dx0intersects_[0] = -1;
+    dy0intersects_[0] = -1;
+    dx_[1] = 1;
+    dy_[1] = 0;
+    dx0intersects_[1] = -1;
+    dy0intersects_[1] = -1;
+    dx_[2] = 1;
+    dy_[2] = -1;
+    dx0intersects_[2] = -1;
+    dy0intersects_[2] = -1;
+    dx_[3] = 0;
+    dy_[3] = 1;
+    dx0intersects_[3] = -1;
+    dy0intersects_[3] = -1;
+    dx_[4] = 0;
+    dy_[4] = -1;
+    dx0intersects_[4] = -1;
+    dy0intersects_[4] = -1;
+    dx_[5] = -1;
+    dy_[5] = 1;
+    dx0intersects_[5] = -1;
+    dy0intersects_[5] = -1;
+    dx_[6] = -1;
+    dy_[6] = 0;
+    dx0intersects_[6] = -1;
+    dy0intersects_[6] = -1;
+    dx_[7] = -1;
+    dy_[7] = -1;
+    dx0intersects_[7] = -1;
+    dy0intersects_[7] = -1;
 
-void MotionPrimitivesMgr::loadBaseOnlyMPrims(){
-    combineVectors(m_all_mprims[MPrim_Types::BASE], m_active_mprims);
-    combineVectors(m_all_mprims[MPrim_Types::BASE_ADAPTIVE], m_active_mprims);
-}
+    dx_[8] = 2; dy_[8] = 1;
+    dx0intersects_[8] = 1; dy0intersects_[8] = 0; dx1intersects_[8] = 1; dy1intersects_[8] = 1;
+    dx_[9] = 1; dy_[9] = 2;
+    dx0intersects_[9] = 0; dy0intersects_[9] = 1; dx1intersects_[9] = 1; dy1intersects_[9] = 1;
+    dx_[10] = -1; dy_[10] = 2;
+    dx0intersects_[10] = 0; dy0intersects_[10] = 1; dx1intersects_[10] = -1; dy1intersects_[10] = 1;
+    dx_[11] = -2; dy_[11] = 1;
+    dx0intersects_[11] = -1; dy0intersects_[11] = 0; dx1intersects_[11] = -1; dy1intersects_[11] = 1;
+    dx_[12] = -2; dy_[12] = -1;
+    dx0intersects_[12] = -1; dy0intersects_[12] = 0; dx1intersects_[12] = -1; dy1intersects_[12] = -1;
+    dx_[13] = -1; dy_[13] = -2;
+    dx0intersects_[13] = 0; dy0intersects_[13] = -1; dx1intersects_[13] = -1; dy1intersects_[13] = -1;
+    dx_[14] = 1; dy_[14] = -2;
+    dx0intersects_[14] = 0; dy0intersects_[14] = -1; dx1intersects_[14] = 1; dy1intersects_[14] = -1;
+    dx_[15] = 2; dy_[15] = -1;
+    dx0intersects_[15] = 1; dy0intersects_[15] = 0; dx1intersects_[15] = 1; dy1intersects_[15] = -1;
 
-void MotionPrimitivesMgr::loadTorsoMPrims(){
-    combineVectors(m_all_mprims[MPrim_Types::TORSO], m_active_mprims);
-}
+    // There are actually 17 motion primitives because we want one to wait in
+    // place while the others "catch-up"
+    // TODO: Introduce wait-in-place primitive here.
 
-// note that we don't separate left and right arm mprims here, since the mprims
-// are in cartesian space
-void MotionPrimitivesMgr::loadArmOnlyMPrims(){
-    combineVectors(m_all_mprims[MPrim_Types::ARM], m_active_mprims);
-    combineVectors(m_all_mprims[MPrim_Types::ARM_ADAPTIVE], m_active_mprims);
-}
+    //compute costs
+    for (int dind = 0; dind < NUM_DIRS; dind++) {
 
-void MotionPrimitivesMgr::loadAllMPrims(){
-    loadBaseOnlyMPrims();
-    loadArmOnlyMPrims();
-    loadTorsoMPrims();
-}
-
-void MotionPrimitivesMgr::computeAllMPrimCosts(vector<MPrimList> mprims){
-    for (auto& mprim_list : mprims){
-        for (auto& mprim : mprim_list){
-            mprim->computeCost(m_params);
+        if (dx_[dind] != 0 && dy_[dind] != 0) {
+            if (dind <= 7)
+                //the cost of a diagonal move in millimeters
+                dxy_distance_mm_[dind] = static_cast<int>(m_params.env_resolution * 1414); 
+            else
+                //the cost of a move to 1,2 or 2,1 or so on in millimeters
+                dxy_distance_mm_[dind] = static_cast<int>(m_params.env_resolution * 2236); 
+        } else {
+            dxy_distance_mm_[dind] = static_cast<int>(m_params.env_resolution * 1000); //the cost of a horizontal move in millimeters
         }
     }
-}
 
-std::vector<MotionPrimitivePtr> MotionPrimitivesMgr::getBaseAndTorsoMotionPrims(){
-    std::vector<MotionPrimitivePtr> base_mprims;
-    combineVectors(m_all_mprims[MPrim_Types::BASE], base_mprims);
-    combineVectors(m_all_mprims[MPrim_Types::BASE_ADAPTIVE], base_mprims);
-    combineVectors(m_all_mprims[MPrim_Types::TORSO], base_mprims);
-    return base_mprims;
-}
+    // create the MPrims themselves
+    for (int i = 0; i < NUM_DIRS; i++) {
+        // make end coords
+        GraphStateMotion end_coords(ROBOT_DOF, 0);
+        end_coords[RobotStateElement::X] = dx_[i];
+        end_coords[RobotStateElement::Y] = dy_[i];
 
-std::vector<MotionPrimitivePtr> MotionPrimitivesMgr::getArmMotionPrims(){
-    std::vector<MotionPrimitivePtr> arm_mprims;
-    combineVectors(m_all_mprims[MPrim_Types::ARM], arm_mprims);
-    combineVectors(m_all_mprims[MPrim_Types::ARM_ADAPTIVE], arm_mprims);
-    return arm_mprims;
-}
+        IntermSteps interm_steps;
+        // make intermsteps (if any)
+        if (i > 7) {
+            interm_steps.resize(2);
+            interm_steps[0] = std::vector<double>{
+                                    static_cast<double>(dx0intersects_[i]),
+                                    static_cast<double>(dy0intersects_[i])
+                                };
+            interm_steps[1] = std::vector<double>{
+                                    static_cast<double>(dx1intersects_[i]),
+                                    static_cast<double>(dy1intersects_[i])
+                                };
+        }
 
-MotionPrimitivePtr MotionPrimitivesMgr::getTuckArmPrim() {
-    ArmTuckMotionPrimitivePtr tuckAMP = make_shared<ArmTuckMotionPrimitive>();
-    return tuckAMP;
-}
-
-MotionPrimitivePtr MotionPrimitivesMgr::getUntuckArmPrim(bool full_untuck) {
-    ArmUntuckMotionPrimitivePtr untuckAMP = 
-                            make_shared<ArmUntuckMotionPrimitive>(full_untuck);
-    return untuckAMP;
+        // fill up the primitive
+        NavMotionPrimitivePtr prim = std::make_shared<NavMotionPrimitive>();
+        prim->setID(i);
+        prim->setEndCoord(end_coords);
+        prim->setIntermSteps(interm_steps);
+        prim->setBaseCost(dxy_distance_mm_[i]);
+        nav_mprims.push_back(prim);
+    }
 }

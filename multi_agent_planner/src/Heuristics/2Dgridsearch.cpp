@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <ctime>
 #include <cmath>
-#include <monolithic_pr2_planner/Heuristics/2Dgridsearch.h>
+#include <multi_agent_planner/Heuristics/2Dgridsearch.h>
 #include <sbpl/utils/heap.h>
 #include <sbpl/utils/list.h>
 

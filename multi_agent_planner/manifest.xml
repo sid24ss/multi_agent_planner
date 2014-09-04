@@ -10,6 +10,8 @@
   <url>http://ros.org/wiki/multi_agent_planner</url>
   <depend package="sbpl"/>
   <depend package="sbpl_manipulation_components"/>
+  <depend package="leatherman" />
+  <depend package="costmap_2d" />
 
   <export>
       <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lmulti_agent_planner"/>

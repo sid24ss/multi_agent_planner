@@ -1,14 +1,11 @@
 #pragma once
-#include <monolithic_pr2_planner/StateReps/GraphState.h>
-#include <monolithic_pr2_planner/StateReps/GoalState.h>
-#include <monolithic_pr2_planner/StateReps/ContArmState.h>
+#include <multi_agent_planner/StateReps/GraphState.h>
+#include <multi_agent_planner/StateReps/GoalState.h>
 #include <stdexcept>
 #include <memory>
-#include <kdl/frames.hpp>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
-namespace monolithic_pr2_planner {
+namespace multi_agent_planner {
     /*! \brief The Abstract Heuristic class that has to be inherited
      * for use in the environment.
      */
@@ -17,8 +14,9 @@ namespace monolithic_pr2_planner {
             AbstractHeuristic() : m_cost_multiplier(1) {};
 
             // The function that has to return the heuristic value at the queried graph state
-            virtual int getGoalHeuristic(GraphStatePtr state) = 0;
+            virtual int getGoalHeuristic(GraphStatePtr state, int leader_id) = 0;
             virtual void setGoal(GoalState& state) = 0;
+            virtual void setGoal(int x, int y) = 0;
 
             // For 3D heuristics that need the obstacles - this function has to be implemented for the heuristic to receive the call for obstacle grid update.
             virtual void update3DHeuristicMap() {};
@@ -33,20 +31,8 @@ namespace monolithic_pr2_planner {
             // Get the cost multiplier
             virtual inline int getCostMultiplier(){ return m_cost_multiplier; };
 
-            // Add all the virtual stuff that may or may not be implemented
-            // For the 2DHeuristic
-            virtual void setRadiusAroundGoal(double radius_m) {};
-            virtual double getRadiusAroundGoal() {return 0;};
-            // For MHABaseHeur
-            virtual void setDesiredOrientation(KDL::Rotation rot) {};
-            // For the ArmAnglesHeur
-            virtual void setGoalArmState(RightContArmState& soln_r_arm_state) {};
-            // For base heuristics, we sometimes want the best cell to move to
-            virtual std::pair<int,int> getBestParent(int x, int y) {
-                throw std::logic_error("getBestParent not implemented!");
-            };
         private:
             int m_cost_multiplier;
     };
-    typedef boost::shared_ptr<AbstractHeuristic> AbstractHeuristicPtr;
+    typedef std::shared_ptr<AbstractHeuristic> AbstractHeuristicPtr;
 }

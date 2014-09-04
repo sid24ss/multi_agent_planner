@@ -29,40 +29,27 @@ rosbuild_add_library(multi_agent_planner
                                             src/StateReps/DiscRobotState.cpp
                                             src/StateReps/GraphState.cpp
                                             src/StateReps/SwarmState.cpp
-                                            # src/StateReps/GoalState.cpp
+                                            src/StateReps/GoalState.cpp
                                             
-                                            # src/MotionPrimitives/ArmMotionPrimitive.cpp
-                                            # src/MotionPrimitives/BaseMotionPrimitive.cpp
-                                            # src/MotionPrimitives/MotionPrimitive.cpp
+                                            src/MotionPrimitives/NavMotionPrimitive.cpp
+                                            src/MotionPrimitives/MotionPrimitive.cpp
                                             # src/MotionPrimitives/FileParser.cpp
-                                            # src/MotionPrimitives/MotionPrimitivesMgr.cpp
-                                            # src/MotionPrimitives/BaseAdaptiveMotionPrimitive.cpp
-                                            # src/MotionPrimitives/ArmAdaptiveMotionPrimitive.cpp
-                                            # src/MotionPrimitives/ArmTuckMotionPrimitive.cpp
-                                            # src/MotionPrimitives/ArmUntuckMotionPrimitive.cpp
-                                            # src/MotionPrimitives/TorsoMotionPrimitive.cpp
+                                            src/MotionPrimitives/MotionPrimitivesMgr.cpp
 
-                                            # src/Heuristics/BFS3DHeuristic.cpp
-                                            # src/Heuristics/BFS2DHeuristic.cpp
-                                            # src/Heuristics/BFS2DRotFootprintHeuristic.cpp
-                                            # src/Heuristics/EndEffectorHeuristic.cpp
-                                            # src/Heuristics/EndEffLocalHeuristic.cpp
-                                            # src/Heuristics/BaseWithRotationHeuristic.cpp
-                                            # src/Heuristics/AbstractHeuristic.cpp
-                                            # src/Heuristics/ArmAnglesHeuristic.cpp
-                                            # src/Heuristics/BFS3DWithRotationHeuristic.cpp
-                                            # src/Heuristics/EndEffOnlyRotationHeuristic.cpp
-                                            # src/Heuristics/HeuristicMgr.cpp
-                                            # src/Heuristics/2Dgridsearch.cpp
+                                            src/Heuristics/BFS2DHeuristic.cpp
+                                            src/Heuristics/AbstractHeuristic.cpp
+                                            src/Heuristics/HeuristicMgr.cpp
+                                            src/Heuristics/2Dgridsearch.cpp
 
                                             # src/SearchRequest.cpp
                                             # src/Environment.cpp
                                             src/OccupancyGridUser.cpp
-                                            # src/CollisionSpaceMgr.cpp
+                                            src/CollisionSpaceMgr.cpp
                                             src/ParameterCatalog.cpp
                                             src/HashManager.cpp
-                                            # src/TransitionData.cpp
-                                            # src/Visualizer.cpp
+                                            src/TransitionData.cpp
+                                            src/Visualizer.cpp
+                                            src/swarmViz.cpp
                                             # src/PathPostProcessor.cpp
 
                                             # src/ExperimentFramework/randomStartGoalGenerator.cpp
