@@ -13,9 +13,10 @@ namespace multi_agent_planner {
             void setGoal(SwarmState goal_state){ m_goal_state =
                 goal_state;};
             bool withinTol(const GraphStatePtr& graph_state) const;
+            void storeAsSolnState(const GraphStatePtr& state){ m_full_goal_state = state; };
             void visualize();
         private:
-            // Not underspecified at the moment.
+            GraphStatePtr m_full_goal_state;
             SwarmState m_goal_state;
             double m_tolerance;
     };

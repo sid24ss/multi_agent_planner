@@ -41,8 +41,8 @@ rosbuild_add_library(multi_agent_planner
                                             src/Heuristics/HeuristicMgr.cpp
                                             src/Heuristics/2Dgridsearch.cpp
 
-                                            # src/SearchRequest.cpp
-                                            # src/Environment.cpp
+                                            src/SearchRequest.cpp
+                                            src/Environment.cpp
                                             src/OccupancyGridUser.cpp
                                             src/CollisionSpaceMgr.cpp
                                             src/ParameterCatalog.cpp
@@ -50,7 +50,7 @@ rosbuild_add_library(multi_agent_planner
                                             src/TransitionData.cpp
                                             src/Visualizer.cpp
                                             src/swarmViz.cpp
-                                            # src/PathPostProcessor.cpp
+                                            src/PathPostProcessor.cpp
 
                                             # src/ExperimentFramework/randomStartGoalGenerator.cpp
                                             # src/StatsWriter.cpp

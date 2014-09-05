@@ -26,6 +26,7 @@ namespace multi_agent_planner {
             void coords(std::vector<int> coords);
 
             void setLeader(int l) { m_leader = l; };
+            int getLeader() const { return m_leader; };
 
             void visualize() const;
 

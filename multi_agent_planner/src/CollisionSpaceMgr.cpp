@@ -54,6 +54,15 @@ bool CollisionSpaceMgr::isValidSuccessor(const GraphState& successor) const {
     return isValid(successor.swarm_state());
 }
 
+bool CollisionSpaceMgr::isValidTransitionStates(const TransitionData& t_data) const
+{
+    for (auto& swarm_state : t_data.interm_swarm_steps()) {
+        if (!isValid(swarm_state))
+            return false;
+    }
+    return true;
+}
+
 /**
  * @brief checks for validity of the robot state
  * @details assumes that the robot is a simple sphere, for now. Checks the

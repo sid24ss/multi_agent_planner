@@ -1,14 +1,14 @@
 #pragma once
-#include <ros/ros.h>
+#include <multi_agent_planner/ParameterCatalog.h>
+#include <multi_agent_planner/CollisionSpaceMgr.h>
+#include <multi_agent_planner/HashManager.h>
+#include <multi_agent_planner/SearchRequest.h>
+#include <multi_agent_planner/StateReps/GoalState.h>
+#include <multi_agent_planner/MotionPrimitives/MotionPrimitivesMgr.h>
+#include <multi_agent_planner/Heuristics/HeuristicMgr.h>
+#include <multi_agent_planner/PathPostProcessor.h>
 #include <sbpl/headers.h>
-#include <monolithic_pr2_planner/ParameterCatalog.h>
-#include <monolithic_pr2_planner/CollisionSpaceMgr.h>
-#include <monolithic_pr2_planner/HashManager.h>
-#include <monolithic_pr2_planner/SearchRequest.h>
-#include <monolithic_pr2_planner/StateReps/GoalState.h>
-#include <monolithic_pr2_planner/MotionPrimitives/MotionPrimitivesMgr.h>
-#include <monolithic_pr2_planner/Heuristics/HeuristicMgr.h>
-#include <monolithic_pr2_planner/PathPostProcessor.h>
+#include <ros/ros.h>
 #include <stdexcept>
 #include <vector>
 #include <memory>
@@ -20,7 +20,7 @@
 #define EPS1 25
 #define EPS2 4
 
-namespace monolithic_pr2_planner {
+namespace multi_agent_planner {
     /*! \brief Implements a complete environment used by the SBPL planner.
      * Contains everything from managing state IDs to collision space
      * information.
@@ -33,20 +33,19 @@ namespace monolithic_pr2_planner {
             HeuristicMgrPtr getHeuristicMgr(){ return m_heur_mgr; };
             bool configureRequest(SearchRequestParamsPtr search_request_params,
                                   int& start_id, int& goal_id);
-            void GetSuccs(int sourceStateID, vector<int>* succIDs, 
-                vector<int>* costs);
-            void GetSuccs(int sourceStateID, vector<int>* succIDs, 
-                vector<int>* costs, int ii);
-            virtual void GetLazySuccs(int sourceStateID, vector<int>* succIDs, 
-                vector<int>* costs, std::vector<bool>* isTrueCost);
-            virtual void GetLazySuccs(int sourceStateID, vector<int>* succIDs, 
-                vector<int>* costs, std::vector<bool>* isTrueCost, int q_id);
+            void GetSuccs(int sourceStateID, std::vector<int>* succIDs, 
+                std::vector<int>* costs);
+            void GetSuccs(int sourceStateID, std::vector<int>* succIDs, 
+                std::vector<int>* costs, int leader_id);
+            virtual void GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
+                std::vector<int>* costs, std::vector<bool>* isTrueCost);
+            virtual void GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
+                std::vector<int>* costs, std::vector<bool>* isTrueCost, int leader_id);
             virtual int GetTrueCost(int parentID, int childID);
-            std::vector<FullBodyState> reconstructPath(std::vector<int> 
+            std::vector<SwarmState> reconstructPath(std::vector<int> 
                 state_ids);
             void reset();
-            void setPlannerType(int planner_type);
-            void setUseNewHeuristics(bool use_new_heuristics);
+            // void setPlannerType(int planner_type);
 
         protected:
             bool setStartGoal(SearchRequestPtr search_request, 
@@ -64,25 +63,25 @@ namespace monolithic_pr2_planner {
             MotionPrimitivesMgr m_mprims;
             HeuristicMgrPtr m_heur_mgr;
 
-            int m_planner_type;
-            bool m_use_new_heuristics;
-
-            std::unordered_map<int, PlanningModes::modes> m_action_partition;
+            // int m_planner_type;
+            // std::unordered_map<int, PlanningModes::modes> m_action_partition;
 
         // SBPL interface stuff
         public:
             bool InitializeEnv(const char* sEnvFile){return false;};
             bool InitializeMDPCfg(MDPConfig *MDPCfg){ return true; };
-            int  GetFromToHeuristic(int FromStateID, int ToStateID){ throw std::runtime_error("unimplement");  };
+            int  GetFromToHeuristic(int FromStateID, int ToStateID){ throw std::runtime_error("unimplemented");  };
             int  GetGoalHeuristic(int stateID);
-            int  GetGoalHeuristic(int heuristic_id, int stateID);
-            int  GetStartHeuristic(int stateID) { throw std::runtime_error("unimplement"); };
+            int  GetGoalHeuristic(int leader_id, int stateID);
+            int  GetStartHeuristic(int stateID) { throw std::runtime_error("unimplemented"); };
             void GetPreds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV){};
             void SetAllActionsandAllOutcomes(CMDPSTATE* state){};
             void SetAllPreds(CMDPSTATE* state){};
             int  SizeofCreatedEnv(){ return m_hash_mgr->size(); };
             void PrintState(int stateID, bool bVerbose, FILE* fOut=NULL){};
             void PrintEnv_Config(FILE* fOut){};
-            std::map<Edge, std::vector<MotionPrimitivePtr> > m_edges;
+            // we'll save the primitive that was used to generate the successor
+            // and use the same interpolation later.
+            std::map<Edge, MotionPrimitivePtr> m_edges;
     };
 }

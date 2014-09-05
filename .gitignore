@@ -22,3 +22,6 @@
 
 # build directories
 build/
+
+# Editor-specific files
+.tags*

@@ -10,6 +10,7 @@ namespace multi_agent_planner {
 
     const double NOMINAL_Z = 0.2;
 
+    // number of planner queues will be 1 (anchor - q_0) + NUM_LEADERS
     const int NUM_LEADERS = 1;  // MUST be <= NUM_ROBOTS
 
     // has to contain elements < NUM_ROBOTS and number of elements = NUM_LEADERS
