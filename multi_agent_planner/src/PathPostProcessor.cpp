@@ -34,6 +34,7 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
             soln_path[i+1]));
         // TransitionData best_transition;
         GraphStatePtr source_state = m_hash_mgr->getGraphState(soln_path[i]);
+        source_state->swarm_state().visualize();
         GraphStatePtr successor;
         GraphStatePtr real_next_successor = m_hash_mgr->getGraphState(soln_path[i+1]);
         ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "reconstructing %d - %d",
@@ -74,6 +75,7 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
 void PathPostProcessor::visualizeFinalPath(std::vector<SwarmState> path) {
     for (auto& state : path){
         state.visualize();
+        usleep(10000);
     }
 }
 

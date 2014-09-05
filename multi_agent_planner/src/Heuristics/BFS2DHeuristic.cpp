@@ -80,9 +80,8 @@ int BFS2DHeuristic::getGoalHeuristic(GraphStatePtr state, int leader_id) {
     }
 
     int cost = m_gridsearch->getlowerboundoncostfromstart_inmm(x, y);
-    // ROS_DEBUG_NAMED(HEUR_LOG, "[BFS2D] 2Ddijkstra's cost to %d %d is %d", 
-    //                           state->base_x(), state->base_y(),
-    //                           (cost)<0?INFINITECOST:cost );
+    ROS_DEBUG_NAMED(HEUR_LOG, "[BFS2D] 2Ddijkstra's cost to %d %d is %d, mult %d", 
+                              x, y, cost, getCostMultiplier());
     
     if (cost < 0){
         return INFINITECOST;

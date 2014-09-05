@@ -6,7 +6,7 @@
 
 namespace multi_agent_planner {
     const int ROBOT_DOF = 2;
-    const int NUM_ROBOTS = 1;
+    const int NUM_ROBOTS = 5;
 
     const double NOMINAL_Z = 0.2;
 

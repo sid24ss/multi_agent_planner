@@ -17,8 +17,8 @@ namespace multi_agent_planner {
 
     enum RequestErrors { 
         VALID_REQUEST,
-        INVALID_START, 
-        INVALID_GOAL, 
+        INVALID_START,
+        INVALID_GOAL,
         INVALID_PARAM
     };
 

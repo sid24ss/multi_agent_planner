@@ -45,33 +45,6 @@ void HeuristicMgr::reset() {
     update2DHeuristicMaps(m_grid_data);
 }
 
-/**
- * @brief sets the planner type - mainly for experiments for the MHA paper
- * @details change the internal planner type to any of the different planners
- */
-/*void HeuristicMgr::setPlannerType(int planner_type)
-{
-    m_planner_type = planner_type;
-    switch (planner_type) {
-        case T_SMHA:
-        case T_IMHA:
-        case T_MHG_REEX:
-        case T_MHG_NO_REEX:
-            m_num_mha_heuristics = 1;
-            break;
-        case T_ARA:
-        case T_MPWA:
-            m_num_mha_heuristics = 0;
-            break;
-        case T_EES:
-            m_num_mha_heuristics = 1;
-            addUniformCost3DHeur("uniform_3d");
-            addUniformCost2DHeur("uniform_2d", 0.7);
-            m_heuristics[m_heuristic_map["uniform_2d"]]->update2DHeuristicMap(m_grid_data);
-            break;
-    }
-}
-*/
 void HeuristicMgr::initializeHeuristics() {
     // initialize as many heuristics as there are number of leaders
     for (int i = 0; i < m_num_leaders; ++i) {

@@ -1,6 +1,8 @@
 #include <multi_agent_planner/StateReps/SwarmState.h>
 #include <multi_agent_planner/Constants.h>
 #include <multi_agent_planner/Utilities.h>
+#include <multi_agent_planner/Visualizer.h>
+#include <sstream>
 #include <boost/scoped_ptr.hpp>
 
 using namespace multi_agent_planner;
@@ -31,17 +33,21 @@ bool SwarmState::operator!=(const SwarmState& other) const {
 }
 
 void SwarmState::printToDebug(char* logger) const {
+    std::stringstream ss;
     for (size_t i =0; i < m_robots_pose.size(); ++i) {
-        ROS_DEBUG_NAMED(logger, "\trobot:%d", static_cast<int>(i));
-        m_robots_pose[i].getDiscRobotState().printToDebug(logger);
+        ss << " |" << i << "| ";
+        ss << vectorToString(m_robots_pose[i].getDiscRobotState().coords());
     }
+    ROS_DEBUG_NAMED(logger, "%s", ss.str().c_str());
 }
 
 void SwarmState::printContToDebug(char* logger) const {
-     for (size_t i =0; i < m_robots_pose.size(); ++i) {
-        ROS_DEBUG_NAMED(logger, "\trobot:%d", static_cast<int>(i));
-        m_robots_pose[i].getContRobotState().printToDebug(logger);
+    std::stringstream ss;
+    for (size_t i =0; i < m_robots_pose.size(); ++i) {
+        ss << " |" << i << "| ";
+        ss << vectorToString(m_robots_pose[i].getContRobotState().coords());
     }
+    ROS_DEBUG_NAMED(logger, "%s", ss.str().c_str());
 }
 
 void SwarmState::coords(std::vector<int> coords) {
@@ -94,8 +100,6 @@ bool SwarmState::interpolate(const SwarmState& start, const SwarmState& end,
 }
 
 void SwarmState::visualize() const {
-    for (size_t i = 0; i < m_robots_pose.size(); i++) {
-        m_robots_pose[i].visualize((m_leader == static_cast<int>(i)));
-    }
+    Visualizer::visualizeSwarm("swarm_state", *this);
 }
 

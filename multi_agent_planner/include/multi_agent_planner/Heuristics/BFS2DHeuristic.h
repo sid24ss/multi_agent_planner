@@ -28,7 +28,6 @@ namespace multi_agent_planner {
             unsigned int m_size_col;
             unsigned int m_size_row;
             unsigned char** m_grid;
-            void visualizeRadiusAroundGoal(int x0, int y0);
     };
     typedef std::shared_ptr<BFS2DHeuristic> BFS2DHeuristicPtr;
 }

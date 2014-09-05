@@ -68,10 +68,11 @@ int Environment::GetGoalHeuristic(int leader_id, int stateID) {
     if(m_goal->isSatisfiedBy(successor) || stateID == GOAL_STATE){
         return 0;
     }
-
     std::stringstream ss;
-    ss << "bfs2d_" << (leader_id-1);
-    return m_heur_mgr->getGoalHeuristic(successor, ss.str(), LEADER_IDS[leader_id-1]);
+    ss << "bfs2d_" << LEADER_IDS[leader_id-1];
+    int heur = m_heur_mgr->getGoalHeuristic(successor, ss.str(), LEADER_IDS[leader_id-1]);
+    successor->printToDebug(HEUR_LOG);
+    ROS_DEBUG_NAMED(HEUR_LOG, "heuristic : %d", heur);
 }
 
 void Environment::GetSuccs(int sourceStateID, std::vector<int>* succIDs, 
@@ -152,10 +153,10 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
     // set the correct leader id.
     leader_id = LEADER_IDS[leader_id-1];
 
-    ROS_DEBUG_NAMED(SEARCH_LOG, "expanding leader : %d", leader_id);
 
     ROS_DEBUG_NAMED(SEARCH_LOG, "==================Expanding state %d==================", 
                     sourceStateID);
+    ROS_DEBUG_NAMED(SEARCH_LOG, "expanding leader : %d", leader_id);
     MPrimList current_mprims = m_mprims.getMotionPrims();
     succIDs->clear();
     succIDs->reserve(current_mprims.size());
@@ -181,6 +182,8 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             continue;
         }
         m_hash_mgr->save(successor);
+        successor->swarm_state().visualize();
+        std::cin.get();
 
         if(!m_cspace_mgr->isValidSuccessor(*successor) ||
                     !m_cspace_mgr->isValidTransitionStates(t_data)) {
@@ -261,12 +264,17 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     m_edges.clear();
 
     auto swarm_start = search_request->m_params->swarm_start;
+    if (!(static_cast<int>(swarm_start.robots_pose().size()) == NUM_ROBOTS))
+        return false;
+
     if (!search_request->isValid(m_cspace_mgr)){
         swarm_start.visualize();
         return false;
     }
 
+    ROS_DEBUG_NAMED(CONFIG_LOG, "VIsualizing start state:");
     swarm_start.visualize();
+    std::cin.get();
 
     GraphStatePtr start_graph_state = std::make_shared<GraphState>(swarm_start);
     m_hash_mgr->save(start_graph_state);
@@ -287,9 +295,12 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
 
     ROS_INFO_NAMED(SEARCH_LOG, "Goal state created:");
     m_goal->getSwarmState().printToDebug(SEARCH_LOG);
+    m_goal->getSwarmState().visualize();
+    std::cin.get();
 
     // informs the heuristic about the goal
     m_heur_mgr->setGoal(*m_goal);
+    m_heur_mgr->printSummaryToDebug(HEUR_LOG);
 
     return true;
 }
@@ -324,6 +335,8 @@ void Environment::configurePlanningDomain(){
     m_cspace_mgr = std::make_shared<CollisionSpaceMgr>(m_param_catalog.m_robot_description_params);
     m_heur_mgr->setCollisionSpaceMgr(m_cspace_mgr);
 
+    // set mprim params
+    m_mprims.setMprimParams(m_param_catalog.m_motion_primitive_params);
     // load up motion primitives
     m_mprims.loadMPrims();
 
@@ -347,6 +360,8 @@ std::vector<SwarmState> Environment::reconstructPath(std::vector<int> soln_path)
     std::vector<SwarmState> final_path = postprocessor.reconstructPath(soln_path, *m_goal,
         m_edges);
     if(m_param_catalog.m_visualization_params.final_path){
+        ROS_DEBUG_NAMED(SEARCH_LOG, "Visualizing final path");
+        std::cin.get();
         postprocessor.visualizeFinalPath(final_path);
     }
     return final_path;

@@ -1,0 +1,22 @@
+<package>
+  <description brief="multi_agent_planner_node">
+
+     multi_agent_planner_node
+
+  </description>
+  <author>Siddharth Swaminathan</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/multi_agent_planner_node</url>
+  <depend package="multi_agent_planner"/>
+  <depend package="sbpl_geometry_utils"/>
+  <depend package="leatherman"/>
+  <depend package="roscpp"/>
+  <depend package="sbpl"/>
+  <depend package="common_rosdeps" />
+  <depend package="costmap_2d"/>
+  <rosdep name="yaml-cpp" />
+
+</package>
+
+

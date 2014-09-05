@@ -25,8 +25,8 @@ void ParameterCatalog::fetch(ros::NodeHandle nh){
 }
 
 void ParameterCatalog::setMotionPrimitiveParams(MotionPrimitiveParams& params){
-    setFileNameFromParamServer("planner/motion_primitive_file", 
-            &params.motion_primitive_file);
+    // setFileNameFromParamServer("planner/motion_primitive_file", 
+    //         &params.motion_primitive_file);
     m_nodehandle.param("planner/nominalvel_mpersecs", params.nominal_vel, 0.5);
     params.env_resolution = m_occupancy_grid_params.env_resolution;
 }

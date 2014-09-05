@@ -10,6 +10,7 @@ namespace multi_agent_planner {
             bool operator!=(const RobotState& other) const;
 
             RobotState(){};
+            RobotState(std::vector<double> values);
             RobotState(ContRobotState cont_state);
             RobotState(DiscRobotState cont_state);
 
@@ -28,6 +29,8 @@ namespace multi_agent_planner {
             static bool interpolate(const RobotState& start, const RobotState& end,
                             int num_interp_steps,
                             std::vector<RobotState>& interm_robot_steps);
+            static void vectorToRobotStates(std::vector<double> values,
+                                        std::vector<RobotState>& robot_states);
 
         private:
             ContRobotState m_cont_robot_state;

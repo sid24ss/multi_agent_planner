@@ -92,7 +92,6 @@ void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
 
     //compute costs
     for (int dind = 0; dind < NUM_DIRS; dind++) {
-
         if (dx_[dind] != 0 && dy_[dind] != 0) {
             if (dind <= 7)
                 //the cost of a diagonal move in millimeters

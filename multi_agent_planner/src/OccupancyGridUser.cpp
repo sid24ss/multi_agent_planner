@@ -3,6 +3,8 @@
 
 using namespace multi_agent_planner;
 
+std::shared_ptr<sbpl_arm_planner::OccupancyGrid> OccupancyGridUser::m_occupancy_grid;
+
 void OccupancyGridUser::init(OccupancyGridParams& params){
     m_occupancy_grid = std::make_shared<sbpl_arm_planner::OccupancyGrid>(
                                                           params.max_point.x, 

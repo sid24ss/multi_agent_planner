@@ -15,6 +15,11 @@ bool RobotState::operator!=(const RobotState& other) const {
     return !(*this == other);
 }
 
+RobotState::RobotState(std::vector<double> values)
+{
+    m_cont_robot_state = ContRobotState(values);
+}
+
 RobotState::RobotState(ContRobotState robot_state):
     m_cont_robot_state (robot_state) {}
 
@@ -74,4 +79,16 @@ bool RobotState::interpolate(const RobotState& start, const RobotState& end,
     }
     assert(num_interp_steps == static_cast<int>(interm_robot_steps.size()));
     return true;
+}
+
+void RobotState::vectorToRobotStates(std::vector<double> values,
+                                    std::vector<RobotState>& robot_states)
+{
+    assert(static_cast<int>(values.size()) == PLANNING_DOF);
+    auto begin = values.begin();
+    for (int i = 0; i < NUM_ROBOTS; i++) {
+        std::vector<double> this_robot_coords(begin, begin + ROBOT_DOF);
+        robot_states.push_back(RobotState(this_robot_coords));
+        begin = begin + ROBOT_DOF;
+    }
 }

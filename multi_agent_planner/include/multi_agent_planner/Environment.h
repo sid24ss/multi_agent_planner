@@ -17,8 +17,8 @@
 #define NUM_IMHA_HEUR 4 // Used in EnvInterfaces to initialize the planner.
 // This should include the Anchor search -> Total number of searches.
 
-#define EPS1 25
-#define EPS2 4
+#define EPS1 1
+#define EPS2 2
 
 namespace multi_agent_planner {
     /*! \brief Implements a complete environment used by the SBPL planner.
