@@ -266,7 +266,8 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
                                int& start_id, int& goal_id){
     m_edges.clear();
 
-    auto swarm_start = search_request->m_params->swarm_start;
+    auto swarm_start_pos = search_request->m_params->swarm_start;
+    auto swarm_start = SwarmState::transformSwarmToPos(swarm_start_pos);
     if (!(static_cast<int>(swarm_start.robots_pose().size()) == SwarmState::NUM_ROBOTS))
         return false;
 

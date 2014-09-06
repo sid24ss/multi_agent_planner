@@ -129,16 +129,10 @@ bool EnvInterfaces::planPathCallback(GetSwarmPlan::Request &req,
     search_request->tolerance = req.tolerance;
     
     // configure start swarm
-    std::vector<RobotState> start_robots_list;
-    RobotState::vectorToRobotStates(req.swarm_start, start_robots_list);
-    SwarmState start_swarm_state(start_robots_list);
-    search_request->swarm_start = start_swarm_state;
+    search_request->swarm_start = req.swarm_start;
 
     // configure goal swarm
-    std::vector<RobotState> goal_robots_list;
-    RobotState::vectorToRobotStates(req.swarm_goal, goal_robots_list);
-    SwarmState goal_swarm_state(goal_robots_list);
-    search_request->swarm_goal = goal_swarm_state;
+    search_request->swarm_goal = req.swarm_goal;
 
     res.stats_field_names.resize(18);
     res.stats.resize(18);

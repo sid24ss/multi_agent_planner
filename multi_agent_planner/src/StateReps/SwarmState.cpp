@@ -127,5 +127,28 @@ void SwarmState::configureSwarmState(const SwarmDescriptionParams& params) {
     }
 }
 
-
-
+/**
+ * @brief transform a SwarmState to the position described
+ * @details The transform is computed from the robot index specified in the
+ * pivot param
+ * 
+ * @param position A valid RobotStateElement vector
+ * @param pivot The index of the robot that is at the location specified
+ * by position; defaults to the 0th robot
+ * @return The transformed SwarmState
+ */
+SwarmState SwarmState::transformSwarmToPos(std::vector<double> position,
+                                            int pivot)
+{
+    assert(static_cast<int>(position.size()) == SWARM_DOF);
+    std::vector<RobotState> robots_list(SwarmState::NUM_ROBOTS);
+    for (size_t i = 0; i < static_cast<size_t>(SwarmState::NUM_ROBOTS); i++) {
+        ContRobotState state;
+        state.x(position[RobotStateElement::X] + SwarmState::REL_POSITIONS[i][
+            pivot].x());
+        state.y(position[RobotStateElement::Y] + SwarmState::REL_POSITIONS[i][
+            pivot].y());
+        robots_list[i] = RobotState(state);
+    }
+    return SwarmState(robots_list);
+}

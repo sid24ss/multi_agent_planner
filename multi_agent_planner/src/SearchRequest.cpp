@@ -24,6 +24,7 @@ bool SearchRequest::isValid(CSpaceMgrPtr& cspace){
 }
 
 GoalStatePtr SearchRequest::createGoalState(){
-    return std::make_shared<GoalState>(m_params->swarm_goal,
-                                                m_params->tolerance);
+    auto swarm_goal_state = m_params->swarm_goal;
+    auto swarm_goal = SwarmState::transformSwarmToPos(swarm_goal_state);
+    return std::make_shared<GoalState>(swarm_goal, m_params->tolerance);
 }

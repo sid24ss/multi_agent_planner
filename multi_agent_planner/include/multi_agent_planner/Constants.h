@@ -8,7 +8,9 @@
 
 namespace multi_agent_planner {
     const int ROBOT_DOF = 2;
-    // const int NUM_ROBOTS = 5;
+    // This is designed so that the swarm by itself can rotate, while the robots
+    // only move in (x,y)
+    const int SWARM_DOF = 2;
 
     const double NOMINAL_Z = 0.2;
 
@@ -29,4 +31,5 @@ namespace multi_agent_planner {
             // THETA   // possibly. maybe later.
         };
     };
+    // TODO : SwarmStateElement
 }

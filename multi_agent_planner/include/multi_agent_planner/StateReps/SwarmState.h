@@ -41,6 +41,9 @@ namespace multi_agent_planner {
             static std::vector<int> LEADER_IDS;
             static void configureSwarmState(const SwarmDescriptionParams& params);
 
+            static SwarmState transformSwarmToPos(std::vector<double> position,
+                                                    int pivot = 0);
+
         private:
             std::vector<RobotState> m_robots_pose;
             int m_leader;

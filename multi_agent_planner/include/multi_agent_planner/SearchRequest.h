@@ -11,8 +11,8 @@ namespace multi_agent_planner {
         double final_epsilon;
         double decrement_epsilon;
         double tolerance;
-        SwarmState swarm_start;
-        SwarmState swarm_goal;
+        std::vector<double> swarm_start;
+        std::vector<double> swarm_goal;
     } SearchRequestParams;
 
     enum RequestErrors { 

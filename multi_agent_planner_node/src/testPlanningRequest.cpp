@@ -11,8 +11,8 @@ int main(int argc, char** argv){
     ros::ServiceClient client = n.serviceClient<multi_agent_planner_node::GetSwarmPlan>("/sbpl_planning/plan_path");
     multi_agent_planner_node::GetSwarmPlan srv;
 
-    std::vector<double> start_swarm { 1, 1 , 2, 1, 3, 1, 4, 1, 2.5, 0.5};
-    std::vector<double> goal_swarm { 1, 4 , 2, 4, 3, 4, 4, 4, 2.5, 3.5};
+    std::vector<double> start_swarm { 1,1 };
+    std::vector<double> goal_swarm { 1, 4};
 
     srv.request.swarm_start = start_swarm;
     srv.request.swarm_goal = goal_swarm;

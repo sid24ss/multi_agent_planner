@@ -6,7 +6,7 @@ visualizations:
   expansions: true
 
 robot_description:
-  radius: 0.3
+  radius: 0.15
 
 collision_space:
   reference_frame: map

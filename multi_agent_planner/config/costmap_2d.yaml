@@ -23,5 +23,5 @@ track_unknown_space: true
 #inflation_radius: 0.47 #---> experiments were run with this.
 inflation_radius: 0.57
 #inflation_radius: 0.38
-robot_radius: 0.3
+robot_radius: 0.15
 # cost_scaling_factor: 10.0
