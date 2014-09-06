@@ -13,8 +13,8 @@ using namespace multi_agent_planner;
 Environment::Environment(ros::NodeHandle nh)
     :   m_hash_mgr(new HashManager(&StateID2IndexMapping)),
         m_nodehandle(nh), m_mprims(m_goal),
-        m_heur_mgr(new HeuristicMgr())
-        // m_planner_type(T_SMHA)
+        m_heur_mgr(new HeuristicMgr()),
+        m_leader_ids(LEADER_IDS)
 {
         m_param_catalog.fetch(nh);
         configurePlanningDomain();
@@ -30,20 +30,7 @@ void Environment::reset() {
     // m_heur_mgr->setCollisionSpaceMgr(m_cspace_mgr);
     m_hash_mgr.reset(new HashManager(&StateID2IndexMapping));
     m_edges.clear();
-
-    // Fetch params again, in case they're being modified between calls.
-    // m_param_catalog.fetch(m_nodehandle);
 }
-
-/**
- * @brief sets the planner type - mainly for experiments for the MHA paper
- * @details change the internal planner type to any of the different planners
- */
-// void Environment::setPlannerType(int planner_type) {
-//     m_planner_type = planner_type;
-//     m_heur_mgr->setPlannerType(planner_type);
-//     ROS_INFO_NAMED(SEARCH_LOG, "Setting planner type: %d", m_planner_type);
-// }
 
 bool Environment::configureRequest(SearchRequestParamsPtr search_request_params,
                                    int& start_id, int& goal_id) {
@@ -63,16 +50,19 @@ int Environment::GetGoalHeuristic(int stateID) {
     return GetGoalHeuristic(0, stateID);
 }
 
-int Environment::GetGoalHeuristic(int leader_id, int stateID) {
+int Environment::GetGoalHeuristic(int q_id, int stateID) {
+    ROS_DEBUG_NAMED(HEUR_LOG, "Queried queue : %d; setting to %d", q_id,
+        m_leader_ids[q_id - 1]);
     GraphStatePtr successor = m_hash_mgr->getGraphState(stateID);
     if(m_goal->isSatisfiedBy(successor) || stateID == GOAL_STATE){
         return 0;
     }
     std::stringstream ss;
-    ss << "bfs2d_" << LEADER_IDS[leader_id-1];
-    int heur = m_heur_mgr->getGoalHeuristic(successor, ss.str(), LEADER_IDS[leader_id-1]);
+    ss << "bfs2d_" << m_leader_ids[q_id - 1];
+    int heur = m_heur_mgr->getGoalHeuristic(successor, ss.str(), m_leader_ids[q_id - 1]);
     successor->printToDebug(HEUR_LOG);
     ROS_DEBUG_NAMED(HEUR_LOG, "heuristic : %d", heur);
+    return heur;
 }
 
 void Environment::GetSuccs(int sourceStateID, std::vector<int>* succIDs, 
@@ -81,12 +71,12 @@ void Environment::GetSuccs(int sourceStateID, std::vector<int>* succIDs,
 }
 
 void Environment::GetSuccs(int sourceStateID, std::vector<int>* succIDs, 
-                           std::vector<int>* costs, int leader_id)
+                           std::vector<int>* costs, int q_id)
 {
     assert(sourceStateID != GOAL_STATE);
     throw std::runtime_error("Shouldn't be calling this for lazy!");
     // need to do this because planner starts queues from 0 (anchor), 1 ... N
-    // leader_id = LEADER_IDS[leader_id-1];
+    // int leader_id = m_leader_ids[q_id];
 
     // ROS_DEBUG_NAMED(SEARCH_LOG, 
     //         "==================Expanding state %d==================", 
@@ -148,10 +138,10 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
 
 void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
                         std::vector<int>* costs, std::vector<bool>* isTrueCost,
-                        int leader_id)
+                        int q_id)
 {
     // set the correct leader id.
-    leader_id = LEADER_IDS[leader_id-1];
+    int leader_id = m_leader_ids[q_id];
 
 
     ROS_DEBUG_NAMED(SEARCH_LOG, "==================Expanding state %d==================", 
@@ -183,7 +173,6 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         }
         m_hash_mgr->save(successor);
         successor->swarm_state().visualize();
-        std::cin.get();
 
         if(!m_cspace_mgr->isValidSuccessor(*successor) ||
                     !m_cspace_mgr->isValidTransitionStates(t_data)) {
@@ -202,9 +191,11 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
           key = Edge(sourceStateID, successor->id());
         }
         costs->push_back(t_data.cost());
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "cost to successor : %d", t_data.cost());
         isTrueCost->push_back(true);
 
         m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
+        // std::cin.get();
     }
 }
 

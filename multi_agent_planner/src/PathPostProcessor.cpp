@@ -73,8 +73,10 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
 }
 
 void PathPostProcessor::visualizeFinalPath(std::vector<SwarmState> path) {
+    // path is a vector of SwarmStates; state is a SwarmState
     for (auto& state : path){
         state.visualize();
+        state.printToDebug(POSTPROCESSOR_LOG);
         usleep(10000);
     }
 }

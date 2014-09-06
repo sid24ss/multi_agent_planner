@@ -17,7 +17,7 @@
 #define NUM_IMHA_HEUR 4 // Used in EnvInterfaces to initialize the planner.
 // This should include the Anchor search -> Total number of searches.
 
-#define EPS1 1
+#define EPS1 10
 #define EPS2 2
 
 namespace multi_agent_planner {
@@ -62,6 +62,7 @@ namespace multi_agent_planner {
             GoalStatePtr m_goal;
             MotionPrimitivesMgr m_mprims;
             HeuristicMgrPtr m_heur_mgr;
+            std::vector<int> m_leader_ids;
 
             // int m_planner_type;
             // std::unordered_map<int, PlanningModes::modes> m_action_partition;

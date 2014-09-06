@@ -117,17 +117,18 @@ void NavMotionPrimitive::computeTData(const GraphState& source_state,
     // you need to push them in.
     SwarmState::interpolate(start_swarm, end_swarm, num_interp_steps, interm_swarm_steps);
 
-    auto start_leader = start_swarm.robots_pose()[leader_id].getContRobotState();
+    auto start_leader = start_swarm.robots_pose()[leader_id].getDiscRobotState();
 
     for (int i = 0; i < num_interp_steps; ++i) {
         // set the leader's interp steps to that of the mprim. (probably not
         // even required)
         auto robots_list = interm_swarm_steps[i].robots_pose();
-        ContRobotState c_leader = robots_list[leader_id].getContRobotState();
-        c_leader.x(start_leader.x() + m_interm_steps[i][RobotStateElement::X]);
-        c_leader.y(start_leader.y() + m_interm_steps[i][RobotStateElement::Y]);
-        robots_list[leader_id] = RobotState(c_leader);
+        DiscRobotState d_leader = robots_list[leader_id].getDiscRobotState();
+        d_leader.x(start_leader.x() + m_interm_steps[i][RobotStateElement::X]);
+        d_leader.y(start_leader.y() + m_interm_steps[i][RobotStateElement::Y]);
+        robots_list[leader_id] = RobotState(d_leader);
         interm_swarm_steps[i] = SwarmState(robots_list);
+        interm_swarm_steps[i].setLeader(start_swarm.getLeader());
     }
     t_data.interm_swarm_steps(interm_swarm_steps);
 }
