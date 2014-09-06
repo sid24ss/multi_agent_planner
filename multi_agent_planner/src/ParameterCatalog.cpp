@@ -1,5 +1,6 @@
 #include <multi_agent_planner/ParameterCatalog.h>
 #include <multi_agent_planner/LoggerNames.h>
+#include <multi_agent_planner/Utilities.h>
 #include <boost/filesystem.hpp>
 #include <log4cxx/logger.h>
 
@@ -21,7 +22,7 @@ void ParameterCatalog::fetch(ros::NodeHandle nh){
     setMotionPrimitiveParams(m_motion_primitive_params);
     setVisualizationParams(m_visualization_params);
     setRobotDescriptionParams(m_robot_description_params);
-    
+    setSwarmDescriptionParams(m_swarm_description_params);
 }
 
 void ParameterCatalog::setMotionPrimitiveParams(MotionPrimitiveParams& params){
@@ -71,6 +72,21 @@ void ParameterCatalog::setRobotDescriptionParams(RobotDescriptionParams& params)
     m_nodehandle.param("robot_description/radius", params.robot_radius, 0.3);
     ROS_DEBUG_NAMED(CONFIG_LOG, "Setting the robot params");
     ROS_DEBUG_NAMED(CONFIG_LOG, "\t robot_radius : %f", params.robot_radius);
+}
+
+void ParameterCatalog::setSwarmDescriptionParams(SwarmDescriptionParams& params)
+{
+    std::vector<double> default_rel_positions {0,0,  1.5,0,  1.5,1.5,  0.75,0.75,  0,1.5};
+    std::vector<int> default_leader_ids {0, 1, 2, 4};
+    m_nodehandle.param("swarm_description/relative_positions", 
+                            params.relative_positions,default_rel_positions);
+    m_nodehandle.param("swarm_description/num_leaders", params.num_leaders, 4);
+    m_nodehandle.param("swarm_description/leader_ids",  params.leader_ids,
+                                                        default_leader_ids);
+    ROS_DEBUG_NAMED(CONFIG_LOG, "Setting the swarm params");
+    ROS_DEBUG_NAMED(CONFIG_LOG, "\trel positions : %s", vectorToString(params.relative_positions).c_str());
+    ROS_DEBUG_NAMED(CONFIG_LOG, "\tnum_leaders : %d", params.num_leaders);
+    ROS_DEBUG_NAMED(CONFIG_LOG, "\tleader_ids : %s", vectorToString(params.leader_ids).c_str());
 }
 
 void ParameterCatalog::getNextLine(ifstream& file, stringstream& ss, 

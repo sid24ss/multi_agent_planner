@@ -13,10 +13,7 @@ using namespace multi_agent_planner;
 
 typedef std::pair<int, int> Point;
 
-HeuristicMgr::HeuristicMgr() : 
-    m_num_leaders(NUM_LEADERS),
-    m_leader_ids(LEADER_IDS)
-{ }
+HeuristicMgr::HeuristicMgr() { }
 
 HeuristicMgr::~HeuristicMgr()
 {
@@ -47,11 +44,11 @@ void HeuristicMgr::reset() {
 
 void HeuristicMgr::initializeHeuristics() {
     // initialize as many heuristics as there are number of leaders
-    for (int i = 0; i < m_num_leaders; ++i) {
+    for (int i = 0; i < NUM_LEADERS; ++i) {
         // the heuristics are named bfs2d_<id> where <id> is the id of the
         // leader.
         std::stringstream ss;
-        ss << "bfs2d_" << m_leader_ids[i];
+        ss << "bfs2d_" << SwarmState::LEADER_IDS[i];
         int cost_multiplier = 1;
         add2DHeur(ss.str(), cost_multiplier);
     }
@@ -104,13 +101,13 @@ void HeuristicMgr::setGoal(GoalState& goal_state){
     m_goal = goal_state;
     auto robots_list = goal_state.getSwarmState().robots_pose();
     // set the right goal for each of the heuristics for the leaders
-    for (int i = 0; i < m_num_leaders; i++) {
+    for (int i = 0; i < NUM_LEADERS; i++) {
         std::stringstream ss;
-        ss << "bfs2d_" << m_leader_ids[i];
-        DiscRobotState d_state = robots_list[m_leader_ids[i]].getDiscRobotState();
+        ss << "bfs2d_" << SwarmState::LEADER_IDS[i];
+        DiscRobotState d_state = robots_list[SwarmState::LEADER_IDS[i]].getDiscRobotState();
         m_heuristics[m_heuristic_map[ss.str()]]->setGoal(d_state.x(), d_state.y());
         ROS_DEBUG_NAMED(HEUR_LOG, "[HEUR_LOG] setting goal %d %d for leader_id %d",
-                                    d_state.x(), d_state.y(), m_leader_ids[i]);
+                                    d_state.x(), d_state.y(), SwarmState::LEADER_IDS[i]);
     }
 }
 
@@ -122,12 +119,28 @@ void HeuristicMgr::getGoalHeuristic(const GraphStatePtr& state,
         return;
     }
     values.reset(new stringintmap(m_heuristic_map));
-    for (int i = 0; i < m_num_leaders; i++) {
+    for (int i = 0; i < NUM_LEADERS; i++) {
         std::stringstream ss;
-        ss << "bfs2d_" << m_leader_ids[i];
+        ss << "bfs2d_" << SwarmState::LEADER_IDS[i];
         values->at(ss.str()) = 
                         m_heuristics[m_heuristic_map.at(ss.str())]->
-                                    getGoalHeuristic(state, m_leader_ids[i]);
+                                    getGoalHeuristic(state, SwarmState::LEADER_IDS[i]);
+    }
+}
+
+void HeuristicMgr::getGoalHeuristic(const GraphStatePtr& state,
+                                        std::vector<int>& values)
+{
+    if (!m_heuristics.size()){
+        ROS_ERROR_NAMED(HEUR_LOG, "No heuristics initialized!");
+        return;
+    }
+    for (int i = 0; i < NUM_LEADERS; i++) {
+        std::stringstream ss;
+        ss << "bfs2d_" << SwarmState::LEADER_IDS[i];
+        values.push_back(m_heuristics[m_heuristic_map.at(ss.str())]->
+                                    getGoalHeuristic(state, SwarmState::LEADER_IDS[i])
+                        );
     }
 }
 

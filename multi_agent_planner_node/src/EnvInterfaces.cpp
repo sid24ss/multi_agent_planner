@@ -12,12 +12,21 @@ using namespace multi_agent_planner_node;
 using namespace multi_agent_planner;
 using namespace boost;
 
+// ugly as hell.
+extern std::vector<int> multi_agent_planner::SwarmState::LEADER_IDS;
+extern int multi_agent_planner::SwarmState::NUM_ROBOTS;
+extern std::vector<std::vector<multi_agent_planner::ContRobotState> > multi_agent_planner::SwarmState::REL_POSITIONS;
+
 // constructor automatically launches the collision space interface, which only
 // loads it up with a pointer to the collision space mgr. it doesn't bind to any
 // topic.
 EnvInterfaces::EnvInterfaces(std::shared_ptr<multi_agent_planner::Environment> env, ros::NodeHandle nh) :
     m_nodehandle(nh),
-    m_env(env), m_collision_space_interface(new CollisionSpaceInterface(env->getCollisionSpace(), env->getHeuristicMgr()))
+    m_env(env), m_collision_space_interface(new CollisionSpaceInterface(env->getCollisionSpace(), env->getHeuristicMgr())),
+    // This costmap_ros object listens to the map topic as defined
+    // in the costmap_2d.yaml file.
+    m_costmap_ros(new costmap_2d::Costmap2DROS("costmap_2d", m_tf))
+
 {
     m_collision_space_interface->mutex = &mutex;
     getParams();
@@ -62,8 +71,8 @@ bool EnvInterfaces::runMHAPlanner(
     std::vector<SwarmState> states;
 
     int planner_queues;
-    planner_queues = NUM_LEADERS + 1;
-
+    planner_queues = static_cast<int>(SwarmState::LEADER_IDS.size()) + 1;
+    ROS_INFO("Creating planner with %d queues", planner_queues);
     m_env->reset();
     m_mha_planner.reset(new MHAPlanner(m_env.get(), planner_queues, forward_search));
     total_planning_time = clock();
@@ -196,7 +205,7 @@ bool EnvInterfaces::bindCollisionSpaceToTopic(std::string topic_name){
 }
 
 void EnvInterfaces::bindNavMapToTopic(std::string topic){
-    sleep(2.0);//TODO: ??!!*U8084u
+    // sleep(2.0);//TODO: ??!!*U8084u
     m_nav_map = m_nodehandle.subscribe(topic, 1, &EnvInterfaces::loadNavMap, this);
 }
 
@@ -257,9 +266,6 @@ void EnvInterfaces::loadNavMap(const nav_msgs::OccupancyGridPtr& map){
         dimZ);
     ROS_DEBUG_NAMED(CONFIG_LOG, "Size of OccupancyGrid : %d %d %d", dimX, dimY,
         dimZ);
-    // This costmap_ros object listens to the map topic as defined
-    // in the costmap_2d.yaml file.
-    m_costmap_ros.reset(new costmap_2d::Costmap2DROS("costmap_2d", m_tf));
 
     // Get the underlying costmap in the cost_map object.
     // Publish for visualization. Publishing is done for the entire (uncropped) costmap.

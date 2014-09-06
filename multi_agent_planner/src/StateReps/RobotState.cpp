@@ -86,7 +86,7 @@ void RobotState::vectorToRobotStates(std::vector<double> values,
 {
     assert(static_cast<int>(values.size()) == PLANNING_DOF);
     auto begin = values.begin();
-    for (int i = 0; i < NUM_ROBOTS; i++) {
+    for (int i = 0; i < SwarmState::NUM_ROBOTS; i++) {
         std::vector<double> this_robot_coords(begin, begin + ROBOT_DOF);
         robot_states.push_back(RobotState(this_robot_coords));
         begin = begin + ROBOT_DOF;

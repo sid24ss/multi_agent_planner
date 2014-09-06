@@ -1,0 +1,8 @@
+swarm_description:
+    # the relative positions of each robot in the swarm is computed from this initial config.
+    # To make it easier, leave one robot at the origin and define the rest with respect to this one
+    relative_positions: [0,0,  1.5,0,  1.5,1.5,  0.75,0.75,  0,1.5]
+    # the number of robots that can act as leaders
+    num_leaders: 4
+    # this indexes into the relative_positions defined above. We want the indices of the robots that can act as leaders, starting with 0.
+    leader_ids: [0, 1, 2, 4]

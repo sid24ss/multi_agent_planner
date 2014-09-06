@@ -47,6 +47,8 @@ namespace multi_agent_planner {
             // Get the heuristic value
             void getGoalHeuristic(const GraphStatePtr& state,
                 std::unique_ptr<stringintmap>& values);
+            void getGoalHeuristic(const GraphStatePtr& state,
+                std::vector<int>& values);
             int getGoalHeuristic(const GraphStatePtr& state, std::string name,
                 int leader_id);
 

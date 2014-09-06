@@ -13,8 +13,7 @@ using namespace multi_agent_planner;
 Environment::Environment(ros::NodeHandle nh)
     :   m_hash_mgr(new HashManager(&StateID2IndexMapping)),
         m_nodehandle(nh), m_mprims(m_goal),
-        m_heur_mgr(new HeuristicMgr()),
-        m_leader_ids(LEADER_IDS)
+        m_heur_mgr(new HeuristicMgr())
 {
         m_param_catalog.fetch(nh);
         configurePlanningDomain();
@@ -51,16 +50,25 @@ int Environment::GetGoalHeuristic(int stateID) {
 }
 
 int Environment::GetGoalHeuristic(int q_id, int stateID) {
-    ROS_DEBUG_NAMED(HEUR_LOG, "Queried queue : %d; setting to %d", q_id,
-        m_leader_ids[q_id - 1]);
+    // ROS_DEBUG_NAMED(HEUR_LOG, "Queried queue : %d; setting to %d", q_id,
+    //     SwarmState::LEADER_IDS.at(q_id - 1));
+    // this is the state we want the heuristic for.
     GraphStatePtr successor = m_hash_mgr->getGraphState(stateID);
+    // if it is the goal state, return 0.
     if(m_goal->isSatisfiedBy(successor) || stateID == GOAL_STATE){
         return 0;
     }
-    std::stringstream ss;
-    ss << "bfs2d_" << m_leader_ids[q_id - 1];
-    int heur = m_heur_mgr->getGoalHeuristic(successor, ss.str(), m_leader_ids[q_id - 1]);
-    successor->printToDebug(HEUR_LOG);
+    int heur;
+    if (q_id == 0) {
+        std::vector<int> values;
+        // get the admissible heuristic - max of all the leader ones.
+        m_heur_mgr->getGoalHeuristic(successor, values);
+        heur = *std::max_element(values.begin(), values.end());
+    } else {
+        std::stringstream ss;
+        ss << "bfs2d_" << SwarmState::LEADER_IDS.at(q_id - 1);
+        heur = m_heur_mgr->getGoalHeuristic(successor, ss.str(), SwarmState::LEADER_IDS.at(q_id - 1));
+    }
     ROS_DEBUG_NAMED(HEUR_LOG, "heuristic : %d", heur);
     return heur;
 }
@@ -76,7 +84,7 @@ void Environment::GetSuccs(int sourceStateID, std::vector<int>* succIDs,
     assert(sourceStateID != GOAL_STATE);
     throw std::runtime_error("Shouldn't be calling this for lazy!");
     // need to do this because planner starts queues from 0 (anchor), 1 ... N
-    // int leader_id = m_leader_ids[q_id];
+    // int leader_id = SwarmState::LEADER_IDS[q_id];
 
     // ROS_DEBUG_NAMED(SEARCH_LOG, 
     //         "==================Expanding state %d==================", 
@@ -140,8 +148,12 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
                         std::vector<int>* costs, std::vector<bool>* isTrueCost,
                         int q_id)
 {
+    if (q_id == 0) {
+        ROS_ERROR("Expanding anchor! Not implemented yet");
+        std::cin.get();
+    }
     // set the correct leader id.
-    int leader_id = m_leader_ids[q_id];
+    int leader_id = SwarmState::LEADER_IDS.at(q_id -1);
 
 
     ROS_DEBUG_NAMED(SEARCH_LOG, "==================Expanding state %d==================", 
@@ -255,7 +267,7 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     m_edges.clear();
 
     auto swarm_start = search_request->m_params->swarm_start;
-    if (!(static_cast<int>(swarm_start.robots_pose().size()) == NUM_ROBOTS))
+    if (!(static_cast<int>(swarm_start.robots_pose().size()) == SwarmState::NUM_ROBOTS))
         return false;
 
     if (!search_request->isValid(m_cspace_mgr)){
@@ -287,11 +299,11 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     ROS_INFO_NAMED(SEARCH_LOG, "Goal state created:");
     m_goal->getSwarmState().printToDebug(SEARCH_LOG);
     m_goal->getSwarmState().visualize();
-    std::cin.get();
 
     // informs the heuristic about the goal
     m_heur_mgr->setGoal(*m_goal);
     m_heur_mgr->printSummaryToDebug(HEUR_LOG);
+    std::cin.get();
 
     return true;
 }
@@ -320,6 +332,8 @@ int Environment::saveFakeGoalState(const GraphStatePtr& start_graph_state){
 void Environment::configurePlanningDomain(){
     // used for collision space and discretizing plain xyz into grid world 
     OccupancyGridUser::init(m_param_catalog.m_occupancy_grid_params);
+
+    SwarmState::configureSwarmState(m_param_catalog.m_swarm_description_params);
 
     m_heur_mgr->initializeHeuristics();
 

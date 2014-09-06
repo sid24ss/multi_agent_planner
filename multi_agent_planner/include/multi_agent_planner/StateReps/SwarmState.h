@@ -1,10 +1,11 @@
 #pragma once
 #include <multi_agent_planner/StateReps/RobotState.h>
+#include <multi_agent_planner/ParameterCatalog.h>
 
 namespace multi_agent_planner {
     class SwarmState {
         public:
-            SwarmState() : m_robots_pose(NUM_ROBOTS, RobotState()){}
+            SwarmState();
             SwarmState(std::vector<RobotState> robots_pose);
             SwarmState(const SwarmState& other);
             
@@ -33,6 +34,12 @@ namespace multi_agent_planner {
             static bool interpolate(const SwarmState& start, const SwarmState& end,
                 int num_interp_steps,
                 std::vector<SwarmState>& interm_swarm_steps);
+
+            static int NUM_ROBOTS;
+            // Note : relative positions [from][to]
+            static std::vector<std::vector<ContRobotState> > REL_POSITIONS;
+            static std::vector<int> LEADER_IDS;
+            static void configureSwarmState(const SwarmDescriptionParams& params);
 
         private:
             std::vector<RobotState> m_robots_pose;

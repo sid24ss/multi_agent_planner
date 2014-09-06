@@ -32,6 +32,12 @@ namespace multi_agent_planner {
     } RobotDescriptionParams;
 
     typedef struct {
+        int num_leaders;
+        std::vector<double> relative_positions;
+        std::vector<int> leader_ids;
+    } SwarmDescriptionParams;
+
+    typedef struct {
         double env_resolution;
         std::string reference_frame;
         Point3D origin; 
@@ -65,11 +71,13 @@ namespace multi_agent_planner {
             void setOccupancyGridParams(OccupancyGridParams& params);
             void setVisualizationParams(VisualizationParams& params);
             void setRobotDescriptionParams(RobotDescriptionParams& params);
+            void setSwarmDescriptionParams(SwarmDescriptionParams& params);
 
             MotionPrimitiveParams m_motion_primitive_params;
             OccupancyGridParams m_occupancy_grid_params;
             VisualizationParams m_visualization_params;
             RobotDescriptionParams m_robot_description_params;
+            SwarmDescriptionParams m_swarm_description_params;
 
         private:
             ros::NodeHandle m_nodehandle;

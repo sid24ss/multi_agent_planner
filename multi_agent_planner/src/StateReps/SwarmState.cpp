@@ -8,6 +8,8 @@
 using namespace multi_agent_planner;
 using namespace boost;
 
+SwarmState::SwarmState(): m_robots_pose(SwarmState::NUM_ROBOTS, RobotState()) { }
+
 SwarmState::SwarmState(std::vector<RobotState> robots_pose)
         :   m_robots_pose(robots_pose),
             m_leader(-1) { }
@@ -102,4 +104,28 @@ bool SwarmState::interpolate(const SwarmState& start, const SwarmState& end,
 void SwarmState::visualize() const {
     Visualizer::visualizeSwarm("swarm_state", *this);
 }
+
+void SwarmState::configureSwarmState(const SwarmDescriptionParams& params) {
+    SwarmState::NUM_ROBOTS = static_cast<int>(
+                static_cast<int>(params.relative_positions.size())/ROBOT_DOF);
+    SwarmState::LEADER_IDS = params.leader_ids;
+    // configure the relative positions
+    // [from][to] -> robot_from - robot_to
+    SwarmState::REL_POSITIONS.resize(SwarmState::NUM_ROBOTS);
+    for (size_t i = 0; i < static_cast<size_t>(NUM_ROBOTS); i++) {
+        auto& robot_rel_position = SwarmState::REL_POSITIONS[i];
+        robot_rel_position.resize(SwarmState::NUM_ROBOTS);
+        // this is the from robot. let's loop over to.
+        for (size_t j = 0; j < static_cast<size_t>(NUM_ROBOTS); j++) {
+            ContRobotState c_robot_state;
+            c_robot_state.x(params.relative_positions[2*i] - params.relative_positions
+                [2*j]);
+            c_robot_state.y(params.relative_positions[2*i+1] - params.relative_positions
+                [2*j+1]);
+            robot_rel_position[j] = c_robot_state;
+        }
+    }
+}
+
+
 
