@@ -11,7 +11,8 @@ using namespace multi_agent_planner;
 using namespace boost;
 
 CollisionSpaceMgr::CollisionSpaceMgr(const RobotDescriptionParams& params)
-    : m_robot_radius (params.robot_radius) { }
+    : m_robot_radius (params.robot_radius),
+      m_fatal_collision_distance (params.fatal_collision_distance) { }
 
 /*! \brief Updates the internal collision map of the collision checker.
  */
@@ -41,7 +42,7 @@ bool CollisionSpaceMgr::isValid(const SwarmState& swarm_state) const {
         if (!isValid(robot_state))
             return false;
     }
-    return true;
+    return checkRobotRobotCollision(swarm_state);
 }
 
 /**
@@ -93,5 +94,27 @@ bool CollisionSpaceMgr::checkCollision(const RobotState& robot_state) const
         return false;
 
     // no collisions!
+    return true;
+}
+
+/**
+ * @brief checks for internal validity of the swarm state
+ * @details checks for internal collisions
+ * 
+ * @param swarm_state the swarm state you want to collision check
+ * @return true if there is NO collision. false if it collides.
+ */
+bool CollisionSpaceMgr::checkRobotRobotCollision(const SwarmState& swarm_state) const
+{
+    auto robots_list = swarm_state.robots_pose();
+    for (size_t i = 0; i < robots_list.size() - 1; i++){
+        for (size_t j = i+1; j < robots_list.size(); j++) {
+            double dist = ContRobotState::distance(
+                                    robots_list[i].getContRobotState(),
+                                    robots_list[j].getContRobotState());
+            if (dist <= 2*m_robot_radius + m_fatal_collision_distance)
+                return false;
+        }
+    }
     return true;
 }

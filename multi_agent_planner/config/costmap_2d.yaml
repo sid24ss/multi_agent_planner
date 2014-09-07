@@ -15,13 +15,6 @@ lethal_cost_threshold: 50
 # Bug in costmap_2d!
 unknown_cost_value: 255
 track_unknown_space: true
-#footprint: [[-0.45, -0.45], [-0.45, 0.45], [0.45, 0.45], [0.45, -0.45]]
-#footprint: [[-0.325, -0.325], [-0.325, 0.325], [0.325, 0.325], [0.325, -0.325]]
-#footprint: [[-0.35, -0.35], [-0.35, 0.35], [0.35, 0.35], [0.35, -0.35]]
-# footprint: [[-0.385, -0.385], [-0.385, 0.385], [0.385, 0.385], [0.385, -0.385]]
-# footprint_padding: 0.01
-#inflation_radius: 0.47 #---> experiments were run with this.
-inflation_radius: 0.57
-#inflation_radius: 0.38
+inflation_radius: 0.30
 robot_radius: 0.15
 # cost_scaling_factor: 10.0

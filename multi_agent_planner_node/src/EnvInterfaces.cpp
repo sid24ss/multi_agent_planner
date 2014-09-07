@@ -239,7 +239,7 @@ void EnvInterfaces::crop2DMap(const nav_msgs::MapMetaData& map_info, const
     // m_final_map.resize(new_width * new_height);
     for (size_t i=0; i < new_map.size(); i++){
         for (size_t j=0; j < new_map[i].size(); j++){
-            m_final_map.push_back(static_cast<signed char>(double(new_map[i][j])/255.0*100.0));
+            m_final_map.push_back(static_cast<signed char>(double(new_map[i][j])/254.0*100.0));
             m_cropped_map.push_back(new_map[i][j]);
         }
     }
@@ -296,16 +296,7 @@ void EnvInterfaces::loadNavMap(const nav_msgs::OccupancyGridPtr& map){
     {
         for (unsigned int i = 0; i < cost_map.getSizeInCellsX(); ++i)
         {
-          /*
-            // Normalize the values from 0 to 100.
-            // makes life easier when dealing with the heuristic later.
-            uncropped_map.push_back(
-                static_cast<unsigned char>(
-                    static_cast<double>(cost_map.getCost(i,j))/UCHAR_MAX*100.0f)
-                );
-          */
           uncropped_map.push_back(cost_map.getCost(i,j));
-
         }
     }
 
