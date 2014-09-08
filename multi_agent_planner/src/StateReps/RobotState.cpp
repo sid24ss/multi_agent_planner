@@ -69,12 +69,12 @@ bool RobotState::interpolate(const RobotState& start, const RobotState& end,
     // and the end externally if need be
     double dx = (c_end.x() - c_start.x());
     double dy = (c_end.y() - c_start.y());
-    double step_mult = 1/(num_interp_steps + 1);
+    double step_mult = 1.0f/static_cast<double>(num_interp_steps + 1);
 
     for (size_t i = 1; i <= static_cast<size_t>(num_interp_steps); i++) {
         ContRobotState c_robot_state;
-        c_robot_state.x(c_start.x() + dx * i * step_mult);
-        c_robot_state.y(c_start.y() + dy * i * step_mult);
+        c_robot_state.x(c_start.x() + dx * static_cast<double>(i) * step_mult);
+        c_robot_state.y(c_start.y() + dy * static_cast<double>(i) * step_mult);
         interm_robot_steps.push_back(RobotState(c_robot_state));
     }
     assert(num_interp_steps == static_cast<int>(interm_robot_steps.size()));

@@ -177,12 +177,30 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
     }
 
     for (auto mprim : current_mprims){
-        GraphStatePtr successor;
+        GraphStatePtr successor, leader_moved_state;
         TransitionData t_data;
+        // Each MPrim is applied in 4 steps.
 
-        if (!mprim->apply(*source_state, leader_id, successor, t_data)){
+        // Step 1 : Apply the mprim motion to just the leader. This generates a
+        // leader_moved_state
+        if (!mprim->apply(*source_state, leader_id, leader_moved_state)){
             continue;
         }
+        // Step 2 : For the policy, we assume that none of the followers have moved. We
+        // take in the leader_moved_state and generate the policy, which gives
+        // us the successor.
+        if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor)) {
+            continue;
+        }
+        // Step 3 : compute the cost of the policy
+        int policy_cost = m_policy_generator->computePolicyCost(*source_state,
+            leader_id, successor);
+        // Step 4 : compute the TData
+        mprim->computeTData(*source_state, leader_id, successor, t_data);
+        // We need to set the cost of the tData because the policyGenerator
+        // is not aware of the cost of the mprim
+        t_data.cost(mprim->getBaseCost() + policy_cost);
+
         m_hash_mgr->save(successor);
         successor->swarm_state().visualize();
 
@@ -346,6 +364,9 @@ void Environment::configurePlanningDomain(){
     // load up motion primitives
     m_mprims.loadMPrims();
 
+    m_policy_generator.reset(new PolicyGenerator(m_cspace_mgr, 
+                                m_param_catalog.m_robot_description_params));
+
     // load up static pviz instance for visualizations. 
     Visualizer::createSwarmVizInstance(m_nodehandle, std::string("/map"));
     Visualizer::configureRobotParams(m_param_catalog.m_robot_description_params);
@@ -362,7 +383,7 @@ void Environment::configureQuerySpecificParams(SearchRequestPtr search_request){
  * transition data.
  */
 std::vector<SwarmState> Environment::reconstructPath(std::vector<int> soln_path){
-    PathPostProcessor postprocessor(m_hash_mgr, m_cspace_mgr);
+    PathPostProcessor postprocessor(m_hash_mgr, m_cspace_mgr, m_policy_generator);
     std::vector<SwarmState> final_path = postprocessor.reconstructPath(soln_path, *m_goal,
         m_edges);
     if(m_param_catalog.m_visualization_params.final_path){

@@ -71,7 +71,7 @@ void ParameterCatalog::setRobotDescriptionParams(RobotDescriptionParams& params)
 {
     m_nodehandle.param("robot_description/radius", params.robot_radius, 0.15);
     m_nodehandle.param("robot_description/fatal_collision_distance",
-                        params.fatal_collision_distance, params.robot_radius);
+                        params.fatal_collision_distance, params.robot_radius/3);
     ROS_DEBUG_NAMED(CONFIG_LOG, "Setting the robot params");
     ROS_DEBUG_NAMED(CONFIG_LOG, "\t robot_radius : %f", params.robot_radius);
     ROS_DEBUG_NAMED(CONFIG_LOG, "\t fatal fatal_collision_distance : %f", params.fatal_collision_distance);

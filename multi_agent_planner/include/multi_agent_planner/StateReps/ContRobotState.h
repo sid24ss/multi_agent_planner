@@ -23,7 +23,7 @@ namespace multi_agent_planner {
             void x(double x) { m_coords[RobotStateElement::X] = x; };
             void y(double y) { m_coords[RobotStateElement::Y] = y; };
 
-            DiscRobotState getDiscRobotState();
+            DiscRobotState getDiscRobotState() const;
             void printToDebug(char* logger);
 
             static double getResolution(){ return m_occupancy_grid->getResolution(); };

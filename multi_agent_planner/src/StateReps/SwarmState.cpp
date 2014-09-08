@@ -2,6 +2,7 @@
 #include <multi_agent_planner/Constants.h>
 #include <multi_agent_planner/Utilities.h>
 #include <multi_agent_planner/Visualizer.h>
+#include <multi_agent_planner/LoggerNames.h>
 #include <sstream>
 #include <boost/scoped_ptr.hpp>
 
@@ -91,7 +92,6 @@ bool SwarmState::interpolate(const SwarmState& start, const SwarmState& end,
         std::vector<RobotState> robots_list;
         for (size_t j = 0; j < interm_robot_states.size(); j++) {
             // runs over the list of robots
-
             // we want it in the order of the robots.
             robots_list.push_back(interm_robot_states[j][i]);
         }

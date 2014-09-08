@@ -23,6 +23,11 @@ ContRobotState::ContRobotState(const DiscRobotState& disc_r_state) :
                                   vz);
 }
 
+DiscRobotState ContRobotState::getDiscRobotState() const
+{
+    return DiscRobotState(*this);
+}
+
 double ContRobotState::distance(const ContRobotState& start, const ContRobotState& end){
     double dX = end.x() - start.x();
     double dY = end.y() - start.y();

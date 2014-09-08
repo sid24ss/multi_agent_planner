@@ -7,6 +7,8 @@ visualizations:
 
 robot_description:
   radius: 0.15
+  # robots can move within each other upto this distance.
+  fatal_collision_distance: 0.05
 
 collision_space:
   reference_frame: map

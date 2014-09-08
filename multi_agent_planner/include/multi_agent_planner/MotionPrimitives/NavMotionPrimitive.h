@@ -14,17 +14,8 @@ namespace multi_agent_planner {
         public:
             virtual bool apply(const GraphState& graph_state,
                                 int leader_id,
-                                GraphStatePtr& successor,
-                                TransitionData& t_data);
-            virtual bool applyPolicy(const GraphState& graph_state,
-                                int leader_id,
-                                GraphStatePtr& successor,
-                                TransitionData& t_data);
+                                GraphStatePtr& successor);
             virtual void print() const ;
-            virtual int computePolicyCost(const GraphState& graph_state, 
-                                int leader_id,
-                                GraphStatePtr& successor,
-                                TransitionData& t_data);
             virtual void computeTData(const GraphState& graph_state, 
                                 int leader_id,
                                 GraphStatePtr& successor,

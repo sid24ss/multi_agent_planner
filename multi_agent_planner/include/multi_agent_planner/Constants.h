@@ -6,6 +6,8 @@
 #define PLANNING_DOF ROBOT_DOF*SwarmState::NUM_ROBOTS
 #define NUM_LEADERS static_cast<int>(SwarmState::LEADER_IDS.size())
 
+#define METER_TO_MM_MULT 1000
+
 namespace multi_agent_planner {
     const int ROBOT_DOF = 2;
     // This is designed so that the swarm by itself can rotate, while the robots

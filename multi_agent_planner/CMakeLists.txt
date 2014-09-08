@@ -33,6 +33,7 @@ rosbuild_add_library(multi_agent_planner
                                             
                                             src/MotionPrimitives/NavMotionPrimitive.cpp
                                             src/MotionPrimitives/MotionPrimitive.cpp
+                                            src/MotionPrimitives/PolicyGenerator.cpp
                                             # src/MotionPrimitives/FileParser.cpp
                                             src/MotionPrimitives/MotionPrimitivesMgr.cpp
 

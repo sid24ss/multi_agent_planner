@@ -7,10 +7,13 @@
 
 using namespace multi_agent_planner;
 
-PathPostProcessor::PathPostProcessor(HashManagerPtr hash_mgr, CSpaceMgrPtr cspace_mgr):
-m_cspace_mgr(cspace_mgr), m_hash_mgr(hash_mgr)
-{
-}
+PathPostProcessor::PathPostProcessor(HashManagerPtr hash_mgr,
+                                    CSpaceMgrPtr cspace_mgr,
+                                    PolicyGeneratorPtr policy_generator)
+    :   m_cspace_mgr(cspace_mgr),
+        m_hash_mgr(hash_mgr),
+        m_policy_generator(policy_generator)
+{ }
 
 
 /*! \brief Given the solution path containing state IDs, reconstruct the
@@ -35,14 +38,17 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
         // TransitionData best_transition;
         GraphStatePtr source_state = m_hash_mgr->getGraphState(soln_path[i]);
         source_state->swarm_state().visualize();
-        GraphStatePtr successor;
+        GraphStatePtr successor, leader_moved_state;
         GraphStatePtr real_next_successor = m_hash_mgr->getGraphState(soln_path[i+1]);
         ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "reconstructing %d - %d",
                                 source_state->id(), real_next_successor->id());
         TransitionData t_data;
         // get the leader
         int leader_id = source_state->swarm_state().getLeader();
-        bool success = mprim->apply(*source_state, leader_id, successor, t_data);
+        bool success = mprim->apply(*source_state, leader_id, leader_moved_state);
+        success = success && m_policy_generator->applyPolicy(*leader_moved_state,
+            leader_id, successor);
+        mprim->computeTData(*source_state, leader_id, successor, t_data);
         if (success) {
             transition_states.push_back(t_data);
         } else {

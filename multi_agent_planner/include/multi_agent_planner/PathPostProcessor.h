@@ -1,5 +1,6 @@
 #pragma once
 #include <multi_agent_planner/MotionPrimitives/MotionPrimitive.h>
+#include <multi_agent_planner/MotionPrimitives/PolicyGenerator.h>
 #include <multi_agent_planner/HashManager.h>
 #include <multi_agent_planner/CollisionSpaceMgr.h>
 #include <multi_agent_planner/StateReps/GoalState.h>
@@ -8,7 +9,8 @@
 namespace multi_agent_planner {
     class PathPostProcessor {
         public:
-            PathPostProcessor(HashManagerPtr hash_mgr, CSpaceMgrPtr cspace_mgr);
+            PathPostProcessor(HashManagerPtr hash_mgr, CSpaceMgrPtr cspace_mgr,
+                PolicyGeneratorPtr policy_generator);
             std::vector<SwarmState> reconstructPath(
                                             std::vector<int> state_ids,
                                             GoalState& goal_state,
@@ -21,5 +23,6 @@ namespace multi_agent_planner {
                                             GoalState& goal_state);
             CSpaceMgrPtr m_cspace_mgr;
             HashManagerPtr m_hash_mgr;
+            PolicyGeneratorPtr m_policy_generator;
     };
 }

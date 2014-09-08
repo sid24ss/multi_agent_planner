@@ -5,6 +5,7 @@
 #include <multi_agent_planner/SearchRequest.h>
 #include <multi_agent_planner/StateReps/GoalState.h>
 #include <multi_agent_planner/MotionPrimitives/MotionPrimitivesMgr.h>
+#include <multi_agent_planner/MotionPrimitives/PolicyGenerator.h>
 #include <multi_agent_planner/Heuristics/HeuristicMgr.h>
 #include <multi_agent_planner/PathPostProcessor.h>
 #include <sbpl/headers.h>
@@ -61,6 +62,7 @@ namespace multi_agent_planner {
             ros::NodeHandle m_nodehandle;
             GoalStatePtr m_goal;
             MotionPrimitivesMgr m_mprims;
+            PolicyGeneratorPtr m_policy_generator;
             HeuristicMgrPtr m_heur_mgr;
             std::vector<int> m_leader_ids;
 

@@ -2,8 +2,6 @@
 #include <multi_agent_planner/Constants.h>
 #include <assert.h>
 
-#define METER_TO_MM_MULT 1000
-
 using namespace multi_agent_planner;
 
 void NavMotionPrimitive::print() const {
@@ -21,8 +19,7 @@ void NavMotionPrimitive::print() const {
  */
 bool NavMotionPrimitive::apply(const GraphState& source_state, 
                             int leader_id,
-                            GraphStatePtr& successor,
-                            TransitionData& t_data)
+                            GraphStatePtr& successor)
 {
     successor.reset(new GraphState(source_state));
     // must change the leader's state.
@@ -34,69 +31,7 @@ bool NavMotionPrimitive::apply(const GraphState& source_state,
     // make a new swarm and set the successor's swarm state to the updated one
     SwarmState leader_moved_swarm(robots_list);
     successor->swarm_state(leader_moved_swarm);
-
-    GraphStatePtr policy_applied_state;
-    applyPolicy(*successor, leader_id, policy_applied_state, t_data);
-    successor = policy_applied_state;
-
-    int policy_cost = computePolicyCost(source_state, leader_id, successor, t_data);
-    computeTData(source_state, leader_id, successor, t_data);
-    t_data.cost(getBaseCost() + policy_cost);
-
     return true;
-}
-
-bool NavMotionPrimitive::applyPolicy(const GraphState& leader_moved_state,
-                                        int leader_id,
-                                        GraphStatePtr& successor,
-                                        TransitionData& t_data)
-{
-    // reset successor to match the leader_moved_state
-    successor.reset(new GraphState(leader_moved_state));
-
-    // go through each robot and apply the policy
-    auto robots_list = successor->swarm_state().robots_pose();
-    for (size_t i = 0; i < robots_list.size(); ++i) {
-        // skip the leader
-        if (static_cast<int>(i) == leader_id)
-            continue;
-        DiscRobotState disc_robot_state = robots_list[i].getDiscRobotState();
-        // compute the policy
-        // for now, this is just to apply the same prim to the followers too
-        disc_robot_state.x(disc_robot_state.x() + m_end_coord[RobotStateElement::X]);
-        disc_robot_state.y(disc_robot_state.y() + m_end_coord[RobotStateElement::Y]);
-        robots_list[i] = RobotState(disc_robot_state);
-    }
-    SwarmState successor_swarm(robots_list);
-    successor->swarm_state(successor_swarm);
-    return true;
-}
-
-int NavMotionPrimitive::computePolicyCost(const GraphState& graph_state, 
-                                int leader_id,
-                                GraphStatePtr& successor,
-                                TransitionData& t_data)
-{
-    auto begin = graph_state.swarm_state().robots_pose();
-    auto end = successor->swarm_state().robots_pose();
-    
-    // sanity check
-    assert(begin.size() == end.size());
-    
-    // go through each of the robots, skip the leader, see how much it has
-    // moved, and compute the cost of moving.
-    int policy_cost = 0;
-    for (size_t i = 0; i < begin.size(); i++) {
-        // skip leader because this is captured in the base cost
-        if (static_cast<int>(i) == leader_id)
-            continue;
-        policy_cost += static_cast<int>(
-                METER_TO_MM_MULT * ContRobotState::distance(
-                    begin[i].getContRobotState(),
-                    end[i].getContRobotState())
-            );
-    }
-    return policy_cost;
 }
 
 void NavMotionPrimitive::computeTData(const GraphState& source_state,
