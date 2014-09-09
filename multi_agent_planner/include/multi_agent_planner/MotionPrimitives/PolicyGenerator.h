@@ -17,12 +17,13 @@ namespace multi_agent_planner {
                 params);
             bool applyPolicy( const GraphState& graph_state, 
                                 int leader_id,
-                                GraphStatePtr& successor);
+                                GraphStatePtr& successor, double leader_movement);
 
             int computePolicyCost(const GraphState& graph_state, 
                                 int leader_id,
                                 GraphStatePtr& successor);
         protected:
+            RobotDescriptionParams m_robot_params;
             double m_robot_radius;
             double m_fatal_collision_distance;
             CSpaceMgrPtr m_collision_space;

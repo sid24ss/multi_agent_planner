@@ -166,11 +166,12 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
     costs->reserve(current_mprims.size());
 
     GraphStatePtr source_state = m_hash_mgr->getGraphState(sourceStateID);
+    // set who the leader is.
+    source_state->setLeader(leader_id);
     
     // debug and visualization
     ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
     source_state->swarm_state().printToDebug(SEARCH_LOG);
-    source_state->setLeader(leader_id);
     if(m_param_catalog.m_visualization_params.expansions){
         source_state->swarm_state().visualize();
         usleep(10000);
@@ -189,7 +190,8 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         // Step 2 : For the policy, we assume that none of the followers have moved. We
         // take in the leader_moved_state and generate the policy, which gives
         // us the successor.
-        if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor)) {
+        if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor,
+            mprim->getDisplacement())) {
             continue;
         }
         // Step 3 : compute the cost of the policy
@@ -201,13 +203,13 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         // is not aware of the cost of the mprim
         t_data.cost(mprim->getBaseCost() + policy_cost);
 
-        m_hash_mgr->save(successor);
-        successor->swarm_state().visualize();
-
         if(!m_cspace_mgr->isValidSuccessor(*successor) ||
                     !m_cspace_mgr->isValidTransitionStates(t_data)) {
             continue;
         }
+
+        m_hash_mgr->save(successor);
+        // successor->swarm_state().visualize();
 
         Edge key;
         if (m_goal->isSatisfiedBy(successor)){
@@ -227,6 +229,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
         // std::cin.get();
     }
+    std::cin.get();
 }
 
 /*
@@ -289,14 +292,11 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     if (!(static_cast<int>(swarm_start.robots_pose().size()) == SwarmState::NUM_ROBOTS))
         return false;
 
-    if (!search_request->isValid(m_cspace_mgr)){
+    if(!m_cspace_mgr->isValid(swarm_start)) {
+        ROS_ERROR("Start state is invalid!");
         swarm_start.visualize();
         return false;
     }
-
-    ROS_DEBUG_NAMED(CONFIG_LOG, "VIsualizing start state:");
-    swarm_start.visualize();
-    std::cin.get();
 
     GraphStatePtr start_graph_state = std::make_shared<GraphState>(swarm_start);
     m_hash_mgr->save(start_graph_state);
@@ -305,9 +305,15 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
 
     ROS_INFO_NAMED(SEARCH_LOG, "Start state set to:");
     swarm_start.printToDebug(SEARCH_LOG);
-    // swarm_start.visualize();
+    swarm_start.visualize();
+    std::cin.get();
 
     m_goal = search_request->createGoalState();
+    if(!m_cspace_mgr->isValid(m_goal->getSwarmState())) {
+        ROS_ERROR("Goal state is invalid!");
+        m_goal->getSwarmState().visualize();
+        return false;
+    }
 
     if (m_hash_mgr->size() < 2){
         goal_id = saveFakeGoalState(start_graph_state);

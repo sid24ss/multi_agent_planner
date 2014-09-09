@@ -47,7 +47,7 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
         int leader_id = source_state->swarm_state().getLeader();
         bool success = mprim->apply(*source_state, leader_id, leader_moved_state);
         success = success && m_policy_generator->applyPolicy(*leader_moved_state,
-            leader_id, successor);
+            leader_id, successor, mprim->getDisplacement());
         mprim->computeTData(*source_state, leader_id, successor, t_data);
         if (success) {
             transition_states.push_back(t_data);

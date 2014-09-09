@@ -38,7 +38,13 @@ bool SwarmState::operator!=(const SwarmState& other) const {
 void SwarmState::printToDebug(char* logger) const {
     std::stringstream ss;
     for (size_t i =0; i < m_robots_pose.size(); ++i) {
-        ss << " |" << i << "| ";
+        ss << " |";
+        if (static_cast<int>(i) == m_leader)
+            ss << "-->";
+        ss << i;
+        if (static_cast<int>(i) == m_leader)
+            ss << "<--";
+        ss << "| ";
         ss << vectorToString(m_robots_pose[i].getDiscRobotState().coords());
     }
     ROS_DEBUG_NAMED(logger, "%s", ss.str().c_str());
@@ -47,7 +53,13 @@ void SwarmState::printToDebug(char* logger) const {
 void SwarmState::printContToDebug(char* logger) const {
     std::stringstream ss;
     for (size_t i =0; i < m_robots_pose.size(); ++i) {
-        ss << " |" << i << "| ";
+        ss << " |";
+        if (static_cast<int>(i) == m_leader)
+            ss << "-->";
+        ss << i;
+        if (static_cast<int>(i) == m_leader)
+            ss << "<--";
+        ss << "| ";
         ss << vectorToString(m_robots_pose[i].getContRobotState().coords());
     }
     ROS_DEBUG_NAMED(logger, "%s", ss.str().c_str());

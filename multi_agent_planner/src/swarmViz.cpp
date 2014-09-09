@@ -37,7 +37,7 @@ void SwarmViz::visualizeCircle(std::string ns, double x, double y, int
     marker.pose.position.z = nominal_z_;
     marker.scale.x = robot_radius_*2.0;
     marker.scale.y = robot_radius_*2.0;
-    marker.scale.z = 0.05;
+    marker.scale.z = robot_radius_*2.0;
     marker.color.r = r;
     marker.color.g = g;
     marker.color.b = b;
@@ -63,7 +63,7 @@ void SwarmViz::visualizeCircles(std::string ns, std::vector<double> x,
         marker.action = visualization_msgs::Marker::ADD;
         marker.scale.x = robot_radius_*2.0;
         marker.scale.y = robot_radius_*2.0;
-        marker.scale.z = 0.05;
+        marker.scale.z = robot_radius_*2.0;
         marker.color.r = r;
         marker.color.g = g;
         marker.color.b = b;

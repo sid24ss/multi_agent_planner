@@ -30,7 +30,7 @@ bool MotionPrimitivesMgr::loadMPrims(){
 }
 
 void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
-    const int NUM_DIRS = 16;
+    const int NUM_DIRS = 17;
     std::vector<int> dx_(NUM_DIRS, 0), dy_(NUM_DIRS, 0);
     std::vector<int> dx0intersects_(NUM_DIRS, 0), dy0intersects_(NUM_DIRS, 0);
     std::vector<int> dx1intersects_(NUM_DIRS, 0), dy1intersects_(NUM_DIRS, 0);
@@ -68,23 +68,28 @@ void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
     dy_[7] = -1;
     dx0intersects_[7] = -1;
     dy0intersects_[7] = -1;
+    dx_[8] = 0;
+    dy_[8] = 0;
+    dx0intersects_[8] = -1;
+    dy0intersects_[8] = -1;
 
-    dx_[8] = 2; dy_[8] = 1;
-    dx0intersects_[8] = 1; dy0intersects_[8] = 0; dx1intersects_[8] = 1; dy1intersects_[8] = 1;
-    dx_[9] = 1; dy_[9] = 2;
-    dx0intersects_[9] = 0; dy0intersects_[9] = 1; dx1intersects_[9] = 1; dy1intersects_[9] = 1;
-    dx_[10] = -1; dy_[10] = 2;
-    dx0intersects_[10] = 0; dy0intersects_[10] = 1; dx1intersects_[10] = -1; dy1intersects_[10] = 1;
-    dx_[11] = -2; dy_[11] = 1;
-    dx0intersects_[11] = -1; dy0intersects_[11] = 0; dx1intersects_[11] = -1; dy1intersects_[11] = 1;
-    dx_[12] = -2; dy_[12] = -1;
-    dx0intersects_[12] = -1; dy0intersects_[12] = 0; dx1intersects_[12] = -1; dy1intersects_[12] = -1;
-    dx_[13] = -1; dy_[13] = -2;
-    dx0intersects_[13] = 0; dy0intersects_[13] = -1; dx1intersects_[13] = -1; dy1intersects_[13] = -1;
-    dx_[14] = 1; dy_[14] = -2;
-    dx0intersects_[14] = 0; dy0intersects_[14] = -1; dx1intersects_[14] = 1; dy1intersects_[14] = -1;
-    dx_[15] = 2; dy_[15] = -1;
-    dx0intersects_[15] = 1; dy0intersects_[15] = 0; dx1intersects_[15] = 1; dy1intersects_[15] = -1;
+
+    dx_[9] = 2; dy_[9] = 1;
+    dx0intersects_[9] = 1; dy0intersects_[9] = 0; dx1intersects_[9] = 1; dy1intersects_[9] = 1;
+    dx_[10] = 1; dy_[10] = 2;
+    dx0intersects_[10] = 0; dy0intersects_[10] = 1; dx1intersects_[10] = 1; dy1intersects_[10] = 1;
+    dx_[11] = -1; dy_[10] = 2;
+    dx0intersects_[11] = 0; dy0intersects_[11] = 1; dx1intersects_[11] = -1; dy1intersects_[11] = 1;
+    dx_[12] = -2; dy_[12] = 1;
+    dx0intersects_[12] = -1; dy0intersects_[12] = 0; dx1intersects_[12] = -1; dy1intersects_[12] = 1;
+    dx_[13] = -2; dy_[13] = -1;
+    dx0intersects_[13] = -1; dy0intersects_[13] = 0; dx1intersects_[13] = -1; dy1intersects_[13] = -1;
+    dx_[14] = -1; dy_[14] = -2;
+    dx0intersects_[14] = 0; dy0intersects_[14] = -1; dx1intersects_[14] = -1; dy1intersects_[14] = -1;
+    dx_[15] = 1; dy_[15] = -2;
+    dx0intersects_[15] = 0; dy0intersects_[15] = -1; dx1intersects_[15] = 1; dy1intersects_[15] = -1;
+    dx_[16] = 2; dy_[16] = -1;
+    dx0intersects_[16] = 1; dy0intersects_[16] = 0; dx1intersects_[16] = 1; dy1intersects_[16] = -1;
 
     // There are actually 17 motion primitives because we want one to wait in
     // place while the others "catch-up"
@@ -93,13 +98,15 @@ void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
     //compute costs
     for (int dind = 0; dind < NUM_DIRS; dind++) {
         if (dx_[dind] != 0 && dy_[dind] != 0) {
-            if (dind <= 7)
+            if (dind <= 8)
                 //the cost of a diagonal move in millimeters
                 dxy_distance_mm_[dind] = static_cast<int>(m_params.env_resolution * 1414); 
             else
                 //the cost of a move to 1,2 or 2,1 or so on in millimeters
                 dxy_distance_mm_[dind] = static_cast<int>(m_params.env_resolution * 2236); 
         } else {
+            // we set the cost of no move to be the same as a horizontal move.
+            // zero-cost actions are not nice.
             dxy_distance_mm_[dind] = static_cast<int>(m_params.env_resolution * 1000); //the cost of a horizontal move in millimeters
         }
     }
@@ -113,7 +120,7 @@ void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
 
         IntermSteps interm_steps;
         // make intermsteps (if any)
-        if (i > 7) {
+        if (i > 8) {
             interm_steps.resize(2);
             interm_steps[0] = std::vector<double>{
                                     static_cast<double>(dx0intersects_[i]),

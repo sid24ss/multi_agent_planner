@@ -13,6 +13,12 @@ void MotionPrimitive::setEndCoord(GraphStateMotion& coord) {
     m_end_coord = coord;
 }
 
+double MotionPrimitive::getDisplacement() {
+    ContRobotState c_origin;
+    ContRobotState c_displaced(m_end_coord);
+    return ContRobotState::distance(c_origin, c_displaced);
+}
+
 void MotionPrimitive::printIntermSteps() const {
     BOOST_FOREACH(auto step, m_interm_steps){
         std::stringstream ss;

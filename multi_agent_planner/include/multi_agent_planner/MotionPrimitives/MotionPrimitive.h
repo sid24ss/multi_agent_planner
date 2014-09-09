@@ -36,14 +36,15 @@ namespace multi_agent_planner {
 
             virtual void setEndCoord(GraphStateMotion& coord); 
             GraphStateMotion getEndCoord() const { return m_end_coord; };
+
+            // returns the continuous displacement that this mprim causes.
+            double getDisplacement();
         protected:
             int m_id;
             // base cost for moving just the leader robot
             int m_base_cost;
-            // policy cost for moving the other robots
             GraphStateMotion m_end_coord;
             IntermSteps m_interm_steps;
-
     };
     typedef std::shared_ptr<MotionPrimitive> MotionPrimitivePtr;
 }

@@ -1,5 +1,6 @@
 planner:
-  nominalvel_mpersecs: 0.5
+  # assume 50 mm/sec
+  nominalvel_mpersecs: 0.05
 
 visualizations:
   final_path: true
@@ -7,8 +8,10 @@ visualizations:
 
 robot_description:
   radius: 0.15
-  # robots can move within each other upto this distance.
+  # robots can move within each other upto this distance (r/3)
   fatal_collision_distance: 0.05
+  # this describes how far the other robots can be before I start caring about not moving closer when executing my policy. Must be greater than the fatal_collision_distance (doesn't make sense otherwise! - I care about loss once I've collided?)
+  neighbor_influence_distance: 0.30
 
 collision_space:
   reference_frame: map

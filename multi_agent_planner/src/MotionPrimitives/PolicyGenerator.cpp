@@ -1,4 +1,5 @@
 #include <multi_agent_planner/MotionPrimitives/PolicyGenerator.h>
+#include <multi_agent_planner/LoggerNames.h>
 #include <multi_agent_planner/Constants.h>
 #include <assert.h>
 
@@ -6,14 +7,15 @@ using namespace multi_agent_planner;
 
 PolicyGenerator::PolicyGenerator(CSpaceMgrPtr cspaceptr,
     const RobotDescriptionParams& params)
-    :   m_robot_radius (params.robot_radius),
-        m_fatal_collision_distance (params.fatal_collision_distance),
+    :   m_robot_params(params),
         m_collision_space(cspaceptr) {}
 
 bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
                                         int leader_id,
-                                        GraphStatePtr& successor)
+                                        GraphStatePtr& successor,
+                                        double leader_movement)
 {
+    // ROS_DEBUG_NAMED(SEARCH_LOG, "leader_movement : %f", leader_movement);
     // reset successor to match the leader_moved_state
     successor.reset(new GraphState(leader_moved_state));
 
@@ -27,6 +29,8 @@ bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
             continue;
         ContRobotState cont_robot_state = robots_list[i].getContRobotState();
         // compute the policy
+        // we first want the move-action; this is the action that makes us move
+        // where the leader is moving toward
         double current_dx = leader_x - cont_robot_state.x();
         double current_dy = leader_y - cont_robot_state.y();
         // do this minus the relative position from leader to this guy
@@ -39,9 +43,9 @@ bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
                 continue;
             double dist_to_bot = ContRobotState::distance(cont_robot_state,
                 robots_list[j].getContRobotState());
-            if (dist_to_bot < 2*m_robot_radius + m_fatal_collision_distance) {
+            if (dist_to_bot < 2*m_robot_params.robot_radius + m_robot_params.fatal_collision_distance) {
                 // we need to repel. How?
-                
+
             }
         }
         // TODO:get the distance to the nearest obstacle. If it is less than some

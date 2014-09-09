@@ -39,8 +39,9 @@ bool CollisionSpaceMgr::isValid(const RobotState& robot_pose) const {
 
 bool CollisionSpaceMgr::isValid(const SwarmState& swarm_state) const {
     for (auto& robot_state : swarm_state.robots_pose()) {
-        if (!isValid(robot_state))
+        if (!isValid(robot_state)) {
             return false;
+        }
     }
     return checkRobotRobotCollision(swarm_state);
 }
@@ -80,7 +81,7 @@ bool CollisionSpaceMgr::checkCollision(const RobotState& robot_state) const
     DiscRobotState disc_robot_state = robot_state.getDiscRobotState();
     int x_i = disc_robot_state.x();
     int y_i = disc_robot_state.y();
-    int z_i = 0;
+    int z_i = NOMINAL_Z/ContRobotState::getResolution();
 
     // check if it is within bounds
     if (!m_occupancy_grid->isInBounds(x_i, y_i, z_i))
@@ -90,7 +91,8 @@ bool CollisionSpaceMgr::checkCollision(const RobotState& robot_state) const
     // NOTE: assumes that the robot is a simple sphere with radius m_robot_radius (
     // this was set from the param server in the constructor)
     // TODO : Extent to collision check various footprints
-    if (m_occupancy_grid->getDistance(x_i, y_i, z_i) <= m_robot_radius)
+    double dist_temp = m_occupancy_grid->getDistance(x_i, y_i, z_i);
+    if (dist_temp <= m_robot_radius)
         return false;
 
     // no collisions!
