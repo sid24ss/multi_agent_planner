@@ -8,3 +8,4 @@
 #define MPRIM_LOG ((char*)"motionprimitives")
 #define HEUR_LOG ((char*)"heuristics")
 #define POSTPROCESSOR_LOG ((char*)"pathpostprocessor")
+#define POLICYGEN_LOG ((char*)"pathpostprocessor")

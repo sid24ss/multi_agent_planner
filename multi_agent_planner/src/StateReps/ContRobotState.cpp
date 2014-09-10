@@ -12,6 +12,13 @@ bool ContRobotState::operator!=(const ContRobotState& other) const {
     return !(*this == other);
 }
 
+ContRobotState ContRobotState::operator+(const ContRobotState& other) const {
+    ContRobotState new_state;
+    new_state.x(x() + other.x());
+    new_state.y(y() + other.y());
+    return new_state;
+}
+
 ContRobotState::ContRobotState(const DiscRobotState& disc_r_state) :
     m_coords(ROBOT_DOF, 0) {
     double vz;

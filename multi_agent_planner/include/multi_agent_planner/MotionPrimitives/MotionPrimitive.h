@@ -39,6 +39,9 @@ namespace multi_agent_planner {
 
             // returns the continuous displacement that this mprim causes.
             double getDisplacement();
+
+            // get the type of the primitive
+            virtual MPrim_Type::Type getPrimitiveType() const = 0;
         protected:
             int m_id;
             // base cost for moving just the leader robot

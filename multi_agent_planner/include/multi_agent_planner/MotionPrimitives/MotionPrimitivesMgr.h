@@ -1,6 +1,7 @@
 #pragma once
 #include <multi_agent_planner/ParameterCatalog.h>
 #include <multi_agent_planner/MotionPrimitives/NavMotionPrimitive.h>
+#include <multi_agent_planner/MotionPrimitives/NavAdaptiveMotionPrimitive.h>
 #include <multi_agent_planner/StateReps/GoalState.h>
 #include <multi_agent_planner/StateReps/GraphState.h>
 #include <vector>
@@ -16,7 +17,6 @@ namespace multi_agent_planner {
             MPrimList getMotionPrims() { return m_all_mprims; };
         private:
             void loadNavPrims(MPrimList& nav_mprims);
-            // MotionPrimitiveFileParser m_parser;
 
             MPrimList m_all_mprims;
 

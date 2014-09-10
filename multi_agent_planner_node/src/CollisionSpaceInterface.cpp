@@ -6,8 +6,8 @@ using namespace multi_agent_planner;
 
 CollisionSpaceInterface::CollisionSpaceInterface(CSpaceMgrPtr cspace_mgr, 
                                                  HeuristicMgrPtr heur_mgr):
-    m_cspace_mgr(cspace_mgr),
-    m_heur_mgr(heur_mgr) {
+    m_cspace_mgr(cspace_mgr)
+,    m_heur_mgr(heur_mgr) {
     m_cmap_pub = m_nodehandle.advertise<arm_navigation_msgs::CollisionMap>("environment", 1);
 }
 
@@ -46,7 +46,6 @@ void CollisionSpaceInterface::mapCallback(
     m_cspace_mgr->updateMap(*map);
     ROS_DEBUG_NAMED(INIT_LOG, "publishing map");
     m_cmap_pub.publish(*map);
-    //setArmToMapTransform(map_frame_);
     return;
 }
 

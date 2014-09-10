@@ -7,6 +7,7 @@
 #define NUM_LEADERS static_cast<int>(SwarmState::LEADER_IDS.size())
 
 #define METER_TO_MM_MULT 1000
+#define SQRT_2 1.41421356237
 
 namespace multi_agent_planner {
     const int ROBOT_DOF = 2;
@@ -31,6 +32,14 @@ namespace multi_agent_planner {
             X,
             Y
             // THETA   // possibly. maybe later.
+        };
+    };
+
+    class MPrim_Type {
+    public:
+        enum Type {
+            NAV,
+            NAVAMP
         };
     };
     // TODO : SwarmStateElement

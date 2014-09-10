@@ -330,15 +330,12 @@ bool SBPL2DGridSearch::search_withheap(unsigned char** Grid2D, unsigned char obs
     if (termination_condition == SBPL_2DGRIDSEARCH_TERM_CONDITION_OPTPATHFOUND)
         //use h-values only if we are NOT computing all state values
         key = key + SBPL_2DGRIDSEARCH_HEUR2D(startX_, startY_); 
-
-    // Insert the center point. If it is within an obstacle, it won't be
-    // expanded anyway.
+    // set the root to itself
+    searchExpState->root = searchExpState;
+    // Insert the start state that was passed in.
     OPEN2D_->insertheap(searchExpState, key);
 
-    // Initialize with all the points on the circle of radius radius_
-    // std::vector<int> circle_x;
-    // std::vector<int> circle_y;
-    // getBresenhamCirclePoints(startX_, startY_, radius, circle_x, circle_y);
+    // initialize all the points in the init_points_ as start states
     for (size_t i = 0; i < init_points_.size(); ++i)
     {
         searchExpState =
@@ -348,7 +345,8 @@ bool SBPL2DGridSearch::search_withheap(unsigned char** Grid2D, unsigned char obs
         key = searchExpState->g;
         if (termination_condition == SBPL_2DGRIDSEARCH_TERM_CONDITION_OPTPATHFOUND)
             //use h-values only if we are NOT computing all state values
-            key = key + SBPL_2DGRIDSEARCH_HEUR2D(init_points_[i].first, init_points_[i].second); 
+            key = key + SBPL_2DGRIDSEARCH_HEUR2D(init_points_[i].first, init_points_[i].second);
+        searchExpState->root = searchExpState;
         OPEN2D_->insertheap(searchExpState, key);
     }
     //set the termination condition
@@ -413,31 +411,24 @@ bool SBPL2DGridSearch::search_withheap(unsigned char** Grid2D, unsigned char obs
 #endif
 
             if (mapcost >= obsthresh) //obstacle encountered
-            continue;
+                continue;
             int cost = (mapcost + 1) * m_uniform_cost_search?1:dxy_distance_mm_[dir];
 
             //get the predecessor
             searchPredState = &searchStates2D_[newx][newy];
-
-            // Update the ptr for the radius of zero cost
-            // if(fabs(cellSize_m_*sqrt((newx - startX_)*(newx - startX_) + (newy -
-            //     startY_)*(newy - startY_)) - radius) < cellSize_m_){
-            //     // Points on the circle. Set to self.
-            //     searchPredState->ptr = searchPredState;
-            // }
-            // else{
-            //     if(radius == 0)
-            //         searchPredState->ptr = &searchStates2D_[startX_][startY_];
-            //     else
-            //         searchPredState->ptr = searchExpState->ptr;
-            // }
-
 
             //update predecessor if necessary
             if (searchPredState->iterationaccessed != iteration_ || searchPredState->g > cost + searchExpState->g) {
                 searchPredState->iterationaccessed = iteration_;
                 searchPredState->g = __min(INFINITECOST, cost + searchExpState->g);
                 searchPredState->parent = searchExpState;
+                if( searchExpState->root == NULL){
+                    printf("root is null for %d %d\n", searchExpState->x,
+                                                        searchExpState->y);
+                    std::cin.get();
+                }
+
+                searchPredState->root = searchExpState->root;
                 key = searchPredState->g;
                 if (termination_condition == SBPL_2DGRIDSEARCH_TERM_CONDITION_OPTPATHFOUND)
                     //use h-values only if we are NOT computing all state values
@@ -458,7 +449,7 @@ bool SBPL2DGridSearch::search_withheap(unsigned char** Grid2D, unsigned char obs
 
     delete[] pbClosed;
 
-    SBPL_PRINTF( "# of expands during 2dgridsearch=%d time=%d msecs 2Dsolcost_inmm=%d "
+    ROS_INFO( "# of expands during 2dgridsearch=%d time=%d msecs 2Dsolcost_inmm=%d "
                 "largestoptfval=%d (start=%d %d goal=%d %d)\n",
                 numofExpands, (int)(((clock() - starttime) / (double)CLOCKS_PER_SEC) * 1000),
                 searchStates2D_[goalx_c][goaly_c].g, largestcomputedoptf_, startx_c, starty_c, goalx_c, goaly_c);
@@ -880,6 +871,13 @@ void SBPL2DGridSearch::getParent(int state_x, int state_y, int& parent_x, int&
         parent_x = searchStates2D_[state_x][state_y].parent->x;
         parent_y = searchStates2D_[state_x][state_y].parent->y;
     }
+}
+
+void SBPL2DGridSearch::getRoot(int state_x, int state_y, int& root_x, int&
+    root_y) {
+    assert(searchStates2D_[state_x][state_y].root != NULL);
+    root_x = searchStates2D_[state_x][state_y].root->x;
+    root_y = searchStates2D_[state_x][state_y].root->y;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

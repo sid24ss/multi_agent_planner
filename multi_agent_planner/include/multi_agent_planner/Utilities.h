@@ -14,11 +14,6 @@ namespace multi_agent_planner {
  * @param v2 the final vector you want
  * @tparam T the type of vectors you want to combine
  */
-// template <typename T>
-// void combineVectors(std::vector<T>&& v1, std::vector<T>& v2)
-// {
-// }
-
 template <typename T>
 void combineVectors(const std::vector<T>& v1, std::vector<T>& v2)
 {
@@ -44,8 +39,16 @@ std::string vectorToString(const std::vector<T>& v) {
     return ss.str();
 }
 
-// template <typename T>
-// std::string vectorToString(std::vector<T>&& v) {
-// }
+/**
+ * @brief signum function
+ * @details returns the sign of the argument
+ * 
+ * @param l the value that you want the sign of
+ * @tparam T the type of the value
+ * @return -1 if negative and +1 if positive; 0 if 0
+ */
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
 
 }

@@ -30,6 +30,8 @@ namespace multi_agent_planner {
         double robot_radius;  // assuming a circular robot
         double fatal_collision_distance;
         double neighbor_influence_distance;
+        double nominal_vel; // m/s
+        double envt_compliance_factor;
         // TODO : take in a general footprint
     } RobotDescriptionParams;
 

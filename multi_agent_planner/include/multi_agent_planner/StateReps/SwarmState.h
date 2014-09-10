@@ -32,7 +32,6 @@ namespace multi_agent_planner {
             void visualize() const;
 
             static bool interpolate(const SwarmState& start, const SwarmState& end,
-                int num_interp_steps,
                 std::vector<SwarmState>& interm_swarm_steps);
 
             static int NUM_ROBOTS;
@@ -43,6 +42,7 @@ namespace multi_agent_planner {
 
             static SwarmState transformSwarmToPos(std::vector<double> position,
                                                     int pivot = 0);
+            static int getNumInterpSteps(const SwarmState& start, const SwarmState& end);
 
         private:
             std::vector<RobotState> m_robots_pose;

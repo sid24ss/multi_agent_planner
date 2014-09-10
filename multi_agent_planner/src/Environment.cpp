@@ -168,10 +168,11 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
     GraphStatePtr source_state = m_hash_mgr->getGraphState(sourceStateID);
     // set who the leader is.
     source_state->setLeader(leader_id);
-    
+
     // debug and visualization
     ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
     source_state->swarm_state().printToDebug(SEARCH_LOG);
+    source_state->swarm_state().printContToDebug(SEARCH_LOG);
     if(m_param_catalog.m_visualization_params.expansions){
         source_state->swarm_state().visualize();
         usleep(10000);
@@ -187,29 +188,39 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         if (!mprim->apply(*source_state, leader_id, leader_moved_state)){
             continue;
         }
-        // Step 2 : For the policy, we assume that none of the followers have moved. We
-        // take in the leader_moved_state and generate the policy, which gives
-        // us the successor.
-        if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor,
-            mprim->getDisplacement())) {
-            continue;
-        }
-        // Step 3 : compute the cost of the policy
-        int policy_cost = m_policy_generator->computePolicyCost(*source_state,
-            leader_id, successor);
-        // Step 4 : compute the TData
-        mprim->computeTData(*source_state, leader_id, successor, t_data);
-        // We need to set the cost of the tData because the policyGenerator
-        // is not aware of the cost of the mprim
-        t_data.cost(mprim->getBaseCost() + policy_cost);
+        // if this is an adaptive primitive that succeeded, we should just skip
+        // ahead to the end
+        bool is_adaptive = (mprim->getPrimitiveType() == MPrim_Type::NAVAMP);
+        if (!is_adaptive) {
+            // Step 2 : For the policy, we assume that none of the followers have moved. We
+            // take in the leader_moved_state and generate the policy, which gives
+            // us the successor.
+            if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor,
+                mprim->getDisplacement())) {
+                continue;
+            }
+            // Step 3 : compute the cost of the policy
+            int policy_cost = m_policy_generator->computePolicyCost(*source_state,
+                leader_id, successor);
+            // Step 4 : compute the TData
+            mprim->computeTData(*source_state, leader_id, successor, t_data);
+            // We need to set the cost of the tData because the policyGenerator
+            // is not aware of the cost of the mprim
+            t_data.cost(mprim->getBaseCost() + policy_cost);
 
-        if(!m_cspace_mgr->isValidSuccessor(*successor) ||
-                    !m_cspace_mgr->isValidTransitionStates(t_data)) {
-            continue;
+            if(!m_cspace_mgr->isValidSuccessor(*successor) ||
+                        !m_cspace_mgr->isValidTransitionStates(t_data)) {
+                continue;
+            }
+        } else {
+            successor = leader_moved_state;
+            mprim->computeTData(*source_state, leader_id, successor, t_data);
+            t_data.cost(mprim->getBaseCost());
         }
-
         m_hash_mgr->save(successor);
-        // successor->swarm_state().visualize();
+
+        successor->swarm_state().printToDebug(SEARCH_LOG);
+        successor->swarm_state().printContToDebug(SEARCH_LOG);
 
         Edge key;
         if (m_goal->isSatisfiedBy(successor)){
@@ -227,9 +238,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         isTrueCost->push_back(true);
 
         m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
-        // std::cin.get();
     }
-    std::cin.get();
 }
 
 /*
@@ -323,11 +332,13 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
 
     ROS_INFO_NAMED(SEARCH_LOG, "Goal state created:");
     m_goal->getSwarmState().printToDebug(SEARCH_LOG);
+    m_goal->getSwarmState().printContToDebug(SEARCH_LOG);
     m_goal->getSwarmState().visualize();
 
     // informs the heuristic about the goal
     m_heur_mgr->setGoal(*m_goal);
     m_heur_mgr->printSummaryToDebug(HEUR_LOG);
+    NavAdaptiveMotionPrimitive::setGoal(*m_goal);
     std::cin.get();
 
     return true;

@@ -74,6 +74,9 @@ void ParameterCatalog::setRobotDescriptionParams(RobotDescriptionParams& params)
                         params.fatal_collision_distance, params.robot_radius/3);
     m_nodehandle.param("robot_description/neighbor_influence_distance",
                         params.neighbor_influence_distance, 2*params.robot_radius);
+    m_nodehandle.param("robot_description/envt_compliance_factor",
+                        params.envt_compliance_factor, 2.0);
+    params.nominal_vel = m_motion_primitive_params.nominal_vel;
     ROS_DEBUG_NAMED(CONFIG_LOG, "Setting the robot params");
     ROS_DEBUG_NAMED(CONFIG_LOG, "\t robot_radius : %f", params.robot_radius);
     ROS_DEBUG_NAMED(CONFIG_LOG, "\t fatal fatal_collision_distance : %f", params.fatal_collision_distance);

@@ -1,5 +1,6 @@
 #include <multi_agent_planner/OccupancyGridUser.h>
 #include <multi_agent_planner/LoggerNames.h>
+#include <Eigen/Core>
 
 using namespace multi_agent_planner;
 

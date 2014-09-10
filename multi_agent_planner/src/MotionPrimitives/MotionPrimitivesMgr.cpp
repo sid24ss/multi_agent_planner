@@ -21,6 +21,12 @@ bool MotionPrimitivesMgr::loadMPrims(){
     loadNavPrims(nav_mprims);
 
     m_all_mprims = nav_mprims;
+    
+    // load the adaptive primitive
+    auto adaptive_navprim = std::make_shared<NavAdaptiveMotionPrimitive>();
+    adaptive_navprim->setID(nav_mprims.size());
+    adaptive_navprim->setBaseCost(1);
+    m_all_mprims.push_back(adaptive_navprim);
 
     for (auto& mprim: m_all_mprims){    
         mprim->print();
@@ -53,23 +59,23 @@ void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
     dx0intersects_[3] = -1;
     dy0intersects_[3] = -1;
     dx_[4] = 0;
-    dy_[4] = -1;
+    dy_[4] = 0;
     dx0intersects_[4] = -1;
     dy0intersects_[4] = -1;
-    dx_[5] = -1;
-    dy_[5] = 1;
+    dx_[5] = 0;
+    dy_[5] = -1;
     dx0intersects_[5] = -1;
     dy0intersects_[5] = -1;
     dx_[6] = -1;
-    dy_[6] = 0;
+    dy_[6] = 1;
     dx0intersects_[6] = -1;
     dy0intersects_[6] = -1;
     dx_[7] = -1;
-    dy_[7] = -1;
+    dy_[7] = 0;
     dx0intersects_[7] = -1;
     dy0intersects_[7] = -1;
-    dx_[8] = 0;
-    dy_[8] = 0;
+    dx_[8] = -1;
+    dy_[8] = -1;
     dx0intersects_[8] = -1;
     dy0intersects_[8] = -1;
 

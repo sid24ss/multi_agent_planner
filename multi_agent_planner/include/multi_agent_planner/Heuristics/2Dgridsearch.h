@@ -85,9 +85,16 @@ public:
      */
     SBPL_2DGridSearchState* parent;
 
+    /**
+     * @brief the root of this state - traces the parents back to the start
+     * state from where this was reached from
+     */
+    SBPL_2DGridSearchState* root;
+
 public:
-    SBPL_2DGridSearchState() { iterationaccessed = 0; parent = NULL; }
-    ~SBPL_2DGridSearchState() { parent = NULL; }
+    SBPL_2DGridSearchState() { iterationaccessed = 0; parent = NULL; root =
+        NULL; }
+    ~SBPL_2DGridSearchState() { parent = NULL; root = NULL; }
 };
 
 /**
@@ -167,6 +174,7 @@ public:
     void setUniformCostSearch(bool ucs = false) { m_uniform_cost_search = ucs; }
 
     void getParent(int state_x, int state_y, int& parent_x, int& parent_y);
+    void getRoot(int state_x, int state_y, int& root_x, int& root_y);
 
 private:
     inline bool withinMap(int x, int y)

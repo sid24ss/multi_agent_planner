@@ -9,3 +9,4 @@ debug:
         motionprimitives: debug
         heuristics: info
         pathpostprocessor: debug
+        policygenerator: debug

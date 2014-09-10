@@ -7,7 +7,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  Release        : w/o debug symbols, w/ optimization
 #  RelWithDebInfo : w/ debug symbols, w/ optimization
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-set(ROS_BUILD_TYPE Coverage)
+set(ROS_BUILD_TYPE Debug)
 
 rosbuild_init()
 SET(CMAKE_CXX_FLAGS "-std=c++0x")
@@ -32,6 +32,7 @@ rosbuild_add_library(multi_agent_planner
                                             src/StateReps/GoalState.cpp
                                             
                                             src/MotionPrimitives/NavMotionPrimitive.cpp
+                                            src/MotionPrimitives/NavAdaptiveMotionPrimitive.cpp
                                             src/MotionPrimitives/MotionPrimitive.cpp
                                             src/MotionPrimitives/PolicyGenerator.cpp
                                             # src/MotionPrimitives/FileParser.cpp

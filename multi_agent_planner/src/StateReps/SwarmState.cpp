@@ -83,9 +83,9 @@ std::vector<int> SwarmState::coords() const {
 }
 
 bool SwarmState::interpolate(const SwarmState& start, const SwarmState& end,
-        int num_interp_steps,
         std::vector<SwarmState>& interm_swarm_steps)
 {
+    int num_interp_steps = getNumInterpSteps(start, end);
     std::vector< std::vector<RobotState> > interm_robot_states;
     interm_robot_states.resize(start.robots_pose().size());
     for (size_t i = 0; i < start.robots_pose().size(); i++) {
@@ -163,4 +163,18 @@ SwarmState SwarmState::transformSwarmToPos(std::vector<double> position,
         robots_list[i] = RobotState(state);
     }
     return SwarmState(robots_list);
+}
+
+int SwarmState::getNumInterpSteps(const SwarmState& start, const SwarmState& end)
+{
+    auto robots_start = start.robots_pose();
+    auto robots_end = end.robots_pose();
+    double max_distance = 0;
+    for (size_t i = 0; i < robots_start.size(); i++){
+        double d = ContRobotState::distance(robots_start[i].getContRobotState(),
+                                              robots_end[i].getContRobotState());
+        if (d > max_distance)
+            max_distance = d;
+    }
+    return static_cast<int>(max_distance/ContRobotState::getResolution());
 }

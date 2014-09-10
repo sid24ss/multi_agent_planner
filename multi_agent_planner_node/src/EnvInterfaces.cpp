@@ -335,5 +335,6 @@ void EnvInterfaces::loadNavMap(const nav_msgs::OccupancyGridPtr& map){
         " within the occupancy grid.");
     m_costmap_pub.publish(costmap_pub);
 
-    m_collision_space_interface->update2DHeuristicMaps(m_cropped_map);
+    m_env->getPolicyGenerator()->update2DHeuristicMaps(m_cropped_map);
+    m_env->getHeuristicMgr()->update2DHeuristicMaps(m_cropped_map);
 }

@@ -47,6 +47,7 @@ namespace multi_agent_planner {
                 state_ids);
             void reset();
             // void setPlannerType(int planner_type);
+            PolicyGeneratorPtr getPolicyGenerator() {return m_policy_generator;}
 
         protected:
             bool setStartGoal(SearchRequestPtr search_request, 

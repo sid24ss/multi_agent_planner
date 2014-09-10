@@ -5,6 +5,8 @@
 #include <vector>
 
 namespace multi_agent_planner {
+    typedef std::vector<double> ContMotion;
+
     class DiscRobotState;
 
     class ContRobotState : public OccupancyGridUser {
@@ -15,6 +17,7 @@ namespace multi_agent_planner {
 
             bool operator==(const ContRobotState& other) const ;
             bool operator!=(const ContRobotState& other) const ;
+            ContRobotState operator+(const ContRobotState& other) const ;
 
             std::vector<double> coords() const { return m_coords; };
 

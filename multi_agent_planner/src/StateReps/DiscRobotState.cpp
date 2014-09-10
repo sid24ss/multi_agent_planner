@@ -24,8 +24,8 @@ DiscRobotState::DiscRobotState(ContRobotState cont_r_state): m_coords(ROBOT_DOF)
                                   NOMINAL_Z,
                                   vx, vy, vz);
 
-    x(static_cast<int>(vx));
-    y(static_cast<int>(vy));
+    x(vx);
+    y(vy);
 }
 
 int DiscRobotState::convertContDistance(double distance){

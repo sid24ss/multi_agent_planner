@@ -12,7 +12,9 @@ int main(int argc, char** argv){
     multi_agent_planner_node::GetSwarmPlan srv;
 
     std::vector<double> start_swarm { 0.5, 0.5 };
-    std::vector<double> goal_swarm { 4, 2.5};
+    // std::vector<double> goal_swarm { 4, 2.5}; -> a bug where the same
+    // contState converts to two different DiscStates
+    std::vector<double> goal_swarm { 4, 2.3};
 
     srv.request.swarm_start = start_swarm;
     srv.request.swarm_goal = goal_swarm;
