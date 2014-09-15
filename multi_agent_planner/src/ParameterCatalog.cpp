@@ -29,6 +29,8 @@ void ParameterCatalog::setMotionPrimitiveParams(MotionPrimitiveParams& params){
     // setFileNameFromParamServer("planner/motion_primitive_file", 
     //         &params.motion_primitive_file);
     m_nodehandle.param("planner/nominalvel_mpersecs", params.nominal_vel, 0.5);
+    m_nodehandle.param("planner/change_leader_cost", params.change_leader_cost,
+        100);
     params.env_resolution = m_occupancy_grid_params.env_resolution;
 }
 

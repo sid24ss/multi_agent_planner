@@ -6,6 +6,7 @@ namespace multi_agent_planner {
     class GraphState {
         public:
             GraphState(SwarmState swarm_state);
+            GraphState(const GraphState& other);
             // GraphState(std::vector<int/double> coords) TODO
             
             // equality of graphstates is defined as:
@@ -24,12 +25,13 @@ namespace multi_agent_planner {
             void printToDebug(char* logger) const ;
             // void printContToDebug(char* logger) const ;
 
-            void setLeader(int l) { m_swarm_state.setLeader(l); }
+            void setLeader(int l);
 
             void updateStateFromSwarmState();
             void updateSwarmStateFromGraphState();
 
-            std::vector<int> getCoords() const { return m_coords; };
+            std::vector<int> getCoords() const;
+            int getLeader() const;
 
         private:
             int m_id;

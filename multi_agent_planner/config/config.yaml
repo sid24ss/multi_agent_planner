@@ -1,6 +1,7 @@
 planner:
   # assume 50 mm/sec
   nominalvel_mpersecs: 0.05
+  change_leader_cost: 500
 
 visualizations:
   final_path: true

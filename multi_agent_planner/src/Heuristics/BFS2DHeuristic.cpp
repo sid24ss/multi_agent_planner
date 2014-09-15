@@ -80,14 +80,33 @@ int BFS2DHeuristic::getGoalHeuristic(GraphStatePtr state, int leader_id) {
     }
 
     int cost = m_gridsearch->getlowerboundoncostfromstart_inmm(x, y);
-    ROS_DEBUG_NAMED(HEUR_LOG, "[BFS2D] 2Ddijkstra's cost to %d %d is %d, mult %d", 
-                              x, y, cost, getCostMultiplier());
+    // ROS_DEBUG_NAMED(HEUR_LOG, "[BFS2D] 2Ddijkstra's cost to %d %d is %d, mult %d", 
+    //                           x, y, cost, getCostMultiplier());
     
     if (cost < 0){
         return INFINITECOST;
     }
 
     return getCostMultiplier()*cost;
+}
+
+/**
+ * @brief visualizes the path from (x,y) to the goal
+ */
+void BFS2DHeuristic::visualizePath(int x, int y) {
+    // get the path
+    std::vector<std::pair<int,int> > path;
+    m_gridsearch->getPath(x, y, path);
+    // convert to geometry_msgs::Point
+    std::vector<geometry_msgs::Point> points;
+    for (auto& path_point : path) {
+        geometry_msgs::Point pt;
+        pt.x = path_point.first;
+        pt.y = path_point.second;
+        pt.z = 0;
+        points.push_back(pt);
+    }
+    Visualizer::swarmVizPtr->visualizeLine(points, "heur_path", 42, 0, 0.1);
 }
 
 // void BFS2DHeuristic::visualizeCenter(int x, int y) {

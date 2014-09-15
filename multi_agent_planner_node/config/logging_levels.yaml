@@ -7,6 +7,6 @@ debug:
         hashmanager: info
         search: debug
         motionprimitives: debug
-        heuristics: info
+        heuristics: debug
         pathpostprocessor: debug
         policygenerator: debug

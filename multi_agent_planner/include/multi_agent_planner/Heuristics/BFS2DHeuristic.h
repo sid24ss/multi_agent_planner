@@ -22,6 +22,7 @@ namespace multi_agent_planner {
             // static void visualizeCenter(int x, int y);
             void setUniformCostSearch(bool ucs = false) {
                 m_gridsearch->setUniformCostSearch(ucs); }
+            void visualizePath(int x, int y);
 
         protected:
             std::unique_ptr<SBPL2DGridSearch> m_gridsearch;

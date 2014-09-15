@@ -19,6 +19,15 @@ ContRobotState ContRobotState::operator+(const ContRobotState& other) const {
     return new_state;
 }
 
+void ContRobotState::x(double x) {
+    m_coords[RobotStateElement::X] = std::floor(x*100 + 0.5)/100;
+}
+
+void ContRobotState::y(double y) {
+    m_coords[RobotStateElement::Y] = std::floor(y*100 + 0.5)/100;
+}
+
+
 ContRobotState::ContRobotState(const DiscRobotState& disc_r_state) :
     m_coords(ROBOT_DOF, 0) {
     double vz;

@@ -120,6 +120,7 @@ void SwarmState::visualize() const {
 void SwarmState::configureSwarmState(const SwarmDescriptionParams& params) {
     SwarmState::NUM_ROBOTS = static_cast<int>(
                 static_cast<int>(params.relative_positions.size())/ROBOT_DOF);
+    ROS_DEBUG_NAMED(CONFIG_LOG, "Number of robots : %d", SwarmState::NUM_ROBOTS);
     SwarmState::LEADER_IDS = params.leader_ids;
     // configure the relative positions
     // [from][to] -> robot_from - robot_to

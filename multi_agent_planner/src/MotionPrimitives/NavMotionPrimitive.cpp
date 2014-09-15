@@ -30,6 +30,7 @@ bool NavMotionPrimitive::apply(const GraphState& source_state,
     robots_list[leader_id] = RobotState(leader_state);
     // make a new swarm and set the successor's swarm state to the updated one
     SwarmState leader_moved_swarm(robots_list);
+    leader_moved_swarm.setLeader(source_state.getLeader());
     successor->swarm_state(leader_moved_swarm);
     return true;
 }

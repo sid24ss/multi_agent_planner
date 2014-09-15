@@ -8,10 +8,16 @@ using namespace boost;
 
 GraphState::GraphState(SwarmState swarm_state) :
     m_swarm_state(swarm_state),
-    m_coords(PLANNING_DOF, 0)
+    m_coords(PLANNING_DOF+1, 0)
 {
     updateStateFromSwarmState();
 }
+
+GraphState::GraphState(const GraphState& other)
+    :   m_id(other.m_id),
+        m_swarm_state(other.m_swarm_state),
+        m_coords(other.m_coords)
+{}
 
 // GraphState::GraphState()
 
@@ -35,8 +41,7 @@ bool GraphState::applyMPrim(const GraphStateMotion& mprim){
 }
 
 void GraphState::printToDebug(char* logger) const {
-    auto str = vectorToString(m_coords);
-    ROS_DEBUG_NAMED(logger, "%s", str.c_str());
+    ROS_INFO_NAMED(logger, "\t%s", vectorToString(m_coords).c_str());
 }
 
 void GraphState::swarm_state(SwarmState swarm_state) {
@@ -49,8 +54,25 @@ void GraphState::swarm_state(SwarmState swarm_state) {
 
 void GraphState::updateStateFromSwarmState() {
     m_coords = m_swarm_state.coords();
+    m_coords.push_back(m_swarm_state.getLeader());
 }
 
 void GraphState::updateSwarmStateFromGraphState() {
-    m_swarm_state.coords(m_coords);
+    std::vector<int> swarm_coords(m_coords.begin(), m_coords.end()-1);
+    m_swarm_state.coords(swarm_coords);
+    m_swarm_state.setLeader(m_coords.back());
+}
+
+void GraphState::setLeader(int l) {
+    m_coords.back() = l;
+    m_swarm_state.setLeader(l);
+}
+
+std::vector<int> GraphState::getCoords() const{
+    return m_coords;
+}
+
+int GraphState::getLeader() const {
+    assert(m_coords.back() == m_swarm_state.getLeader());
+    return m_coords.back();
 }

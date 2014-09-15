@@ -70,6 +70,7 @@ bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
         robots_list[i] = RobotState(robots_list[i].getContRobotState() + policies[i]);
     }
     SwarmState successor_swarm(robots_list);
+    successor_swarm.setLeader(leader_id);
     successor->swarm_state(successor_swarm);
     return true;
 }
@@ -168,6 +169,7 @@ int PolicyGenerator::computePolicyCost(const GraphState& graph_state,
                 METER_TO_MM_MULT * ContRobotState::distance(
                     begin[i].getContRobotState(),
                     end[i].getContRobotState())
+                + 0.5
             );
     }
     return policy_cost;

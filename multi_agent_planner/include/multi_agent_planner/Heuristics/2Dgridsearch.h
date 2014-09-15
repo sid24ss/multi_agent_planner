@@ -175,6 +175,7 @@ public:
 
     void getParent(int state_x, int state_y, int& parent_x, int& parent_y);
     void getRoot(int state_x, int state_y, int& root_x, int& root_y);
+    void getPath(int x, int y, std::vector<std::pair<int, int> >& path);
 
 private:
     inline bool withinMap(int x, int y)

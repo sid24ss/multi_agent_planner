@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
+#include <geometry_msgs/Point.h>
 #include <leatherman/utils.h>
 
 namespace multi_agent_planner {
@@ -19,6 +20,8 @@ namespace multi_agent_planner {
             hue);
         void visualizeCircles(std::string ns, std::vector<double> x, std::vector<
             double> y, std::vector<int> hues);
+        void visualizeLine(const std::vector<geometry_msgs::Point> points, std::string ns, int id, int hue, double thickness);
+
     private:
         ros::NodeHandle nh_;
         std::string reference_frame_;

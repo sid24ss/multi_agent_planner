@@ -24,6 +24,7 @@ bool NavAdaptiveMotionPrimitive::apply(const GraphState& source_state,
     if(!nearGoal(source_state))
         return false;
     successor.reset(new GraphState(m_goal.getSwarmState()));
+    successor->setLeader(source_state.getLeader());
     return true;
 }
 
@@ -42,6 +43,8 @@ void NavAdaptiveMotionPrimitive::computeTData(const GraphState& source_state,
     // NOTE: If TData should have the start and the end as well, this is where
     // you need to push them in.
     SwarmState::interpolate(start_swarm, end_swarm, interm_swarm_steps);
+    for (auto& interm_swarm_step : interm_swarm_steps)
+        interm_swarm_step.setLeader(start_swarm.getLeader());
 
     t_data.interm_swarm_steps(interm_swarm_steps);
 }
@@ -51,7 +54,8 @@ bool NavAdaptiveMotionPrimitive::nearGoal(const GraphState& graph_state){
     GraphState sample_goal(m_goal.getSwarmState());
     auto goal_coords = sample_goal.getCoords();
     int max_dev = 0;
-    for (size_t i = 0; i < current_coords.size(); i++) {
+    // skip the last point, because that represents the leader.
+    for (size_t i = 0; i < current_coords.size()-1; i++) {
         if (max_dev < std::abs(current_coords[i] - goal_coords[i]))
             max_dev = std::abs(current_coords[i] - goal_coords[i]);
     }

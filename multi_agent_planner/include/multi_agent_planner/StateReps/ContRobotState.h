@@ -23,8 +23,8 @@ namespace multi_agent_planner {
 
             double x() const { return m_coords[RobotStateElement::X]; };
             double y() const { return m_coords[RobotStateElement::Y]; };
-            void x(double x) { m_coords[RobotStateElement::X] = x; };
-            void y(double y) { m_coords[RobotStateElement::Y] = y; };
+            void x(double x);
+            void y(double y);
 
             DiscRobotState getDiscRobotState() const;
             void printToDebug(char* logger);

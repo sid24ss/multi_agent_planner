@@ -880,4 +880,19 @@ void SBPL2DGridSearch::getRoot(int state_x, int state_y, int& root_x, int&
     root_y = searchStates2D_[state_x][state_y].root->y;
 }
 
+void SBPL2DGridSearch::getPath(int x, int y, std::vector<std::pair<int, int> >& path)
+{
+    int cur_x = x;
+    int cur_y = y;
+    int parent_x, parent_y;
+    getParent(cur_x, cur_y, parent_x, parent_y);
+    while(!(parent_x == cur_x && parent_y == cur_y)) {
+        path.push_back(std::make_pair(cur_x, cur_y));
+        cur_x = parent_x;
+        cur_y = parent_y;
+        getParent(cur_x, cur_y, parent_x, parent_y);
+    }
+}
+
+
 //----------------------------------------------------------------------------------------------------------------------

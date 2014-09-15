@@ -42,20 +42,40 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
         GraphStatePtr real_next_successor = m_hash_mgr->getGraphState(soln_path[i+1]);
         ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "reconstructing %d - %d",
                                 source_state->id(), real_next_successor->id());
+        ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "source (%d) : ", source_state->id());
+        source_state->printToDebug(POSTPROCESSOR_LOG);
+        ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "real_next_successor (%d) : ", real_next_successor->id());
+        real_next_successor->printToDebug(POSTPROCESSOR_LOG);
+        bool success = false;
+
         TransitionData t_data;
         // get the leader
         int leader_id = source_state->swarm_state().getLeader();
-        bool success = mprim->apply(*source_state, leader_id, leader_moved_state);
+        // bool success = mprim->apply(*source_state, leader_id, leader_moved_state);
+        // ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "leader_moved_state:");
+        // leader_moved_state->printToDebug(POSTPROCESSOR_LOG);
         // skip policy if adaptive
         bool is_adaptive = (mprim->getPrimitiveType() == MPrim_Type::NAVAMP);
-        if (!is_adaptive){
+        bool is_change_l = (mprim->getPrimitiveType() == MPrim_Type::
+            CHANGE_LEADER);
+        if (is_adaptive){
+            ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "ADAPTIVE MOTION!");
+            success = mprim->apply(*source_state, leader_id, successor);
+        } else if (is_change_l) {
+            ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "CHANGE LEADER ACTION");
+            successor = m_hash_mgr->getGraphState(soln_path[i+1]);
+            success = true;
+        } else {
+            success = mprim->apply(*source_state, leader_id, leader_moved_state);
             success = success && m_policy_generator->applyPolicy(*leader_moved_state,
             leader_id, successor, mprim->getDisplacement());
-        } else {
-            ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "ADAPTIVE MOTION!");
-            successor = leader_moved_state;
         }
+        if (((i + 1) != soln_path.size() -1))
+            successor->setLeader(real_next_successor->getLeader());
         mprim->computeTData(*source_state, leader_id, successor, t_data);
+        ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "successor:");
+        successor->printToDebug(POSTPROCESSOR_LOG);
+        
         if (success) {
             transition_states.push_back(t_data);
         } else {

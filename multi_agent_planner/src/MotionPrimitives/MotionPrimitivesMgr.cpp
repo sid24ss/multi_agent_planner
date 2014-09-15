@@ -28,6 +28,10 @@ bool MotionPrimitivesMgr::loadMPrims(){
     adaptive_navprim->setBaseCost(1);
     m_all_mprims.push_back(adaptive_navprim);
 
+    // load the change leader primitive
+    m_change_leader_prim = std::make_shared<ChangeLeaderPrimitive>();
+    m_change_leader_prim->setBaseCost(m_params.change_leader_cost);
+
     for (auto& mprim: m_all_mprims){    
         mprim->print();
     }
@@ -84,7 +88,7 @@ void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
     dx0intersects_[9] = 1; dy0intersects_[9] = 0; dx1intersects_[9] = 1; dy1intersects_[9] = 1;
     dx_[10] = 1; dy_[10] = 2;
     dx0intersects_[10] = 0; dy0intersects_[10] = 1; dx1intersects_[10] = 1; dy1intersects_[10] = 1;
-    dx_[11] = -1; dy_[10] = 2;
+    dx_[11] = -1; dy_[11] = 2;
     dx0intersects_[11] = 0; dy0intersects_[11] = 1; dx1intersects_[11] = -1; dy1intersects_[11] = 1;
     dx_[12] = -2; dy_[12] = 1;
     dx0intersects_[12] = -1; dy0intersects_[12] = 0; dx1intersects_[12] = -1; dy1intersects_[12] = 1;
@@ -97,9 +101,6 @@ void MotionPrimitivesMgr::loadNavPrims(MPrimList& nav_mprims) {
     dx_[16] = 2; dy_[16] = -1;
     dx0intersects_[16] = 1; dy0intersects_[16] = 0; dx1intersects_[16] = 1; dy1intersects_[16] = -1;
 
-    // There are actually 17 motion primitives because we want one to wait in
-    // place while the others "catch-up"
-    // TODO: Introduce wait-in-place primitive here.
 
     //compute costs
     for (int dind = 0; dind < NUM_DIRS; dind++) {

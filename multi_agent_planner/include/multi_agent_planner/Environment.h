@@ -14,12 +14,8 @@
 #include <vector>
 #include <memory>
 
-#define NUM_SMHA_HEUR 5 // Used in EnvInterfaces to initialize the planner.
-#define NUM_IMHA_HEUR 4 // Used in EnvInterfaces to initialize the planner.
-// This should include the Anchor search -> Total number of searches.
-
 #define EPS1 10
-#define EPS2 2
+#define EPS2 1.1
 
 namespace multi_agent_planner {
     /*! \brief Implements a complete environment used by the SBPL planner.
@@ -66,6 +62,7 @@ namespace multi_agent_planner {
             PolicyGeneratorPtr m_policy_generator;
             HeuristicMgrPtr m_heur_mgr;
             std::vector<int> m_leader_ids;
+            int m_start_state_id;
 
             // int m_planner_type;
             // std::unordered_map<int, PlanningModes::modes> m_action_partition;

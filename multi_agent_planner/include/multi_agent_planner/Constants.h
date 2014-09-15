@@ -39,7 +39,8 @@ namespace multi_agent_planner {
     public:
         enum Type {
             NAV,
-            NAVAMP
+            NAVAMP,
+            CHANGE_LEADER
         };
     };
     // TODO : SwarmStateElement

@@ -58,6 +58,9 @@ int Environment::GetGoalHeuristic(int q_id, int stateID) {
     if(m_goal->isSatisfiedBy(successor) || stateID == GOAL_STATE){
         return 0;
     }
+    ROS_DEBUG_NAMED(HEUR_LOG, "heur asked for: %d, at q_id %d", 
+        stateID, q_id);
+    successor->printToDebug(HEUR_LOG);
     int heur;
     if (q_id == 0) {
         std::vector<int> values;
@@ -149,8 +152,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
                         int q_id)
 {
     if (q_id == 0) {
-        ROS_ERROR("Expanding anchor! Not implemented yet");
-        std::cin.get();
+        throw std::runtime_error("Expanding anchor is not implemented yet!");
     }
     // set the correct leader id.
     int leader_id = SwarmState::LEADER_IDS.at(q_id -1);
@@ -166,13 +168,45 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
     costs->reserve(current_mprims.size());
 
     GraphStatePtr source_state = m_hash_mgr->getGraphState(sourceStateID);
-    // set who the leader is.
-    source_state->setLeader(leader_id);
+    // if we are expanding the start state, then no leaders would have been set
+    // yet. So, we go ahead and expand it. The other condition to go ahead and
+    // expand it is that the leader of the state is the current queue expanding it.
+
+    // if the leader of the current graph state is not equal to the queue
+    // trying to expand it, we need a change_leader_action
+    if (sourceStateID == m_start_state_id) {
+        // must set the leader to whichever queue is expanding it and continue
+        // to expand the state
+        source_state->setLeader(leader_id);
+    } 
+    bool change_leader_action = (source_state->getLeader()!= leader_id);
+    // else if (change_leader_action) {
+
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "Change leader action asked!");
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "source state : ");
+        // source_state->printToDebug(SEARCH_LOG);
+        // // just change the leader as the only successor and return
+        // GraphStatePtr successor(new GraphState(*source_state));
+        // successor->setLeader(leader_id);
+        // auto mprim = m_mprims.getChangeLeaderPrim();
+        // m_hash_mgr->save(successor);
+
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "successor state : ");
+        // successor->printToDebug(SEARCH_LOG);
+        // succIDs->push_back(successor->id());
+        // costs->push_back(mprim->getBaseCost());
+        // isTrueCost->push_back(true);
+
+        // Edge key(sourceStateID, successor->id());
+        // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
+        // std::cin.get();
+        // return;
+    // }
 
     // debug and visualization
     ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
+    source_state->printToDebug(SEARCH_LOG);
     source_state->swarm_state().printToDebug(SEARCH_LOG);
-    source_state->swarm_state().printContToDebug(SEARCH_LOG);
     if(m_param_catalog.m_visualization_params.expansions){
         source_state->swarm_state().visualize();
         usleep(10000);
@@ -204,6 +238,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
                 leader_id, successor);
             // Step 4 : compute the TData
             mprim->computeTData(*source_state, leader_id, successor, t_data);
+            // ROS_DEBUG_NAMED(SEARCH_LOG, "policy_cost : %d", policy_cost);
             // We need to set the cost of the tData because the policyGenerator
             // is not aware of the cost of the mprim
             t_data.cost(mprim->getBaseCost() + policy_cost);
@@ -217,10 +252,14 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             mprim->computeTData(*source_state, leader_id, successor, t_data);
             t_data.cost(mprim->getBaseCost());
         }
+        // successor->setLeader(source_state->getLeader());
+        if (change_leader_action) {
+            successor->setLeader(leader_id);
+            t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
+        }
         m_hash_mgr->save(successor);
 
-        successor->swarm_state().printToDebug(SEARCH_LOG);
-        successor->swarm_state().printContToDebug(SEARCH_LOG);
+        successor->printToDebug(SEARCH_LOG);
 
         Edge key;
         if (m_goal->isSatisfiedBy(successor)){
@@ -234,10 +273,17 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
           key = Edge(sourceStateID, successor->id());
         }
         costs->push_back(t_data.cost());
-        // ROS_DEBUG_NAMED(SEARCH_LOG, "cost to successor : %d", t_data.cost());
+        ROS_DEBUG_NAMED(SEARCH_LOG, "cost to successor : %d", t_data.cost());
         isTrueCost->push_back(true);
 
+        ROS_DEBUG_NAMED(SEARCH_LOG, "heuristic for q_id : %d for this state : %d",
+            q_id, GetGoalHeuristic(q_id, successor->id()));
+
         m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
+        ROS_DEBUG_NAMED(SEARCH_LOG, "size of succsIDs %ld, costs : %ld", 
+            succIDs->size(), costs->size());
+        successor->swarm_state().visualize();
+        std::cin.get();
     }
 }
 
@@ -310,6 +356,7 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     GraphStatePtr start_graph_state = std::make_shared<GraphState>(swarm_start);
     m_hash_mgr->save(start_graph_state);
     start_id = start_graph_state->id();
+    m_start_state_id = start_id;
     assert(m_hash_mgr->getGraphState(start_graph_state->id()) == start_graph_state);
 
     ROS_INFO_NAMED(SEARCH_LOG, "Start state set to:");

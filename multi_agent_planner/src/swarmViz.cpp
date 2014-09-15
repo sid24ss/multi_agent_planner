@@ -77,3 +77,32 @@ void SwarmViz::visualizeCircles(std::string ns, std::vector<double> x,
     }
     marker_array_publisher_.publish(marker_array);
 }
+
+void SwarmViz::visualizeLine(const std::vector<geometry_msgs::Point> points, std::string ns, int id, int hue, double thickness)
+{
+  double r=0,g=0,b=0;
+  visualization_msgs::Marker marker;
+
+  leatherman::HSVtoRGB(&r, &g, &b, hue, 1.0, 1.0);
+
+  marker.header.stamp = ros::Time::now();
+  marker.header.frame_id = reference_frame_;
+  marker.ns = ns;
+  marker.id = id;
+  marker.type = visualization_msgs::Marker::LINE_STRIP;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.points = points;
+  marker.scale.x = thickness;
+  marker.pose.position.x = 0.0;
+  marker.pose.position.y = 0.0;
+  marker.pose.position.z = 0.0;
+  
+  marker.color.r = r;
+  marker.color.g = g;
+  marker.color.b = b;
+  marker.color.a = 0.5;
+  marker.lifetime = ros::Duration(180.0);
+
+  ROS_INFO("[swarmViz] Visualizing a line with %d points", int(points.size()));
+  marker_publisher_.publish(marker);
+}
