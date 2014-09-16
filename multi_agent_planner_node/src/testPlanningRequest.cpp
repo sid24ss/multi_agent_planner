@@ -11,10 +11,10 @@ int main(int argc, char** argv){
     ros::ServiceClient client = n.serviceClient<multi_agent_planner_node::GetSwarmPlan>("/sbpl_planning/plan_path");
     multi_agent_planner_node::GetSwarmPlan srv;
 
-    std::vector<double> start_swarm { 6, 2.5 };
+    std::vector<double> start_swarm { 0.6, 0.3 };
     // std::vector<double> goal_swarm { 4, 2.5}; -> a bug where the same
     // contState converts to two different DiscStates
-    std::vector<double> goal_swarm { 8, 2.5};
+    std::vector<double> goal_swarm { 6, 2.5};
 
     srv.request.swarm_start = start_swarm;
     srv.request.swarm_goal = goal_swarm;

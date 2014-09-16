@@ -8,7 +8,7 @@
 using namespace multi_agent_planner;
 
 bool RobotState::operator==(const RobotState& other) const {
-    return m_cont_robot_state == other.getContRobotState();
+    return m_cont_robot_state == other.m_cont_robot_state;
 }
 
 bool RobotState::operator!=(const RobotState& other) const {

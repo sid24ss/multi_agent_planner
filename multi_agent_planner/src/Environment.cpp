@@ -172,36 +172,11 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
     // yet. So, we go ahead and expand it. The other condition to go ahead and
     // expand it is that the leader of the state is the current queue expanding it.
 
-    // if the leader of the current graph state is not equal to the queue
-    // trying to expand it, we need a change_leader_action
     if (sourceStateID == m_start_state_id) {
         // must set the leader to whichever queue is expanding it and continue
         // to expand the state
         source_state->setLeader(leader_id);
     } 
-    bool change_leader_action = (source_state->getLeader()!= leader_id);
-    // else if (change_leader_action) {
-
-        // ROS_DEBUG_NAMED(SEARCH_LOG, "Change leader action asked!");
-        // ROS_DEBUG_NAMED(SEARCH_LOG, "source state : ");
-        // source_state->printToDebug(SEARCH_LOG);
-        // // just change the leader as the only successor and return
-        // GraphStatePtr successor(new GraphState(*source_state));
-        // successor->setLeader(leader_id);
-        // auto mprim = m_mprims.getChangeLeaderPrim();
-        // m_hash_mgr->save(successor);
-
-        // ROS_DEBUG_NAMED(SEARCH_LOG, "successor state : ");
-        // successor->printToDebug(SEARCH_LOG);
-        // succIDs->push_back(successor->id());
-        // costs->push_back(mprim->getBaseCost());
-        // isTrueCost->push_back(true);
-
-        // Edge key(sourceStateID, successor->id());
-        // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
-        // std::cin.get();
-        // return;
-    // }
 
     // debug and visualization
     ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
@@ -247,20 +222,36 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
                         !m_cspace_mgr->isValidTransitionStates(t_data)) {
                 continue;
             }
+            // generate bool leader_change_required after checking if we need to
+            // really do it. This is done by calling PolicyGenerator::
+            // isLeaderChangeRequired
+            // NOTE : We do it here because you don't need to change the leader
+            // for the adaptive motion primitive
+            bool leader_change_required = 
+            m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
+            if (leader_change_required) {
+                ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
+                successor->setLeader(leader_id);
+                t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
+            } else {
+                successor->setLeader(source_state->getLeader());
+            }
         } else {
             successor = leader_moved_state;
             mprim->computeTData(*source_state, leader_id, successor, t_data);
             t_data.cost(mprim->getBaseCost());
         }
-        // successor->setLeader(source_state->getLeader());
-        if (change_leader_action) {
-            successor->setLeader(leader_id);
-            t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
-        }
-        m_hash_mgr->save(successor);
-
         successor->printToDebug(SEARCH_LOG);
 
+        // save the successor to the hash manager
+        // generate the edge
+        // push back to succIDs
+        // push back to costs
+        // set isTrueCost
+        // add to edge cache
+        // NOTE : You probably don't have to mess with the part below this as
+        // long as you have the right successor in the `successor` variable.
+        m_hash_mgr->save(successor);
         Edge key;
         if (m_goal->isSatisfiedBy(successor)){
           m_goal->storeAsSolnState(successor);
@@ -282,8 +273,6 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
         ROS_DEBUG_NAMED(SEARCH_LOG, "size of succsIDs %ld, costs : %ld", 
             succIDs->size(), costs->size());
-        successor->swarm_state().visualize();
-        std::cin.get();
     }
 }
 

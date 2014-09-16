@@ -12,7 +12,7 @@ namespace multi_agent_planner {
     class ContRobotState : public OccupancyGridUser {
         public:
             ContRobotState() : m_coords(ROBOT_DOF, 0) {};
-            ContRobotState(std::vector<double> coords) : m_coords(coords) {};
+            ContRobotState(std::vector<double> coords);
             ContRobotState(const DiscRobotState& coords);
 
             bool operator==(const ContRobotState& other) const ;

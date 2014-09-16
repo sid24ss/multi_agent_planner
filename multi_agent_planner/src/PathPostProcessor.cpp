@@ -28,6 +28,7 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
                                             MotionPrimitivePtr>& edge_cache)
 {
     double temptime = clock();
+    int num_leader_changes = 0;
     std::vector<TransitionData> transition_states;
     // the last state in the soln path return by the SBPL planner will always be
     // the goal state ID. Since this doesn't actually correspond to a real state
@@ -50,28 +51,34 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
 
         TransitionData t_data;
         // get the leader
-        int leader_id = source_state->swarm_state().getLeader();
+        int leader_id;
+        if ((i + 1) == soln_path.size() -1) {
+            leader_id = source_state->swarm_state().getLeader();
+        } else {
+            leader_id = real_next_successor->swarm_state().getLeader();
+        }
         // bool success = mprim->apply(*source_state, leader_id, leader_moved_state);
         // ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "leader_moved_state:");
         // leader_moved_state->printToDebug(POSTPROCESSOR_LOG);
         // skip policy if adaptive
         bool is_adaptive = (mprim->getPrimitiveType() == MPrim_Type::NAVAMP);
-        bool is_change_l = (mprim->getPrimitiveType() == MPrim_Type::
-            CHANGE_LEADER);
         if (is_adaptive){
             ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "ADAPTIVE MOTION!");
             success = mprim->apply(*source_state, leader_id, successor);
-        } else if (is_change_l) {
-            ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "CHANGE LEADER ACTION");
-            successor = m_hash_mgr->getGraphState(soln_path[i+1]);
-            success = true;
         } else {
             success = mprim->apply(*source_state, leader_id, leader_moved_state);
             success = success && m_policy_generator->applyPolicy(*leader_moved_state,
             leader_id, successor, mprim->getDisplacement());
+            bool leader_change_required = 
+            m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
+            if (leader_change_required) {
+                ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
+                num_leader_changes++;
+                successor->setLeader(leader_id);
+            } else {
+                successor->setLeader(source_state->getLeader());
+            }
         }
-        if (((i + 1) != soln_path.size() -1))
-            successor->setLeader(real_next_successor->getLeader());
         mprim->computeTData(*source_state, leader_id, successor, t_data);
         ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "successor:");
         successor->printToDebug(POSTPROCESSOR_LOG);
@@ -99,6 +106,8 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
     //                                                 goal_state);
 
     // temptime = clock();
+    ROS_INFO_NAMED(POSTPROCESSOR_LOG, "Number of leader changes in the path: %d",
+        num_leader_changes);
     std::vector<SwarmState> final_path = getFinalPath(soln_path,
                                                 transition_states, goal_state);
     // ROS_INFO("Shortcutting took %.3f", (clock()-temptime)/(double)CLOCKS_PER_SEC);

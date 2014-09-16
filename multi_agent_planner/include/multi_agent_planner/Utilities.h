@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 namespace multi_agent_planner {
 
@@ -51,4 +52,21 @@ template <typename T> int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
+/**
+ * @brief returns the euclidean norm of the vector
+ * @details the norm is sqrt(v_1**2 + v_2**2 + ... )
+ * 
+ * @param v the vector you want the norm for
+ * @tparam T the type of the vector
+ * @return the euclidean norm
+ */
+template <typename T>
+double vectorNorm(const std::vector<T>& v)
+{
+    double norm = 0.0;
+    for (auto& e : v)
+        norm += e*e;
+    return std::sqrt(norm);
 }
+
+}   // close namespace multi_agent_planner

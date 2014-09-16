@@ -1,7 +1,7 @@
 planner:
   # assume 50 mm/sec
   nominalvel_mpersecs: 0.05
-  change_leader_cost: 500
+  change_leader_cost: 250
 
 visualizations:
   final_path: true
@@ -14,7 +14,9 @@ robot_description:
   # this describes how far the other robots can be before I start caring about not moving closer when executing my policy. Must be greater than the fatal_collision_distance (doesn't make sense otherwise! - I care about loss once I've collided?)
   neighbor_influence_distance: 0.30
   # the envt_compliance_factor defines how much the robots can respond to the obstacles around when executing their policies. A factor of 1 implies that they can't move any more than their nominalvel_mpersecs (say, 0.05m) at each step.
-  envt_compliance_factor: 2
+  envt_compliance_factor: 2.0
+  # the leader_attraction_factor defines how much the robots can move to keep up with the leader.
+  leader_attraction_factor: 1.0
 
 collision_space:
   reference_frame: map

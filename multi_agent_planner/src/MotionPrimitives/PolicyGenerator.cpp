@@ -24,8 +24,7 @@ bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
 
     // go through each robot and apply the policy
     auto robots_list = successor->swarm_state().robots_pose();
-    double leader_x = robots_list[leader_id].getContRobotState().x();
-    double leader_y = robots_list[leader_id].getContRobotState().y();
+    
     std::vector<ContRobotState> policies(robots_list.size());
     for (size_t i = 0; i < robots_list.size(); ++i) {
         // ROS_DEBUG_NAMED(POLICYGEN_LOG, "Policy for robot %ld with leader %d", i,
@@ -33,37 +32,7 @@ bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
         // skip the leader
         if (static_cast<int>(i) == leader_id)
             continue;
-        ContRobotState cont_robot_state = robots_list[i].getContRobotState();
-        // compute the policy
-        // Step 1 : we first want the move-action; this is the action that makes
-        // us move where the leader is moving toward
-        ContMotion cur_disp(ROBOT_DOF,0);
-        cur_disp[RobotStateElement::X] = leader_x - cont_robot_state.x();
-        cur_disp[RobotStateElement::Y] = leader_y - cont_robot_state.y();
-        // do this minus the relative position from leader to this guy
-        ContMotion move_component(ROBOT_DOF, 0);
-        move_component[RobotStateElement::X] = cur_disp[RobotStateElement::X] - 
-                                    SwarmState::REL_POSITIONS[leader_id][i].x();
-        move_component[RobotStateElement::Y] = cur_disp[RobotStateElement::Y] - 
-                                    SwarmState::REL_POSITIONS[leader_id][i].y();
-
-        // Step 2: get other robots' influence for this robot
-        ContMotion robots_influence(ROBOT_DOF, 0);
-        // ContMotion robots_influence = getRobotsInfluence(successor->swarm_state(),
-        //                                                 static_cast<int>(i),
-        //                                                 leader_id,
-        //                                                 leader_movement);
-        // ROS_DEBUG_NAMED(POLICYGEN_LOG, "robots influence : %f %f",
-        //                             robots_influence[0], robots_influence[1]);
-        // Step 3: get the environment's influence
-        ContMotion envt_influence = getEnvironmentInfluence(cont_robot_state,
-                                                            leader_movement);
-        policies[i].x(move_component[RobotStateElement::X] +
-                      robots_influence[RobotStateElement::X] + 
-                      envt_influence[RobotStateElement::X]);
-        policies[i].y(move_component[RobotStateElement::Y] +
-                      robots_influence[RobotStateElement::Y] + 
-                      envt_influence[RobotStateElement::Y]);
+        policies[i] = getRobotPolicy(robots_list, leader_id, i);
     }
     // now set the robotstate based on the policies
     for(size_t i = 0; i < robots_list.size(); ++i) {
@@ -73,6 +42,57 @@ bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
     successor_swarm.setLeader(leader_id);
     successor->swarm_state(successor_swarm);
     return true;
+}
+
+ContRobotState PolicyGenerator::getRobotPolicy(const std::vector<RobotState>& robots_list, int leader_id, int robot_id)
+{
+    assert(robot_id != leader_id);
+    double leader_x = robots_list[leader_id].getContRobotState().x();
+    double leader_y = robots_list[leader_id].getContRobotState().y();
+    // Cannot ask for policy of the leader. Doesn't make sense.
+    ContRobotState cont_robot_state = robots_list[robot_id].getContRobotState();
+    // compute the policy
+    // Step 1 : we first want the move-action; this is the action that makes
+    // us move where the leader is moving toward
+    ContMotion cur_disp(ROBOT_DOF,0);
+    cur_disp[RobotStateElement::X] = leader_x - cont_robot_state.x();
+    cur_disp[RobotStateElement::Y] = leader_y - cont_robot_state.y();
+    // do this minus the relative position from leader to this guy
+    ContMotion move_component(ROBOT_DOF, 0);
+    move_component[RobotStateElement::X] = cur_disp[RobotStateElement::X] - 
+                                SwarmState::REL_POSITIONS[leader_id][robot_id].x();
+    move_component[RobotStateElement::Y] = cur_disp[RobotStateElement::Y] - 
+                                SwarmState::REL_POSITIONS[leader_id][robot_id].y();
+
+    // TODO: Cap the move_component
+    // get the norm of the move_component
+    double move_norm = vectorNorm(move_component);
+    double max_change = m_robot_params.leader_attraction_factor * m_robot_params.nominal_vel;
+    double move_ratio = max_change / move_norm;
+    if (move_ratio < 1.0) {
+        // scale the move_component to reduce the movement.
+        for (auto& c : move_component)
+            c *= move_ratio;
+    }
+
+    // Step 2: get other robots' influence for this robot
+    ContMotion robots_influence(ROBOT_DOF, 0);
+    // ContMotion robots_influence = getRobotsInfluence(successor->swarm_state(),
+    //                                                 static_cast<int>(i),
+    //                                                 leader_id,
+    //                                                 leader_movement);
+    // ROS_DEBUG_NAMED(POLICYGEN_LOG, "robots influence : %f %f",
+    //                             robots_influence[0], robots_influence[1]);
+    // Step 3: get the environment's influence
+    ContMotion envt_influence = getEnvironmentInfluence(cont_robot_state);
+    ContRobotState policy;
+    policy.x(move_component[RobotStateElement::X] +
+                  robots_influence[RobotStateElement::X] + 
+                  envt_influence[RobotStateElement::X]);
+    policy.y(move_component[RobotStateElement::Y] +
+                  robots_influence[RobotStateElement::Y] + 
+                  envt_influence[RobotStateElement::Y]);
+    return policy;
 }
 
 std::vector<double> PolicyGenerator::getRobotsInfluence(
@@ -121,8 +141,7 @@ std::vector<double> PolicyGenerator::getRobotsInfluence(
 }
 
 std::vector<double> PolicyGenerator::getEnvironmentInfluence(
-                                                const ContRobotState& c_state,
-                                                double leader_movement)
+                                                const ContRobotState& c_state)
 {
     ContMotion envt_influence(ROBOT_DOF, 0);
     DiscRobotState d_state(c_state);
@@ -199,4 +218,57 @@ void PolicyGenerator::update2DHeuristicMaps(const std::vector<unsigned char>& da
     ROS_DEBUG_NAMED(POLICYGEN_LOG, "running the 2D gridsearch for PolicyGenerator");
     m_gridsearch->search(m_grid, costmap_2d::LETHAL_OBSTACLE+1,
         last_pt.first, last_pt.second, 0,0, SBPL_2DGRIDSEARCH_TERM_CONDITION_ALLCELLS, init_points);
+}
+
+/**
+ * @brief check if the same state would have been generated by applying the 
+ * mprim to the source's leader and the policy to the current leader_id
+ * @details Note that we only need to check these two robots; others will follow
+ * the same policy if these two align. TODO: Validate this claim
+ * 
+ * @param graph_state source_state
+ * @param successor successor state
+ * @param leader_id current leader_id
+ * @return if we need to change the leader or not
+ */
+bool PolicyGenerator::isLeaderChangeRequired(const GraphState& source_state, const
+                GraphState& successor, int leader_id, MotionPrimitivePtr mprim)
+{
+    bool leader_change_required = false;
+    int desired_leader = source_state.getLeader();
+    if (desired_leader == leader_id)
+        return leader_change_required;
+    GraphStatePtr leader_moved_state;
+    // apply the mprim with this guy as the leader
+    if (!mprim->apply(source_state, desired_leader, leader_moved_state))
+        leader_change_required = true;
+    // in leader_moved_state, we now have source->state with desired leader moved
+    auto robots_list = leader_moved_state->swarm_state().robots_pose();
+    ContRobotState policy_for_proposed_leader = getRobotPolicy(robots_list,
+                                                               desired_leader,
+                                                               leader_id);
+    // create a robot state for the proposed leader
+    RobotState policy_moved_state(robots_list[leader_id].getContRobotState()
+                                + policy_for_proposed_leader);
+    // check if the two states are the same as that from the successor state
+    auto successor_robots_list = successor.swarm_state().robots_pose();
+    // MUST check the discrete states because the policy might land us in the 
+    // same cell as the mprim, but we won't call it equal otherwise.
+
+    // debug!
+    // ROS_DEBUG_NAMED(SEARCH_LOG, "leader_id: %d, desired_leader : %d", leader_id,
+    //     desired_leader);
+    // ROS_DEBUG_NAMED(SEARCH_LOG, "[leaderchangereq] successor :");
+    // successor.printToDebug(SEARCH_LOG);
+    // ROS_DEBUG_NAMED(SEARCH_LOG, "[leaderchangereq] desired_leader moved : ");
+    // leader_moved_state->printToDebug(SEARCH_LOG);
+    // ROS_DEBUG_NAMED(SEARCH_LOG, "[leaderchangereq] desired_leader policy for new leader_id: ");
+    // policy_moved_state.getDiscRobotState().printToDebug(SEARCH_LOG);
+    leader_change_required = leader_change_required ||
+                        (successor_robots_list[desired_leader].getDiscRobotState() != robots_list[desired_leader].getDiscRobotState());
+    leader_change_required = leader_change_required ||
+            (successor_robots_list[leader_id].getDiscRobotState() != 
+                                policy_moved_state.getDiscRobotState());
+    
+    return leader_change_required;
 }

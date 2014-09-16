@@ -78,6 +78,8 @@ void ParameterCatalog::setRobotDescriptionParams(RobotDescriptionParams& params)
                         params.neighbor_influence_distance, 2*params.robot_radius);
     m_nodehandle.param("robot_description/envt_compliance_factor",
                         params.envt_compliance_factor, 2.0);
+    m_nodehandle.param("robot_description/leader_attraction_factor",
+                        params.leader_attraction_factor, 1.0);
     params.nominal_vel = m_motion_primitive_params.nominal_vel;
     ROS_DEBUG_NAMED(CONFIG_LOG, "Setting the robot params");
     ROS_DEBUG_NAMED(CONFIG_LOG, "\t robot_radius : %f", params.robot_radius);

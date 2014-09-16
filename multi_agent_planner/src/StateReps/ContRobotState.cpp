@@ -4,6 +4,13 @@
 using namespace multi_agent_planner;
 using namespace std;
 
+ContRobotState::ContRobotState(std::vector<double> coords)
+{
+    x(coords[RobotStateElement::X]);
+    y(coords[RobotStateElement::Y]);
+};
+
+
 bool ContRobotState::operator==(const ContRobotState& other) const {
     return (m_coords == other.m_coords);
 }
@@ -30,13 +37,15 @@ void ContRobotState::y(double y) {
 
 ContRobotState::ContRobotState(const DiscRobotState& disc_r_state) :
     m_coords(ROBOT_DOF, 0) {
-    double vz;
+    double vx, vy, vz;
     m_occupancy_grid->gridToWorld(disc_r_state.x(),
                                   disc_r_state.y(),
                                   0,
-                                  m_coords[RobotStateElement::X],
-                                  m_coords[RobotStateElement::Y],
+                                  vx,
+                                  vy,
                                   vz);
+    x(vx);
+    y(vy);
 }
 
 DiscRobotState ContRobotState::getDiscRobotState() const

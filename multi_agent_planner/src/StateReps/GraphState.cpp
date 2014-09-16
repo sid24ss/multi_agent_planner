@@ -1,6 +1,7 @@
 #include <multi_agent_planner/StateReps/GraphState.h>
 #include <multi_agent_planner/Constants.h>
 #include <multi_agent_planner/Utilities.h>
+#include <sstream>
 #include <boost/scoped_ptr.hpp>
 
 using namespace multi_agent_planner;
@@ -8,7 +9,7 @@ using namespace boost;
 
 GraphState::GraphState(SwarmState swarm_state) :
     m_swarm_state(swarm_state),
-    m_coords(PLANNING_DOF+1, 0)
+    m_coords(PLANNING_DOF, 0)
 {
     updateStateFromSwarmState();
 }
@@ -41,7 +42,10 @@ bool GraphState::applyMPrim(const GraphStateMotion& mprim){
 }
 
 void GraphState::printToDebug(char* logger) const {
-    ROS_INFO_NAMED(logger, "\t%s", vectorToString(m_coords).c_str());
+    std::stringstream ss;
+    ss << vectorToString(m_coords);
+    ss << "\t leader : " << m_swarm_state.getLeader();
+    ROS_INFO_NAMED(logger, "\t%s", ss.str().c_str());
 }
 
 void GraphState::swarm_state(SwarmState swarm_state) {
@@ -54,17 +58,19 @@ void GraphState::swarm_state(SwarmState swarm_state) {
 
 void GraphState::updateStateFromSwarmState() {
     m_coords = m_swarm_state.coords();
-    m_coords.push_back(m_swarm_state.getLeader());
+    // m_coords.push_back(m_swarm_state.getLeader());
 }
 
 void GraphState::updateSwarmStateFromGraphState() {
-    std::vector<int> swarm_coords(m_coords.begin(), m_coords.end()-1);
-    m_swarm_state.coords(swarm_coords);
-    m_swarm_state.setLeader(m_coords.back());
+    // std::vector<int> swarm_coords(m_coords.begin(), m_coords.end()-1);
+    // m_swarm_state.coords(swarm_coords);
+    // m_swarm_state.setLeader(m_coords.back());
+
+    m_swarm_state.coords(m_coords);
 }
 
 void GraphState::setLeader(int l) {
-    m_coords.back() = l;
+    // m_coords.back() = l;
     m_swarm_state.setLeader(l);
 }
 
@@ -73,6 +79,6 @@ std::vector<int> GraphState::getCoords() const{
 }
 
 int GraphState::getLeader() const {
-    assert(m_coords.back() == m_swarm_state.getLeader());
-    return m_coords.back();
+    // assert(m_coords.back() == m_swarm_state.getLeader());
+    return m_swarm_state.getLeader();
 }

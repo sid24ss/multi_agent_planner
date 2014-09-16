@@ -16,7 +16,8 @@ DiscRobotState::DiscRobotState(std::vector<int> coords) :
     m_coords(coords) { }
 
 
-DiscRobotState::DiscRobotState(ContRobotState cont_r_state): m_coords(ROBOT_DOF)
+DiscRobotState::DiscRobotState(ContRobotState cont_r_state)
+    : m_coords(ROBOT_DOF,0)
 {
     int vx, vy, vz;
     m_occupancy_grid->worldToGrid(cont_r_state.x(), 
@@ -24,8 +25,8 @@ DiscRobotState::DiscRobotState(ContRobotState cont_r_state): m_coords(ROBOT_DOF)
                                   NOMINAL_Z,
                                   vx, vy, vz);
 
-    x(vx);
-    y(vy);
+    m_coords[RobotStateElement::X] = vx;
+    m_coords[RobotStateElement::Y] = vy;
 }
 
 int DiscRobotState::convertContDistance(double distance){
