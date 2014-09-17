@@ -19,7 +19,7 @@ namespace multi_agent_planner {
                 params);
             bool applyPolicy( const GraphState& graph_state, 
                                 int leader_id,
-                                GraphStatePtr& successor, double leader_movement);
+                                GraphStatePtr& successor);
 
             int computePolicyCost(const GraphState& graph_state, 
                                 int leader_id,
@@ -28,10 +28,10 @@ namespace multi_agent_planner {
             bool isLeaderChangeRequired(const GraphState& source_state, const
                 GraphState& successor, int leader_id, MotionPrimitivePtr mprim);
         private:
-            std::vector<double> getRobotsInfluence(const SwarmState& swarm_state, 
-                                        int current_robot_id,
-                                        int leader_id,
-                                        double leader_movement);
+            std::vector<double> getRobotsInfluence(
+                                    const std::vector<RobotState>& robots_list, 
+                                    int current_robot_id,
+                                    int leader_id);
             std::vector<double> getEnvironmentInfluence(const ContRobotState& c_state);
             ContRobotState getRobotPolicy(const std::vector<RobotState>& robots_list, int leader_id, int robot_id);
             std::unique_ptr<SBPL2DGridSearch> m_gridsearch;

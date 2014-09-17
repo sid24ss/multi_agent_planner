@@ -30,10 +30,12 @@ namespace multi_agent_planner {
     typedef struct {
         double robot_radius;  // assuming a circular robot
         double fatal_collision_distance;
+        double fatal_distortion_distance;
         double neighbor_influence_distance;
         double nominal_vel; // m/s
         double envt_compliance_factor;
         double leader_attraction_factor;
+        double neighbor_repel_factor;
         // TODO : take in a general footprint
     } RobotDescriptionParams;
 

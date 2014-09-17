@@ -200,6 +200,21 @@ void addStartStateRegionToParamServer(){
         dimZ);
 }
 
+void addEnvironmentComponents(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud){
+    // first corridor
+    addCuboid(pclCloud, 0, 0, 0, 0.04, 4, 0.5, true);
+    addCuboid(pclCloud, 2, 0, 0, 0.04, 2.0, 0.5, true);
+    // second corridor
+    addCuboid(pclCloud, 0, 4, 0, 5.00, 0.04, 0.5, true);
+    addCuboid(pclCloud, 2, 2, 0, 5.00, 0.04, 0.5, true);
+    // third corridor
+    addCuboid(pclCloud, 5, 4, 0, 0.04, 1.00, 0.5, true);
+    addCuboid(pclCloud, 7, 2, 0, 0.04, 5.00, 0.5, true);
+    // fourth corridor
+    addCuboid(pclCloud, 0, 5, 0, 5.00, 0.04, 0.5, true);
+    addCuboid(pclCloud, 0, 7, 0, 7.00, 0.04, 0.5, true);
+}
+
 vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
     ros::NodeHandle nh;
     ros::NodeHandle ph("~");
@@ -267,13 +282,8 @@ vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
         pclCloud->points[i].y = points[i][1];
         pclCloud->points[i].z = points[i][2];
     }
-    
-    // first corridor
-    addCuboid(pclCloud, 0, 0, 0, 0.04, 4, 0.5, true);
-    addCuboid(pclCloud, 2, 0, 0, 0.04, 2.0, 0.5, true);
-    // second corridor
-    addCuboid(pclCloud, 0, 4, 0, 5.00, 0.04, 0.5, true);
-    addCuboid(pclCloud, 2, 2, 0, 3.00, 0.04, 0.5, true);
+
+    addEnvironmentComponents(pclCloud);
 
     bool addTableObstacles;
     ph.param("addTableObstacles",addTableObstacles,false);

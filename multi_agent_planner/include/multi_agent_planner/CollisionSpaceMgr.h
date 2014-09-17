@@ -34,8 +34,10 @@ namespace multi_agent_planner {
         private:
             double m_robot_radius;
             double m_fatal_collision_distance;
+            double m_fatal_distortion_distance;
             bool checkCollision(const RobotState& robot_state) const;
             bool checkRobotRobotCollision(const SwarmState& swarm_state) const;
+            bool checkSwarmDistortion(const SwarmState& swarm_state) const;
 
     };
     typedef std::shared_ptr<CollisionSpaceMgr> CSpaceMgrPtr;

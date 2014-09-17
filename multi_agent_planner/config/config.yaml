@@ -1,7 +1,7 @@
 planner:
   # assume 50 mm/sec
   nominalvel_mpersecs: 0.05
-  change_leader_cost: 250
+  change_leader_cost: 500
 
 visualizations:
   final_path: true
@@ -10,13 +10,17 @@ visualizations:
 robot_description:
   radius: 0.15
   # robots can move within each other upto this distance (r/3)
-  fatal_collision_distance: 0.05
+  fatal_collision_distance: 0.10
+  # swarm can't get distorted more than this! If any robot goes more than fatal_distortion_distance away from the reference point in RELATIVE_POSITIONS, it is invalid
+  fatal_distortion_distance: 0.4
   # this describes how far the other robots can be before I start caring about not moving closer when executing my policy. Must be greater than the fatal_collision_distance (doesn't make sense otherwise! - I care about loss once I've collided?)
   neighbor_influence_distance: 0.30
   # the envt_compliance_factor defines how much the robots can respond to the obstacles around when executing their policies. A factor of 1 implies that they can't move any more than their nominalvel_mpersecs (say, 0.05m) at each step.
   envt_compliance_factor: 2.0
   # the leader_attraction_factor defines how much the robots can move to keep up with the leader.
   leader_attraction_factor: 1.0
+  # the neighbor_repel_factor decides how much the robots comply to the position of the other robots
+  neighbor_repel_factor: 1.0
 
 collision_space:
   reference_frame: map
@@ -28,7 +32,7 @@ collision_space:
     origin_y: 0.0   # 1.25 - changed to see if there is a bug in the distance_field class
     origin_z: 0.0   # -0.05 - ditto
     size_x: 10.0
-    size_y: 6.0
-    size_z: 2.0
+    size_y: 10.0
+    size_z: 1.0
 
 reference_frame: map

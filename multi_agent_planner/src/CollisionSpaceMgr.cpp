@@ -1,6 +1,7 @@
 #include <multi_agent_planner/CollisionSpaceMgr.h>
 #include <multi_agent_planner/LoggerNames.h>
 #include <multi_agent_planner/Constants.h>
+#include <multi_agent_planner/Utilities.h>
 #include <multi_agent_planner/Visualizer.h>
 #include <boost/foreach.hpp>
 #include <stdexcept>
@@ -12,7 +13,9 @@ using namespace boost;
 
 CollisionSpaceMgr::CollisionSpaceMgr(const RobotDescriptionParams& params)
     : m_robot_radius (params.robot_radius),
-      m_fatal_collision_distance (params.fatal_collision_distance) { }
+      m_fatal_collision_distance (params.fatal_collision_distance),
+      m_fatal_distortion_distance(params.fatal_distortion_distance)
+{ }
 
 /*! \brief Updates the internal collision map of the collision checker.
  */
@@ -43,7 +46,9 @@ bool CollisionSpaceMgr::isValid(const SwarmState& swarm_state) const {
             return false;
         }
     }
-    return checkRobotRobotCollision(swarm_state);
+    if (!checkRobotRobotCollision(swarm_state))
+        return false;
+    return checkSwarmDistortion(swarm_state);
 }
 
 /**
@@ -88,8 +93,8 @@ bool CollisionSpaceMgr::checkCollision(const RobotState& robot_state) const
         return false;
 
     // check if it is in collision
-    // NOTE: assumes that the robot is a simple sphere with radius m_robot_radius (
-    // this was set from the param server in the constructor)
+    // NOTE: assumes that the robot is a simple sphere with radius m_robot_radius
+    // (radius was set from the param server in the constructor)
     // TODO : Extent to collision check various footprints
     double dist_temp = m_occupancy_grid->getDistance(x_i, y_i, z_i);
     if (dist_temp <= m_robot_radius)
@@ -115,6 +120,34 @@ bool CollisionSpaceMgr::checkRobotRobotCollision(const SwarmState& swarm_state) 
                                     robots_list[i].getContRobotState(),
                                     robots_list[j].getContRobotState());
             if (dist <= 2*m_robot_radius + m_fatal_collision_distance)
+                return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * @brief checks if the swarm hasn't distorted too much
+ * @details invalid if any robot has moved too much from the relative position
+ * it has to be in
+ * 
+ * @param swarm_state the input swarm pose
+ * @return false if it has distorted too much, true if not
+ */
+bool CollisionSpaceMgr::checkSwarmDistortion(const SwarmState& swarm_state) const
+{
+    auto robots_list = swarm_state.robots_pose();
+    for (size_t i = 0; i < static_cast<size_t>(SwarmState::NUM_ROBOTS); i++) {
+        for (size_t j = 0; j < static_cast<size_t>(SwarmState::NUM_ROBOTS); j++) {
+            // get the relative position it should be in
+            auto desired_coords = SwarmState::REL_POSITIONS[i][j].coords();
+            double desired_norm = vectorNorm(desired_coords);
+            // get the current distance
+            double current_norm = ContRobotState::distance(
+                                            robots_list[i].getContRobotState(),
+                                            robots_list[j].getContRobotState()
+                                        );
+            if (current_norm > desired_norm + m_fatal_distortion_distance)
                 return false;
         }
     }

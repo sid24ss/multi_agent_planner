@@ -15,8 +15,7 @@ PolicyGenerator::PolicyGenerator(CSpaceMgrPtr cspaceptr,
 
 bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
                                         int leader_id,
-                                        GraphStatePtr& successor,
-                                        double leader_movement)
+                                        GraphStatePtr& successor)
 {
     // ROS_DEBUG_NAMED(SEARCH_LOG, "leader_movement : %f", leader_movement);
     // reset successor to match the leader_moved_state
@@ -77,10 +76,9 @@ ContRobotState PolicyGenerator::getRobotPolicy(const std::vector<RobotState>& ro
 
     // Step 2: get other robots' influence for this robot
     ContMotion robots_influence(ROBOT_DOF, 0);
-    // ContMotion robots_influence = getRobotsInfluence(successor->swarm_state(),
-    //                                                 static_cast<int>(i),
-    //                                                 leader_id,
-    //                                                 leader_movement);
+    // ContMotion robots_influence = getRobotsInfluence(robots_list,
+    //                                                 robot_id,
+    //                                                 leader_id);
     // ROS_DEBUG_NAMED(POLICYGEN_LOG, "robots influence : %f %f",
     //                             robots_influence[0], robots_influence[1]);
     // Step 3: get the environment's influence
@@ -96,12 +94,10 @@ ContRobotState PolicyGenerator::getRobotPolicy(const std::vector<RobotState>& ro
 }
 
 std::vector<double> PolicyGenerator::getRobotsInfluence(
-                                                const SwarmState& swarm_state, 
-                                                int current_robot_id,
-                                                int leader_id,
-                                                double leader_movement)
+                                    const std::vector<RobotState>& robots_list, 
+                                    int current_robot_id,
+                                    int leader_id)
 {
-    auto robots_list = swarm_state.robots_pose();
     ContMotion robots_influence(ROBOT_DOF, 0);
     auto cont_robot_state = robots_list[current_robot_id].getContRobotState();
     // now, calculate repulsion from nearby obstacles (or other robots)
@@ -130,10 +126,14 @@ std::vector<double> PolicyGenerator::getRobotsInfluence(
         // compute hinge loss.
         // since we know the magnitude of change in the x and y
         // directions, we only need to find the sign of change.
-        double change_mag = leader_movement / SQRT_2;
+        double change_mag = m_robot_params.neighbor_repel_factor *
+                            m_robot_params.nominal_vel /
+                            SQRT_2;
         // find the directions
-        double x_dir = static_cast<double>(sgn<double>(cont_robot_state.x() - repelling_robot.x()));
-        double y_dir = static_cast<double>(sgn<double>(cont_robot_state.y() - repelling_robot.y()));
+        double x_dir = static_cast<double>(sgn(cont_robot_state.x() - repelling_robot.x()));
+        double y_dir = static_cast<double>(sgn(cont_robot_state.y() - repelling_robot.y()));
+        if (std::fabs(x_dir) + std::fabs(y_dir) < 2)
+            change_mag *= SQRT_2;
         robots_influence[RobotStateElement::X] += x_dir * weight_r * change_mag;
         robots_influence[RobotStateElement::Y] += y_dir * weight_r * change_mag;
     }
@@ -156,8 +156,8 @@ std::vector<double> PolicyGenerator::getEnvironmentInfluence(
         double change_mag = m_robot_params.envt_compliance_factor *
                             m_robot_params.nominal_vel /
                             SQRT_2;
-        double x_dir = static_cast<double>(sgn<double>(d_state.x() - nearest_cell.first));
-        double y_dir = static_cast<double>(sgn<double>(d_state.y() - nearest_cell.second));
+        double x_dir = static_cast<double>(sgn(d_state.x() - nearest_cell.first));
+        double y_dir = static_cast<double>(sgn(d_state.y() - nearest_cell.second));
         if (std::fabs(x_dir) + std::fabs(y_dir) < 2)
             change_mag *= SQRT_2;
         envt_influence[RobotStateElement::X] += x_dir * weight * change_mag;

@@ -160,7 +160,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
 
     ROS_DEBUG_NAMED(SEARCH_LOG, "==================Expanding state %d==================", 
                     sourceStateID);
-    ROS_DEBUG_NAMED(SEARCH_LOG, "expanding leader : %d", leader_id);
+    ROS_DEBUG_NAMED(SEARCH_LOG, "expanding leader : %d, q_id : %d", leader_id, q_id);
     MPrimList current_mprims = m_mprims.getMotionPrims();
     succIDs->clear();
     succIDs->reserve(current_mprims.size());
@@ -179,8 +179,8 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
     } 
 
     // debug and visualization
-    ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
-    source_state->printToDebug(SEARCH_LOG);
+    // ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
+    // source_state->printToDebug(SEARCH_LOG);
     source_state->swarm_state().printToDebug(SEARCH_LOG);
     if(m_param_catalog.m_visualization_params.expansions){
         source_state->swarm_state().visualize();
@@ -204,8 +204,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             // Step 2 : For the policy, we assume that none of the followers have moved. We
             // take in the leader_moved_state and generate the policy, which gives
             // us the successor.
-            if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor,
-                mprim->getDisplacement())) {
+            if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor)) {
                 continue;
             }
             // Step 3 : compute the cost of the policy
@@ -230,7 +229,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             bool leader_change_required = 
             m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
             if (leader_change_required) {
-                ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
+                // ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
                 successor->setLeader(leader_id);
                 t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
             } else {
@@ -242,6 +241,17 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             t_data.cost(mprim->getBaseCost());
         }
         successor->printToDebug(SEARCH_LOG);
+
+        if(sourceStateID == 2965){
+            ROS_DEBUG_NAMED(SEARCH_LOG, "expanded with leader : %d", leader_id);
+            GraphStatePtr cl, cs;
+            mprim->apply(*source_state, source_state->getLeader(), cl);
+            m_policy_generator->applyPolicy(*cl, source_state->getLeader(), cs);
+            ROS_DEBUG_NAMED(SEARCH_LOG, "successor with %d as leader : ", source_state
+                ->getLeader());
+            cs->printToDebug(SEARCH_LOG);
+            std::cin.get();
+        }
 
         // save the successor to the hash manager
         // generate the edge
@@ -264,15 +274,15 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
           key = Edge(sourceStateID, successor->id());
         }
         costs->push_back(t_data.cost());
-        ROS_DEBUG_NAMED(SEARCH_LOG, "cost to successor : %d", t_data.cost());
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "cost to successor : %d", t_data.cost());
         isTrueCost->push_back(true);
 
-        ROS_DEBUG_NAMED(SEARCH_LOG, "heuristic for q_id : %d for this state : %d",
-            q_id, GetGoalHeuristic(q_id, successor->id()));
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "heuristic for q_id : %d for this state : %d",
+        //     q_id, GetGoalHeuristic(q_id, successor->id()));
 
         m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
-        ROS_DEBUG_NAMED(SEARCH_LOG, "size of succsIDs %ld, costs : %ld", 
-            succIDs->size(), costs->size());
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "size of succsIDs %ld, costs : %ld", 
+        //     succIDs->size(), costs->size());
     }
 }
 

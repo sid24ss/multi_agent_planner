@@ -57,6 +57,7 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
         } else {
             leader_id = real_next_successor->swarm_state().getLeader();
         }
+        ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "expanding with leader : %d", leader_id);
         // bool success = mprim->apply(*source_state, leader_id, leader_moved_state);
         // ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "leader_moved_state:");
         // leader_moved_state->printToDebug(POSTPROCESSOR_LOG);
@@ -67,17 +68,9 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
             success = mprim->apply(*source_state, leader_id, successor);
         } else {
             success = mprim->apply(*source_state, leader_id, leader_moved_state);
-            success = success && m_policy_generator->applyPolicy(*leader_moved_state,
-            leader_id, successor, mprim->getDisplacement());
-            bool leader_change_required = 
-            m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
-            if (leader_change_required) {
-                ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
-                num_leader_changes++;
-                successor->setLeader(leader_id);
-            } else {
-                successor->setLeader(source_state->getLeader());
-            }
+            success = success && m_policy_generator->applyPolicy(
+                                    *leader_moved_state, leader_id, successor);
+            successor->setLeader(leader_id);
         }
         mprim->computeTData(*source_state, leader_id, successor, t_data);
         ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "successor:");

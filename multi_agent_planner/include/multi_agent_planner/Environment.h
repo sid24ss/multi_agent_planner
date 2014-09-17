@@ -14,7 +14,7 @@
 #include <vector>
 #include <memory>
 
-#define EPS1 10
+#define EPS1 15
 #define EPS2 1.1
 
 namespace multi_agent_planner {
