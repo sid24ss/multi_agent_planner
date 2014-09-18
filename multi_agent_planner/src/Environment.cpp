@@ -242,17 +242,6 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         }
         successor->printToDebug(SEARCH_LOG);
 
-        if(sourceStateID == 2965){
-            ROS_DEBUG_NAMED(SEARCH_LOG, "expanded with leader : %d", leader_id);
-            GraphStatePtr cl, cs;
-            mprim->apply(*source_state, source_state->getLeader(), cl);
-            m_policy_generator->applyPolicy(*cl, source_state->getLeader(), cs);
-            ROS_DEBUG_NAMED(SEARCH_LOG, "successor with %d as leader : ", source_state
-                ->getLeader());
-            cs->printToDebug(SEARCH_LOG);
-            std::cin.get();
-        }
-
         // save the successor to the hash manager
         // generate the edge
         // push back to succIDs

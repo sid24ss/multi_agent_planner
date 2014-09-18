@@ -21,6 +21,8 @@ namespace multi_agent_planner {
         void visualizeCircles(std::string ns, std::vector<double> x, std::vector<
             double> y, std::vector<int> hues);
         void visualizeLine(const std::vector<geometry_msgs::Point> points, std::string ns, int id, int hue, double thickness);
+        void visualizeQuadSwarm(std::string ns, std::vector<double> x, 
+                        std::vector<double> y, std::vector<int> hues);
 
     private:
         ros::NodeHandle nh_;
@@ -29,5 +31,7 @@ namespace multi_agent_planner {
         double nominal_z_;
         ros::Publisher marker_array_publisher_;
         ros::Publisher marker_publisher_;
+        std::string quad_mesh_;
+        const double quad_radius_;
     };
 }

@@ -15,6 +15,7 @@ namespace multi_agent_planner {
             bool withinTol(const GraphStatePtr& graph_state) const;
             void storeAsSolnState(const GraphStatePtr& state){ m_full_goal_state = state; };
             void visualize();
+            GraphStatePtr getSolnState() const { return m_full_goal_state; }
         private:
             GraphStatePtr m_full_goal_state;
             SwarmState m_goal_state;

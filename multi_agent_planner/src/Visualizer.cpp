@@ -38,5 +38,5 @@ void Visualizer::visualizeSwarm(std::string ns,
         y.push_back(r_state.getContRobotState().y());
         hues.push_back((static_cast<int>(i)==leader_id)?0:120);
     }
-    swarmVizPtr->visualizeCircles(ns, x, y, hues);
+    swarmVizPtr->visualizeQuadSwarm(ns, x, y, hues);
 }

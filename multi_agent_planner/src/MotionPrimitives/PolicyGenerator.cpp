@@ -75,10 +75,10 @@ ContRobotState PolicyGenerator::getRobotPolicy(const std::vector<RobotState>& ro
     }
 
     // Step 2: get other robots' influence for this robot
-    ContMotion robots_influence(ROBOT_DOF, 0);
-    // ContMotion robots_influence = getRobotsInfluence(robots_list,
-    //                                                 robot_id,
-    //                                                 leader_id);
+    // ContMotion robots_influence(ROBOT_DOF, 0);
+    ContMotion robots_influence = getRobotsInfluence(robots_list,
+                                                    robot_id,
+                                                    leader_id);
     // ROS_DEBUG_NAMED(POLICYGEN_LOG, "robots influence : %f %f",
     //                             robots_influence[0], robots_influence[1]);
     // Step 3: get the environment's influence
@@ -104,8 +104,7 @@ std::vector<double> PolicyGenerator::getRobotsInfluence(
     // other robots first
     for (size_t j =0; j < robots_list.size(); j++) {
         // skip the leader and the current robot itself
-        if (static_cast<int>(j) == leader_id ||
-            static_cast<int>(j) == current_robot_id) {
+        if (static_cast<int>(j) == current_robot_id) {
             continue;
         }
         auto repelling_robot = robots_list[j].getContRobotState();
