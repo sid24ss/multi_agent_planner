@@ -45,7 +45,38 @@ bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
 
 ContRobotState PolicyGenerator::getRobotPolicy(const std::vector<RobotState>& robots_list, int leader_id, int robot_id)
 {
+    // Cannot ask for policy of the leader. Doesn't make sense.
     assert(robot_id != leader_id);
+    // Step 1 : we first want the move-action; this is the action that makes
+    // us move where the leader is moving toward
+    ContMotion move_component = getLeaderComponent(robots_list,
+                                                    robot_id,
+                                                    leader_id);
+    // Step 2: get other robots' influence for this robot
+    // ContMotion robots_influence(ROBOT_DOF, 0);
+    ContMotion robots_influence = getRobotsInfluence(robots_list,
+                                                    robot_id,
+                                                    leader_id);
+    // ROS_DEBUG_NAMED(POLICYGEN_LOG, "robots influence : %f %f",
+    //                             robots_influence[0], robots_influence[1]);
+    // Step 3: get the environment's influence
+    ContRobotState cont_robot_state = robots_list[robot_id].getContRobotState();
+    ContMotion envt_influence = getEnvironmentInfluence(cont_robot_state);
+    ContRobotState policy;
+    policy.x(move_component[RobotStateElement::X] +
+                  robots_influence[RobotStateElement::X] + 
+                  envt_influence[RobotStateElement::X]);
+    policy.y(move_component[RobotStateElement::Y] +
+                  robots_influence[RobotStateElement::Y] + 
+                  envt_influence[RobotStateElement::Y]);
+    return policy;
+}
+
+std::vector <double> PolicyGenerator::getLeaderComponent(
+                                    const std::vector<RobotState>& robots_list,
+                                    int robot_id,
+                                    int leader_id)
+{
     double leader_x = robots_list[leader_id].getContRobotState().x();
     double leader_y = robots_list[leader_id].getContRobotState().y();
     // Cannot ask for policy of the leader. Doesn't make sense.
@@ -73,24 +104,7 @@ ContRobotState PolicyGenerator::getRobotPolicy(const std::vector<RobotState>& ro
         for (auto& c : move_component)
             c *= move_ratio;
     }
-
-    // Step 2: get other robots' influence for this robot
-    // ContMotion robots_influence(ROBOT_DOF, 0);
-    ContMotion robots_influence = getRobotsInfluence(robots_list,
-                                                    robot_id,
-                                                    leader_id);
-    // ROS_DEBUG_NAMED(POLICYGEN_LOG, "robots influence : %f %f",
-    //                             robots_influence[0], robots_influence[1]);
-    // Step 3: get the environment's influence
-    ContMotion envt_influence = getEnvironmentInfluence(cont_robot_state);
-    ContRobotState policy;
-    policy.x(move_component[RobotStateElement::X] +
-                  robots_influence[RobotStateElement::X] + 
-                  envt_influence[RobotStateElement::X]);
-    policy.y(move_component[RobotStateElement::Y] +
-                  robots_influence[RobotStateElement::Y] + 
-                  envt_influence[RobotStateElement::Y]);
-    return policy;
+    return move_component;
 }
 
 std::vector<double> PolicyGenerator::getRobotsInfluence(

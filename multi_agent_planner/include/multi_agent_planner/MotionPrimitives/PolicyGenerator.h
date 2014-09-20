@@ -7,7 +7,7 @@
 #include <multi_agent_planner/ParameterCatalog.h>
 #include <multi_agent_planner/TransitionData.h>
 #include <multi_agent_planner/Constants.h>
-#include <assert.h>
+#include <cassert>
 
 namespace multi_agent_planner {
     /*! \brief Base class for motion primitives. Motion primitives contain user
@@ -28,6 +28,10 @@ namespace multi_agent_planner {
             bool isLeaderChangeRequired(const GraphState& source_state, const
                 GraphState& successor, int leader_id, MotionPrimitivePtr mprim);
         private:
+            std::vector <double> getLeaderComponent(
+                                    const std::vector<RobotState>& robots_list,
+                                    int robot_id,
+                                    int leader_id);
             std::vector<double> getRobotsInfluence(
                                     const std::vector<RobotState>& robots_list, 
                                     int current_robot_id,
