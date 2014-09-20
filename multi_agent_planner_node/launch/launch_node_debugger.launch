@@ -25,8 +25,9 @@
 
   <node pkg="multi_agent_planner_node" type="stlToOctomap"
   name="stlToOctomap" args="$(find multi_agent_planner_node)/maps/empty_map.dae">
+    <param name="add_random_obstacles" value="false"/>
     <param name="randomize_environment" value="false"/>
-        <param name="/multi_agent_planner/node/environment_obstacles_file" value="$(find multi_agent_planner_node)/experiments/env_3.yaml" />
+    <param name="/multi_agent_planner/node/environment_obstacles_file" value="$(find multi_agent_planner_node)/experiments/env_3.yaml" />
   </node>
   
   <node pkg="multi_agent_planner_node" type="node" name="multi_agent_planner_node" output="screen" launch-prefix="gdb -ex run --args">

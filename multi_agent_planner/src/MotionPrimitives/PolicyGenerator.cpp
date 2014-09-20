@@ -72,6 +72,32 @@ ContRobotState PolicyGenerator::getRobotPolicy(const std::vector<RobotState>& ro
     return policy;
 }
 
+std::vector <double> PolicyGenerator::getFollowLeaderComponent(
+                                    const std::vector<RobotState>& robots_list,
+                                    int robot_id,
+                                    int leader_id)
+{
+    double leader_x = robots_list[leader_id].getContRobotState().x();
+    double leader_y = robots_list[leader_id].getContRobotState().y();
+    ContRobotState cont_robot_state = robots_list[robot_id].getContRobotState();
+    // compute the policy
+    ContMotion move_component(ROBOT_DOF,0);
+    move_component[RobotStateElement::X] = leader_x - cont_robot_state.x();
+    move_component[RobotStateElement::Y] = leader_y - cont_robot_state.y();
+    
+    // TODO: Cap the move_component
+    // get the norm of the move_component
+    double move_norm = vectorNorm(move_component);
+    double max_change = m_robot_params.leader_attraction_factor * m_robot_params.nominal_vel;
+    double move_ratio = max_change / move_norm;
+    if (move_ratio < 1.0) {
+        // scale the move_component to reduce the movement.
+        for (auto& c : move_component)
+            c *= move_ratio;
+    }
+    return move_component;
+}
+
 std::vector <double> PolicyGenerator::getLeaderComponent(
                                     const std::vector<RobotState>& robots_list,
                                     int robot_id,

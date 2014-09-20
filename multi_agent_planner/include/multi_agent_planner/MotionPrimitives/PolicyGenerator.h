@@ -28,6 +28,10 @@ namespace multi_agent_planner {
             bool isLeaderChangeRequired(const GraphState& source_state, const
                 GraphState& successor, int leader_id, MotionPrimitivePtr mprim);
         private:
+            std::vector <double> getFollowLeaderComponent(
+                                    const std::vector<RobotState>& robots_list,
+                                    int robot_id,
+                                    int leader_id);
             std::vector <double> getLeaderComponent(
                                     const std::vector<RobotState>& robots_list,
                                     int robot_id,

@@ -219,54 +219,58 @@ vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
         pclCloud->points[i].z = points[i][2];
     }
 
-    // addEnvironmentComponents(pclCloud);
     bool randomize_environment;
     ph.param("randomize_environment",randomize_environment,true);
     ROS_WARN("randomize environment set to %d", static_cast<int>(randomize_environment));
-    if(!randomize_environment){
-        string environment_obstacles_file;
-        ph.param<string>("/multi_agent_planner_node/experiments/environment_obstacles_file",environment_obstacles_file,"");
-        if(environment_obstacles_file.empty()){
-          throw new std::runtime_error("rosparam randomize_environment was set to false, but then environment_obstacles_file was not set!");
+    bool add_random_obstacles;
+    ph.param("add_random_obstacles", add_random_obstacles, true);
+    if(add_random_obstacles){
+        if(!randomize_environment){
+            string environment_obstacles_file;
+            ph.param<string>("/multi_agent_planner_node/experiments/environment_obstacles_file",environment_obstacles_file,"");
+            if(environment_obstacles_file.empty()){
+              throw new std::runtime_error("rosparam randomize_environment was set to false, but then environment_obstacles_file was not set!");
+            }
+            FILE* fin = fopen(environment_obstacles_file.c_str(), "r");
+            if(!fin){
+              ROS_ERROR("environment_obstacles_file did not lead to a file");
+              exit(1);
+            }
+            unsigned int seed;
+            int num_obstacles;
+            bool success = true;
+            success &= fscanf(fin,"randomSeed: %u\n",&seed) == 1;
+            success &= fscanf(fin,"num_obstacles: %d\n",&num_obstacles) == 1;
+            if(!success){
+              throw new std::runtime_error("envt obstacle param file formatted incorrectly");
+            }
+            addRandomObstacles(pclCloud, num_obstacles, seed);
+            ROS_WARN("loaded environment from file (seed=%d) with %d obstacles",seed,num_obstacles);
         }
-        FILE* fin = fopen(environment_obstacles_file.c_str(), "r");
-        if(!fin){
-          ROS_ERROR("environment_obstacles_file did not lead to a file");
-          exit(1);
+        else {
+            string out_path;
+            ph.param<string>("out_path",out_path,"");
+            if(out_path.empty()){
+              throw new std::runtime_error("No path specified to write to!");
+            }
+            nh.setParam("/multi_agent_planner_node/experiments/out_path", out_path);
+            out_path.append("/env.yaml");
+            int num_obstacles_min = 8;
+            int num_obstacles_max = 15;
+            int num_obstacles = num_obstacles_min + 
+                                rand()%(num_obstacles_max - num_obstacles_min + 1);
+            unsigned int seed = static_cast<unsigned int>(time(NULL));
+            ROS_WARN("generating random environment (seed=%d) with %d obstacles",seed,num_obstacles);
+            addRandomObstacles(pclCloud, num_obstacles, seed);
+            ROS_WARN("writing env.yaml file!");
+            FILE* fout = fopen(out_path.c_str(), "w");
+            fprintf(fout,"randomSeed: %u\n",seed);
+            fprintf(fout,"num_obstacles: %d\n",num_obstacles);
+            fclose(fout);
         }
-        unsigned int seed;
-        int num_obstacles;
-        bool success = true;
-        success &= fscanf(fin,"randomSeed: %u\n",&seed) == 1;
-        success &= fscanf(fin,"num_obstacles: %d\n",&num_obstacles) == 1;
-        if(!success){
-          throw new std::runtime_error("envt obstacle param file formatted incorrectly");
-        }
-        addRandomObstacles(pclCloud, num_obstacles, seed);
-        ROS_WARN("loaded environment from file (seed=%d) with %d obstacles",seed,num_obstacles);
+    } else {
+        addEnvironmentComponents(pclCloud);
     }
-    else {
-        string out_path;
-        ph.param<string>("out_path",out_path,"");
-        if(out_path.empty()){
-          throw new std::runtime_error("No path specified to write to!");
-        }
-        nh.setParam("/multi_agent_planner_node/experiments/out_path", out_path);
-        out_path.append("/env.yaml");
-        int num_obstacles_min = 8;
-        int num_obstacles_max = 15;
-        int num_obstacles = num_obstacles_min + 
-                            rand()%(num_obstacles_max - num_obstacles_min + 1);
-        unsigned int seed = static_cast<unsigned int>(time(NULL));
-        ROS_WARN("generating random environment (seed=%d) with %d obstacles",seed,num_obstacles);
-        addRandomObstacles(pclCloud, num_obstacles, seed);
-        ROS_WARN("writing env.yaml file!");
-        FILE* fout = fopen(out_path.c_str(), "w");
-        fprintf(fout,"randomSeed: %u\n",seed);
-        fprintf(fout,"num_obstacles: %d\n",num_obstacles);
-        fclose(fout);
-    }
-
     // addStartStateRegionToParamServer();
 
     sensor_msgs::PointCloud2 pc;
