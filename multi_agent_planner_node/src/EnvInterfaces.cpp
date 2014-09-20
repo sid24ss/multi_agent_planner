@@ -55,6 +55,69 @@ void EnvInterfaces::bindPlanPathToEnv(std::string service_name){
                                                    this);
 }
 
+void EnvInterfaces::bindWriteExperimentToEnv(std::string service_name){
+    m_write_exp_service = m_nodehandle.advertiseService(service_name, 
+                                   &EnvInterfaces::GenerateExperimentsFile,
+                                   this);
+}
+
+bool EnvInterfaces::GenerateExperimentsFile(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res){
+  ROS_INFO("generating trials!");
+  std::vector<std::pair<ContPoint, ContPoint> > start_goal_pairs;
+  int number_of_trials = 10;
+  int dimX, dimY, dimZ;
+  m_collision_space_interface->getOccupancyGridSize(dimX, dimY,
+        dimZ);
+  double maxX = dimX * ContRobotState::getResolution();
+  double maxY = dimY * ContRobotState::getResolution();
+  // generate random states and check validity; random states (at the moment)
+  // are just x,y for the reference point on the swarm.
+  int successful_pair_count = 0;
+  while (successful_pair_count < number_of_trials) {
+    std::vector<double> start {randomDouble(0, maxX), randomDouble(0,maxY)};
+    std::vector<double> goal {randomDouble(0, maxX), randomDouble(0,maxY)};
+    auto swarm_start = SwarmState::transformSwarmToPos(start);
+    auto swarm_goal = SwarmState::transformSwarmToPos(goal);
+    if (m_collision_space_interface->getCollisionSpace()->isValid(swarm_start)
+        && m_collision_space_interface->getCollisionSpace()->isValid(swarm_goal))
+    {
+        swarm_start.visualize();
+        swarm_goal.visualize();
+        // huzzah! We have a valid start goal
+        ContPoint start_pt(std::make_pair(start[RobotStateElement::X],
+                                        start[RobotStateElement::Y]));
+        ContPoint goal_pt(std::make_pair(goal[RobotStateElement::X],
+                                        goal[RobotStateElement::Y]));
+        start_goal_pairs.push_back(std::make_pair(start_pt, goal_pt));
+        ROS_INFO("generated pair %d", successful_pair_count);
+        successful_pair_count++;
+    }
+  }
+  std::string out_path;
+  m_nodehandle.param<std::string>("experiments/out_path", out_path, 
+    std::string("/home/siddharth/ros-packages/multiagent/multi_agent_planner_node/experiments"));
+  out_path.append("/swarm_tests.yaml");
+  int test_num = 0;
+  ROS_INFO("writing to file %s", out_path.c_str());
+  FILE* fout = fopen(out_path.c_str(),"w");
+  fprintf(fout, "experiments:\n\n");
+  for (auto& start_goal : start_goal_pairs){
+    fprintf(fout,"  - test: test_%d\n", test_num);
+    fprintf(fout,"    start:\n");
+    fprintf(fout,"      position: %f %f\n",
+        start_goal.first.first,
+        start_goal.first.second);
+    fprintf(fout,"    goal:\n");
+    fprintf(fout,"      position: %f %f\n",
+        start_goal.second.first,
+        start_goal.second.second);
+    fprintf(fout,"\n");
+    test_num++;
+  }
+  fclose(fout);
+  return true;
+}
+
 bool EnvInterfaces::runMHAPlanner(
     std::string planner_prefix,
     GetSwarmPlan::Request &req,
@@ -105,7 +168,6 @@ bool EnvInterfaces::runMHAPlanner(
         total_planning_time = clock() - total_planning_time;
         packageMHAStats(stat_names, stats, soln_cost, states.size(),
             total_planning_time);
-        // m_stats_writer.writeSBPL(stats, states, counter, planner_prefix);
         res.stats_field_names = stat_names;
         res.stats = stats;
     } else {
@@ -147,9 +209,10 @@ void EnvInterfaces::packageMHAStats(std::vector<std::string>& stat_names,
                                  std::vector<double>& stats,
                                  int solution_cost,
                                  size_t solution_size,
-                                 double total_planning_time){
-    stat_names.resize(10);
-    stats.resize(10);
+                                 double total_planning_time)
+{
+    stat_names.resize(11);
+    stats.resize(11);
     stat_names[0] = "total plan time";
     stat_names[1] = "initial solution planning time";
     stat_names[2] = "epsilon 1";
@@ -160,24 +223,26 @@ void EnvInterfaces::packageMHAStats(std::vector<std::string>& stat_names,
     stat_names[7] = "expansions";
     stat_names[8] = "solution cost";
     stat_names[9] = "path length";
+    stat_names[10] = "num_leader_changes";
 
     // TODO fix the total planning time
     //stats[0] = totalPlanTime;
     // TODO: Venkat. Handle the inital/final solution eps correctly when this becomes anytime someday.
     
-    stats[0] = total_planning_time/static_cast<double>(CLOCKS_PER_SEC);
-    stats[1] = m_ara_planner->get_initial_eps_planning_time();
-    stats[2] = m_ara_planner->get_initial_eps();
-    stats[3] = m_ara_planner->get_n_expands_init_solution();
-    stats[4] = m_ara_planner->get_final_eps_planning_time();
-    stats[5] = m_ara_planner->get_final_epsilon();
-    stats[6] = m_ara_planner->get_solution_eps();
-    stats[7] = m_ara_planner->get_n_expands();
-    stats[8] = static_cast<double>(solution_cost);
-    stats[9] = static_cast<double>(solution_size);
+    // stats[0] = total_planning_time/static_cast<double>(CLOCKS_PER_SEC);
+    // stats[1] = m_ara_planner->get_initial_eps_planning_time();
+    // stats[2] = m_ara_planner->get_initial_eps();
+    // stats[3] = m_ara_planner->get_n_expands_init_solution();
+    // stats[4] = m_ara_planner->get_final_eps_planning_time();
+    // stats[5] = m_ara_planner->get_final_epsilon();
+    // stats[6] = m_ara_planner->get_solution_eps();
+    // stats[7] = m_ara_planner->get_n_expands();
+    // stats[8] = static_cast<double>(solution_cost);
+    // stats[9] = static_cast<double>(solution_size);
     
     std::vector<PlannerStats> planner_stats;
     m_mha_planner->get_search_stats(&planner_stats);
+    ROS_INFO("planner stats size : %u", planner_stats.size());
     // Take stats only for the first solution, since this is not anytime currently
     stats[0] = planner_stats[0].time;
     stats[1] = stats[0];
@@ -189,6 +254,7 @@ void EnvInterfaces::packageMHAStats(std::vector<std::string>& stat_names,
     stats[7] = stats[3];
     stats[8] = static_cast<double>(planner_stats[0].cost);
     stats[9] = static_cast<double>(solution_size);
+    stats[10] = m_env->getLeaderChangeCount();
 }
 
 bool EnvInterfaces::bindCollisionSpaceToTopic(std::string topic_name){
@@ -205,7 +271,8 @@ void EnvInterfaces::bindNavMapToTopic(std::string topic){
 
 void EnvInterfaces::crop2DMap(const nav_msgs::MapMetaData& map_info, const
     std::vector<unsigned char>& v, double new_origin_x, double new_origin_y,
-                              double width, double height){
+                              double width, double height)
+{
     ROS_DEBUG_NAMED(CONFIG_LOG, "to be cropped to : %f (width), %f (height)", width, height);
     std::vector<std::vector<unsigned char> > tmp_map(map_info.height);
     for (unsigned int i=0; i < map_info.height; i++){

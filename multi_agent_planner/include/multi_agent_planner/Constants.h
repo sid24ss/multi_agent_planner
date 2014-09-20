@@ -10,6 +10,8 @@
 #define SQRT_2 1.41421356237
 
 namespace multi_agent_planner {
+    typedef std::pair<double, double> ContPoint;
+
     const int ROBOT_DOF = 2;
     // This is designed so that the swarm by itself can rotate, while the robots
     // only move in (x,y)

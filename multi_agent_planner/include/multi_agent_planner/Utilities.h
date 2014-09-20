@@ -69,4 +69,9 @@ double vectorNorm(const std::vector<T>& v)
     return std::sqrt(norm);
 }
 
+inline double randomDouble(double lower, double higher)
+{
+    return lower + (higher-lower) * ( double(rand()) / RAND_MAX );
+}
+
 }   // close namespace multi_agent_planner

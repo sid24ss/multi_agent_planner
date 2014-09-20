@@ -369,12 +369,12 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     m_goal->getSwarmState().printToDebug(SEARCH_LOG);
     m_goal->getSwarmState().printContToDebug(SEARCH_LOG);
     m_goal->getSwarmState().visualize();
+    std::cin.get();
 
     // informs the heuristic about the goal
     m_heur_mgr->setGoal(*m_goal);
     m_heur_mgr->printSummaryToDebug(HEUR_LOG);
     NavAdaptiveMotionPrimitive::setGoal(*m_goal);
-    std::cin.get();
 
     return true;
 }
@@ -437,7 +437,8 @@ void Environment::configureQuerySpecificParams(SearchRequestPtr search_request){
 std::vector<SwarmState> Environment::reconstructPath(std::vector<int> soln_path){
     PathPostProcessor postprocessor(m_hash_mgr, m_cspace_mgr, m_policy_generator);
     std::vector<SwarmState> final_path = postprocessor.reconstructPath(soln_path, *m_goal,
-        m_edges);
+        m_edges,
+        m_num_leader_changes);
     if(m_param_catalog.m_visualization_params.final_path){
         ROS_DEBUG_NAMED(SEARCH_LOG, "Visualizing final path");
         std::cin.get();

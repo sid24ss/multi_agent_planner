@@ -15,7 +15,8 @@ namespace multi_agent_planner {
                                             std::vector<int> state_ids,
                                             GoalState& goal_state,
                                             std::map< std::pair<int,int>,
-                                            MotionPrimitivePtr>& edge_cache);
+                                            MotionPrimitivePtr>& edge_cache,
+                                            int& num_leader_changes);
             void visualizeFinalPath(std::vector<SwarmState> path);
         private:
             std::vector<SwarmState> getFinalPath(const std::vector<int>& state_ids,

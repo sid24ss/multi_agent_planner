@@ -42,7 +42,7 @@ target_link_libraries(node multi_agent_planner ${SBPL_LIBRARIES})
 rosbuild_add_executable(testPlanningRequest src/testPlanningRequest.cpp)
 target_link_libraries(testPlanningRequest multi_agent_planner)
 
+rosbuild_add_executable(runTests src/run_tests.cpp)
+
 rosbuild_add_executable(stlToOctomap src/publishSTLToOctomap.cpp)
-
-#target_link_libraries(example ${PROJECT_NAME})
-
+rosbuild_add_executable(generateExperimentsNode src/generateExperimentsNode.cpp)

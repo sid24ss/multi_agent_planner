@@ -45,7 +45,7 @@ void GraphState::printToDebug(char* logger) const {
     std::stringstream ss;
     ss << vectorToString(m_coords);
     ss << "\t leader : " << m_swarm_state.getLeader();
-    ROS_INFO_NAMED(logger, "\t%s", ss.str().c_str());
+    ROS_DEBUG_NAMED(logger, "\t%s", ss.str().c_str());
 }
 
 void GraphState::swarm_state(SwarmState swarm_state) {

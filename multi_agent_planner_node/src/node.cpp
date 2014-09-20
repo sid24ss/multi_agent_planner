@@ -10,10 +10,9 @@ Node::Node(ros::NodeHandle nh) : m_env(new Environment(nh)), m_env_interface(m_e
   nh){
     m_env_interface.bindPlanPathToEnv("/sbpl_planning/plan_path");
     m_env_interface.bindNavMapToTopic("/projected_map");
-    // m_env_interface.bindNavMapToTopic("/map");
     m_env_interface.bindCollisionSpaceToTopic("collision_map_out");
     // m_env_interface.bindExperimentToEnv("/sbpl_planning/run_simulation");
-    // m_env_interface.bindWriteExperimentToEnv("/sbpl_planning/generate_experiments_file");
+    m_env_interface.bindWriteExperimentToEnv("/sbpl_planning/generate_experiments_file");
     // m_env_interface.bindDemoToEnv("/sbpl_planning/run_demo");
 }
 
@@ -144,7 +143,7 @@ int main(int argc, char** argv){
     setLoggersFromParamServer(nh);
     Node node(nh);
     ROS_INFO("Node is ready to receive planning requests.");
-    ros::MultiThreadedSpinner spinner(4);//need 4 threads to catch a the interrupt (a thread for each blocking callback + the interrupt)
+    ros::MultiThreadedSpinner spinner(5);//need 4 threads to catch a the interrupt (a thread for each blocking callback + the interrupt)
     spinner.spin();
     //ros::spin();
 }

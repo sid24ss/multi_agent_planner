@@ -25,10 +25,11 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
                                             std::vector<int> soln_path,
                                             GoalState& goal_state,
                                             std::map< std::pair<int,int>,
-                                            MotionPrimitivePtr>& edge_cache)
+                                            MotionPrimitivePtr>& edge_cache,
+                                            int& num_leader_changes)
 {
     double temptime = clock();
-    int num_leader_changes = 0;
+    num_leader_changes = 0;
     std::vector<TransitionData> transition_states;
     // the last state in the soln path return by the SBPL planner will always be
     // the goal state ID. Since this doesn't actually correspond to a real state
@@ -62,6 +63,8 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
         // }
         leader_id = real_next_successor->swarm_state().getLeader();
         ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "real_next_successor (%d) : ", real_next_successor->id());
+        if(source_state->getLeader() != real_next_successor->getLeader())
+            num_leader_changes++;
         real_next_successor->printToDebug(POSTPROCESSOR_LOG);
         // ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "expanding with leader : %d", leader_id);
         // bool success = mprim->apply(*source_state, leader_id, leader_moved_state);

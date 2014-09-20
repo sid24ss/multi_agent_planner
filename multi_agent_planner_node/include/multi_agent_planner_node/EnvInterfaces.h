@@ -5,6 +5,7 @@
 #include <multi_agent_planner/SearchRequest.h>
 #include <multi_agent_planner/Environment.h>
 #include <multi_agent_planner/Constants.h>
+#include <multi_agent_planner/Utilities.h>
 // #include <multi_agent_planner/StatsWriter.h>
 #include <sbpl/planners/araplanner.h>
 #include <sbpl/planners/mha_planner.h>
@@ -31,6 +32,7 @@ namespace multi_agent_planner_node {
             bool planPathCallback(GetSwarmPlan::Request &req, 
                                   GetSwarmPlan::Response &res);
             void bindPlanPathToEnv(std::string service_name);
+            void bindWriteExperimentToEnv(std::string service_name);
             bool bindCollisionSpaceToTopic(std::string topic_name);
             void bindNavMapToTopic(std::string topic_name);
             void packageMHAStats(std::vector<std::string>& stat_names,
@@ -38,6 +40,7 @@ namespace multi_agent_planner_node {
                               int solution_cost,
                               size_t solution_size,
                               double total_planning_time);
+             bool GenerateExperimentsFile(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 
         private:
             void loadNavMap(const nav_msgs::OccupancyGridPtr& map);
@@ -59,6 +62,7 @@ namespace multi_agent_planner_node {
             tf::TransformListener m_tf;
 
             ros::ServiceServer m_plan_service;
+            ros::ServiceServer m_write_exp_service;
 
             std::unique_ptr<SBPLPlanner> m_ara_planner;
             std::unique_ptr<MHAPlanner> m_mha_planner;

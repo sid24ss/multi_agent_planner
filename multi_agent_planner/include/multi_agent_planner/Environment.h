@@ -41,6 +41,8 @@ namespace multi_agent_planner {
             virtual int GetTrueCost(int parentID, int childID);
             std::vector<SwarmState> reconstructPath(std::vector<int> 
                 state_ids);
+            inline int getLeaderChangeCount() const {return
+                m_num_leader_changes; }
             void reset();
             // void setPlannerType(int planner_type);
             PolicyGeneratorPtr getPolicyGenerator() {return m_policy_generator;}
@@ -63,6 +65,7 @@ namespace multi_agent_planner {
             HeuristicMgrPtr m_heur_mgr;
             std::vector<int> m_leader_ids;
             int m_start_state_id;
+            int m_num_leader_changes;
 
             // int m_planner_type;
             // std::unordered_map<int, PlanningModes::modes> m_action_partition;

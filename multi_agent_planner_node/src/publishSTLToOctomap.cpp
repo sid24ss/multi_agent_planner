@@ -1,4 +1,5 @@
 #include <multi_agent_planner/LoggerNames.h>
+#include <multi_agent_planner/Utilities.h>
 #include <sbpl_geometry_utils/Voxelizer.h>
 #include <leatherman/utils.h>
 #include <leatherman/file.h>
@@ -10,10 +11,16 @@
 #include <ros/ros.h>
 #include <boost/filesystem.hpp>
 #include <cstdlib>
+#include <cstdio>
 #include <vector>
+#include <ctime>
 
 using namespace boost::filesystem;
 using namespace std;
+using namespace multi_agent_planner;
+
+const double dimX = 10;
+const double dimY = 10;
 
 bool getVoxelsFromMesh(std::string resource, 
         geometry_msgs::Pose pose, 
@@ -74,109 +81,38 @@ void addCuboid(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud, double X, double Y,
 }
 
 void addRandomObstacles(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud, int
-    numSurfaces, int numObstaclesPerSurface, unsigned int seed){
+    num_obstacles, unsigned int seed){
     ros::NodeHandle nh;
 
     // Add the surface - these are generated only within these bounds.
-    double surfaceBoundsXMin = 7.2;
-    double surfaceBoundsXMax = 8;
-    
-    double surfaceBoundsYMin = 0.8;
-    double surfaceBoundsYMax = 3.5;
-
-    double surfaceSizeXMax = 0.65;
-    double surfaceSizeXMin = 0.65;
-
-    double surfaceSizeYMax = 1.3;
-    double surfaceSizeYMin = 0.65;
-
-    double surfaceSizeZ = 0.8;
-    
-
-    double obstacleBoundsXMin = 3.5;
-    double obstacleBoundsXMax = 6;
-    
-    double obstacleBoundsYMin = 0;
-    double obstacleBoundsYMax = 4;
-
-    double obstacleSizeXMax = 0.3;
+    double obstacleSizeXMax = 2;
     double obstacleSizeXMin = 0.1;
 
-    double obstacleSizeYMax = 0.3;
+    double obstacleSizeYMax = 2;
     double obstacleSizeYMin = 0.1;
 
-    double obstacleSizeZMin = 0.1;
-    double obstacleSizeZMax = 0.4;
+    double obstacleBoundsXMin = 0 + obstacleSizeXMax/2;
+    double obstacleBoundsXMax = dimX - obstacleSizeXMax/2;
+    
+    double obstacleBoundsYMin = 0 + obstacleSizeYMax/2;
+    double obstacleBoundsYMax = dimY - obstacleSizeYMax/2;
 
-    nh.setParam("/multi_agent_planner_node/experiments/number_of_regions",
-        numSurfaces);
-
-    nh.setParam("/multi_agent_planner_node/experiments/seed", int(seed));
     srand(seed);
 
-    for (int i = 0, j = 0; i < numSurfaces; ++i, j+=2){
-
-        // Generate position
-        double X = surfaceBoundsXMin + static_cast<double>(rand())/RAND_MAX *
-        (surfaceBoundsXMax - surfaceBoundsXMin);
-        double Y = surfaceBoundsYMin + j*(surfaceBoundsYMax - surfaceBoundsYMin)/(numSurfaces+1) + static_cast<double>(rand())/RAND_MAX *
-        (surfaceBoundsYMax - surfaceBoundsYMin)/(numSurfaces+1);
-
-        double Z = 0.0;
-        
+    for (int i = 0; i < num_obstacles; ++i){
         // Generate size
-        double dimX = surfaceSizeXMin + static_cast<double>(rand())/RAND_MAX *
-        (surfaceSizeXMax - surfaceSizeXMin);
+        double dimX = randomDouble(obstacleSizeXMin, obstacleSizeXMax);
+        double dimY = randomDouble(obstacleSizeYMin, obstacleSizeYMax);
+        double dimZ = 0.2;
 
-        double dimY = surfaceSizeYMin + static_cast<double>(rand())/RAND_MAX *
-        (surfaceSizeYMax - surfaceSizeYMin);
-
-        double dimZ = surfaceSizeZ;
-
-        // Add to Param server (not the best thing to do, but whatever)
-        nh.setParam("/multi_agent_planner_node/experiments/goal_region_x_" + std::to_string(i), X);
-        nh.setParam("/multi_agent_planner_node/experiments/goal_region_y_" + std::to_string(i), Y);
-        nh.setParam("/multi_agent_planner_node/experiments/goal_region_z_" + std::to_string(i), Z);
-        nh.setParam("/multi_agent_planner_node/experiments/goal_region_dimx_" + std::to_string(i),
-            dimX);
-        nh.setParam("/multi_agent_planner_node/experiments/goal_region_dimy_" + std::to_string(i),
-            dimY);
-        nh.setParam("/multi_agent_planner_node/experiments/goal_region_dimz_" + std::to_string(i),
-            dimZ);
+        // generate position and adjust to center
+        double X = randomDouble(obstacleBoundsXMin, obstacleBoundsXMax) - dimX/2;
+        double Y = randomDouble(obstacleBoundsYMin, obstacleBoundsYMax) - dimY/2;
+        double Z = 0.0;
 
         // Now, we can add this surface.
         addCuboid(pclCloud, X, Y, Z, dimX, dimY, dimZ, false);
-
-        obstacleBoundsXMin = X;
-        obstacleBoundsXMax = X + (dimX - obstacleSizeXMax);
-
-        obstacleBoundsYMin = Y;
-        obstacleBoundsYMax = Y + (dimY - obstacleSizeYMax);
-
-        // Add the obstacles on the surface
-        for (int j = 0; j < numObstaclesPerSurface; ++j){
-            double oX = obstacleBoundsXMin + static_cast<double>(rand())/RAND_MAX *
-            (obstacleBoundsXMax - obstacleBoundsXMin);
-            double oY = obstacleBoundsYMin + static_cast<double>(rand())/RAND_MAX *
-            (obstacleBoundsYMax - obstacleBoundsYMin);
-
-            double oZ = dimZ;
-            
-            // Generate size
-            double odimX = obstacleSizeXMin + static_cast<double>(rand())/RAND_MAX *
-            (obstacleSizeXMax - obstacleSizeXMin);
-
-            double odimY = obstacleSizeYMin + static_cast<double>(rand())/RAND_MAX *
-            (obstacleSizeYMax - obstacleSizeYMin);
-
-            double odimZ = obstacleSizeZMin + static_cast<double>(rand())/RAND_MAX *
-            (obstacleSizeZMax - obstacleSizeZMin);
-            
-            addCuboid(pclCloud, oX, oY, oZ, odimX, odimY, odimZ, true);
-        }
     }
-    
-
 }
 
 void addStartStateRegionToParamServer(){
@@ -283,55 +219,55 @@ vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
         pclCloud->points[i].z = points[i][2];
     }
 
-    addEnvironmentComponents(pclCloud);
-
-    bool addTableObstacles;
-    ph.param("addTableObstacles",addTableObstacles,false);
-   
-    if(addTableObstacles){
-      bool randomizeTableObstacles;
-      ph.param("randomizeTableObstacles",randomizeTableObstacles,true);
-      if(!randomizeTableObstacles){
-        string pathToTableObstacleParamFile;
-        ph.param<string>("pathToTableObstacleParamFile",pathToTableObstacleParamFile,"");
-        if(pathToTableObstacleParamFile.empty()){
-          ROS_ERROR("rosparam randomizeTableObstacles was set to false, but then pathToTableObstacleParamFile was not set!");
-          exit(1);
+    // addEnvironmentComponents(pclCloud);
+    bool randomize_environment;
+    ph.param("randomize_environment",randomize_environment,true);
+    ROS_WARN("randomize environment set to %d", static_cast<int>(randomize_environment));
+    if(!randomize_environment){
+        string environment_obstacles_file;
+        ph.param<string>("/multi_agent_planner_node/experiments/environment_obstacles_file",environment_obstacles_file,"");
+        if(environment_obstacles_file.empty()){
+          throw new std::runtime_error("rosparam randomize_environment was set to false, but then environment_obstacles_file was not set!");
         }
-        FILE* fin = fopen(pathToTableObstacleParamFile.c_str(), "r");
+        FILE* fin = fopen(environment_obstacles_file.c_str(), "r");
         if(!fin){
-          ROS_ERROR("pathToTableObstacleParamFile did not lead to a file");
+          ROS_ERROR("environment_obstacles_file did not lead to a file");
           exit(1);
         }
         unsigned int seed;
-        int numSurfaces, numObstaclesPerSurface;
+        int num_obstacles;
         bool success = true;
         success &= fscanf(fin,"randomSeed: %u\n",&seed) == 1;
-        success &= fscanf(fin,"numSurfaces: %d\n",&numSurfaces) == 1;
-        success &= fscanf(fin,"numObstaclesPerSurface: %d\n",&numObstaclesPerSurface) == 1;
+        success &= fscanf(fin,"num_obstacles: %d\n",&num_obstacles) == 1;
         if(!success){
-          ROS_ERROR("table obstacle param file formatted incorrectly");
-          exit(1);
+          throw new std::runtime_error("envt obstacle param file formatted incorrectly");
         }
-        addRandomObstacles(pclCloud, numSurfaces, numObstaclesPerSurface, seed);
-        ROS_WARN("loaded environment from file (seed=%d) %d surfaces and %d obstacles on each",seed,numSurfaces,numObstaclesPerSurface);
-      }
-      else{
-        int numSurfaces = 2;
-        int numObstaclesPerSurface = 5;
-        unsigned int seed = clock();
-        ROS_WARN("generating random environment (seed=%d) with %d surfaces and %d obstacles on each",seed,numSurfaces,numObstaclesPerSurface);
-        addRandomObstacles(pclCloud, numSurfaces, numObstaclesPerSurface, seed);
-        ROS_WARN("writing tableObstacles.yaml file!");
-        FILE* fout = fopen("tableObstacles.yaml", "w");
+        addRandomObstacles(pclCloud, num_obstacles, seed);
+        ROS_WARN("loaded environment from file (seed=%d) with %d obstacles",seed,num_obstacles);
+    }
+    else {
+        string out_path;
+        ph.param<string>("out_path",out_path,"");
+        if(out_path.empty()){
+          throw new std::runtime_error("No path specified to write to!");
+        }
+        nh.setParam("/multi_agent_planner_node/experiments/out_path", out_path);
+        out_path.append("/env.yaml");
+        int num_obstacles_min = 8;
+        int num_obstacles_max = 15;
+        int num_obstacles = num_obstacles_min + 
+                            rand()%(num_obstacles_max - num_obstacles_min + 1);
+        unsigned int seed = static_cast<unsigned int>(time(NULL));
+        ROS_WARN("generating random environment (seed=%d) with %d obstacles",seed,num_obstacles);
+        addRandomObstacles(pclCloud, num_obstacles, seed);
+        ROS_WARN("writing env.yaml file!");
+        FILE* fout = fopen(out_path.c_str(), "w");
         fprintf(fout,"randomSeed: %u\n",seed);
-        fprintf(fout,"numSurfaces: %d\n",numSurfaces);
-        fprintf(fout,"numObstaclesPerSurface: %d\n",numObstaclesPerSurface);
+        fprintf(fout,"num_obstacles: %d\n",num_obstacles);
         fclose(fout);
-      }
     }
 
-    addStartStateRegionToParamServer();
+    // addStartStateRegionToParamServer();
 
     sensor_msgs::PointCloud2 pc;
     pcl::toROSMsg (*pclCloud, pc);
