@@ -55,7 +55,7 @@ int Environment::GetGoalHeuristic(int q_id, int stateID) {
     // this is the state we want the heuristic for.
     GraphStatePtr successor = m_hash_mgr->getGraphState(stateID);
     // if it is the goal state, return 0.
-    if(m_goal->isSatisfiedBy(successor) || stateID == GOAL_STATE){
+    if(m_goal_region->isSatisfiedBy(successor) || stateID == GOAL_STATE){
         return 0;
     }
     ROS_DEBUG_NAMED(HEUR_LOG, "heur asked for: %d, at q_id %d", 
@@ -229,7 +229,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             bool leader_change_required = 
             m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
             if (leader_change_required) {
-                // ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
+                ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
                 successor->setLeader(leader_id);
                 t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
             } else {
@@ -241,6 +241,8 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             t_data.cost(mprim->getBaseCost());
         }
         successor->printToDebug(SEARCH_LOG);
+        successor->swarm_state().visualize();
+        std::cin.get();
 
         // save the successor to the hash manager
         // generate the edge
@@ -252,8 +254,8 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         // long as you have the right successor in the `successor` variable.
         m_hash_mgr->save(successor);
         Edge key;
-        if (m_goal->isSatisfiedBy(successor)){
-          m_goal->storeAsSolnState(successor);
+        if (m_goal_region->isSatisfiedBy(successor)){
+          m_goal_region->storeAsSolnState(successor);
           ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
             "cost: %d", source_state->id(), successor->id(), t_data.cost());
           succIDs->push_back(GOAL_STATE);
@@ -353,11 +355,13 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     std::cin.get();
 
     m_goal = search_request->createGoalState();
-    if(!m_cspace_mgr->isValid(m_goal->getSwarmState())) {
-        ROS_ERROR("Goal state is invalid!");
-        m_goal->getSwarmState().visualize();
-        return false;
-    }
+    m_goal_region.reset(new GoalRegionState(search_request->m_params->swarm_goal, 1.0));
+    // if(!m_cspace_mgr->isValid(m_goal->getSwarmState())) {
+    //     ROS_ERROR("Goal state is invalid!");
+    //     m_goal->getSwarmState().visualize();
+    //     return false;
+    // }
+    
 
     if (m_hash_mgr->size() < 2){
         goal_id = saveFakeGoalState(start_graph_state);
@@ -366,13 +370,14 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     }
 
     ROS_INFO_NAMED(SEARCH_LOG, "Goal state created:");
-    m_goal->getSwarmState().printToDebug(SEARCH_LOG);
-    m_goal->getSwarmState().printContToDebug(SEARCH_LOG);
-    m_goal->getSwarmState().visualize();
+    // m_goal->getSwarmState().printToDebug(SEARCH_LOG);
+    // m_goal->getSwarmState().printContToDebug(SEARCH_LOG);
+    // m_goal->getSwarmState().visualize();
+    m_goal_region->visualize();
     std::cin.get();
 
     // informs the heuristic about the goal
-    m_heur_mgr->setGoal(*m_goal);
+    m_heur_mgr->setGoal(*m_goal_region);
     m_heur_mgr->printSummaryToDebug(HEUR_LOG);
     NavAdaptiveMotionPrimitive::setGoal(*m_goal);
 
@@ -436,7 +441,8 @@ void Environment::configureQuerySpecificParams(SearchRequestPtr search_request){
  */
 std::vector<SwarmState> Environment::reconstructPath(std::vector<int> soln_path){
     PathPostProcessor postprocessor(m_hash_mgr, m_cspace_mgr, m_policy_generator);
-    std::vector<SwarmState> final_path = postprocessor.reconstructPath(soln_path, *m_goal,
+    std::vector<SwarmState> final_path = postprocessor.reconstructPath(soln_path,
+        *m_goal_region,
         m_edges,
         m_num_leader_changes);
     if(m_param_catalog.m_visualization_params.final_path){

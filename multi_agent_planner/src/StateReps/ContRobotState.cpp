@@ -5,6 +5,7 @@ using namespace multi_agent_planner;
 using namespace std;
 
 ContRobotState::ContRobotState(std::vector<double> coords)
+    : m_coords(ROBOT_DOF, 0)
 {
     x(coords[RobotStateElement::X]);
     y(coords[RobotStateElement::Y]);

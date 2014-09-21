@@ -3,7 +3,7 @@
 #include <multi_agent_planner/MotionPrimitives/PolicyGenerator.h>
 #include <multi_agent_planner/HashManager.h>
 #include <multi_agent_planner/CollisionSpaceMgr.h>
-#include <multi_agent_planner/StateReps/GoalState.h>
+#include <multi_agent_planner/StateReps/GoalRegionState.h>
 #include <vector>
 
 namespace multi_agent_planner {
@@ -13,7 +13,7 @@ namespace multi_agent_planner {
                 PolicyGeneratorPtr policy_generator);
             std::vector<SwarmState> reconstructPath(
                                             std::vector<int> state_ids,
-                                            GoalState& goal_state,
+                                            GoalRegionState& goal_state,
                                             std::map< std::pair<int,int>,
                                             MotionPrimitivePtr>& edge_cache,
                                             int& num_leader_changes);
@@ -21,7 +21,7 @@ namespace multi_agent_planner {
         private:
             std::vector<SwarmState> getFinalPath(const std::vector<int>& state_ids,
                                             const std::vector<TransitionData>& transition_states,
-                                            GoalState& goal_state);
+                                            GoalRegionState& goal_state);
             CSpaceMgrPtr m_cspace_mgr;
             HashManagerPtr m_hash_mgr;
             PolicyGeneratorPtr m_policy_generator;

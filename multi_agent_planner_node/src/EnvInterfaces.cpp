@@ -2,6 +2,7 @@
 #include <multi_agent_planner/StateReps/SwarmState.h>
 #include <multi_agent_planner/StateReps/RobotState.h>
 #include <multi_agent_planner/Constants.h>
+#include <multi_agent_planner/Utilities.h>
 #include <boost/filesystem.hpp>
 #include <leatherman/utils.h>
 #include <LinearMath/btVector3.h>
@@ -242,7 +243,6 @@ void EnvInterfaces::packageMHAStats(std::vector<std::string>& stat_names,
     
     std::vector<PlannerStats> planner_stats;
     m_mha_planner->get_search_stats(&planner_stats);
-    ROS_INFO("planner stats size : %u", planner_stats.size());
     // Take stats only for the first solution, since this is not anytime currently
     stats[0] = planner_stats[0].time;
     stats[1] = stats[0];

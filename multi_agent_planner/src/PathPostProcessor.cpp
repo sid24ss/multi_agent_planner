@@ -1,7 +1,7 @@
 #include <multi_agent_planner/PathPostProcessor.h>
 #include <multi_agent_planner/Constants.h>
 #include <multi_agent_planner/StateReps/GraphState.h>
-#include <multi_agent_planner/StateReps/GoalState.h>
+#include <multi_agent_planner/StateReps/GoalRegionState.h>
 #include <multi_agent_planner/Visualizer.h>
 
 
@@ -23,7 +23,7 @@ PathPostProcessor::PathPostProcessor(HashManagerPtr hash_mgr,
  */
 std::vector<SwarmState> PathPostProcessor::reconstructPath(
                                             std::vector<int> soln_path,
-                                            GoalState& goal_state,
+                                            GoalRegionState& goal_state,
                                             std::map< std::pair<int,int>,
                                             MotionPrimitivePtr>& edge_cache,
                                             int& num_leader_changes)
@@ -38,10 +38,11 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
     for (size_t i=0; i < soln_path.size()-1; i++){
         MotionPrimitivePtr mprim = edge_cache.at(std::make_pair(soln_path[i],
             soln_path[i+1]));
+        bool last_state_before_goal = (i + 1) == soln_path.size() - 1;
         // TransitionData best_transition;
         GraphStatePtr source_state = m_hash_mgr->getGraphState(soln_path[i]);
         source_state->swarm_state().visualize();
-        if ((i+1) == soln_path.size() - 1)
+        if (last_state_before_goal)
             soln_path.back() = soln_state->id();
         // GraphStatePtr successor, leader_moved_state;
         GraphStatePtr real_next_successor = m_hash_mgr->getGraphState(soln_path[i+1]);
@@ -62,6 +63,7 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
         //     leader_id = real_next_successor->swarm_state().getLeader();
         // }
         leader_id = real_next_successor->swarm_state().getLeader();
+
         ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "real_next_successor (%d) : ", real_next_successor->id());
         if(source_state->getLeader() != real_next_successor->getLeader())
             num_leader_changes++;
@@ -135,7 +137,7 @@ void PathPostProcessor::visualizeFinalPath(std::vector<SwarmState> path) {
  * */
 std::vector<SwarmState> PathPostProcessor::getFinalPath(const std::vector<int>& state_ids,
                                  const std::vector<TransitionData>& transition_states,
-                                 GoalState& goal_state){
+                                 GoalRegionState& goal_state){
     std::vector<SwarmState> swarm_states;
     for (size_t i=0; i < transition_states.size(); i++){
         // throw in the first point in this transition

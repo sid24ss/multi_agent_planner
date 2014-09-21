@@ -18,6 +18,8 @@ namespace multi_agent_planner {
         // visualization functions
         void visualizeCircle(std::string ns, double x, double y, int
             hue);
+        void visualizeCircle(std::string ns, double x, double y, double radius, int
+            hue);
         void visualizeCircles(std::string ns, std::vector<double> x, std::vector<
             double> y, std::vector<int> hues);
         void visualizeLine(const std::vector<geometry_msgs::Point> points, std::string ns, int id, int hue, double thickness);

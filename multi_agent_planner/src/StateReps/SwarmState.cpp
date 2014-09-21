@@ -1,8 +1,8 @@
 #include <multi_agent_planner/StateReps/SwarmState.h>
 #include <multi_agent_planner/Constants.h>
-#include <multi_agent_planner/Utilities.h>
 #include <multi_agent_planner/Visualizer.h>
 #include <multi_agent_planner/LoggerNames.h>
+#include <multi_agent_planner/Utilities.h>
 #include <sstream>
 #include <boost/scoped_ptr.hpp>
 

@@ -4,6 +4,7 @@
 #include <multi_agent_planner/HashManager.h>
 #include <multi_agent_planner/SearchRequest.h>
 #include <multi_agent_planner/StateReps/GoalState.h>
+#include <multi_agent_planner/StateReps/GoalRegionState.h>
 #include <multi_agent_planner/MotionPrimitives/MotionPrimitivesMgr.h>
 #include <multi_agent_planner/MotionPrimitives/PolicyGenerator.h>
 #include <multi_agent_planner/Heuristics/HeuristicMgr.h>
@@ -60,6 +61,7 @@ namespace multi_agent_planner {
             HashManagerPtr m_hash_mgr;
             ros::NodeHandle m_nodehandle;
             GoalStatePtr m_goal;
+            GoalRegionStatePtr m_goal_region;
             MotionPrimitivesMgr m_mprims;
             PolicyGeneratorPtr m_policy_generator;
             HeuristicMgrPtr m_heur_mgr;

@@ -48,6 +48,34 @@ void SwarmViz::visualizeCircle(std::string ns, double x, double y, int
     marker_publisher_.publish(marker);
 }
 
+void SwarmViz::visualizeCircle(std::string ns, double x, double y, double
+  radius, int hue)
+{
+    // visualizes a generic circle
+    double r=0,g=0,b=0;
+    visualization_msgs::Marker marker;
+    leatherman::HSVtoRGB(&r, &g, &b, hue, 1.0, 1.0);
+
+    marker.header.stamp = ros::Time::now();
+    marker.header.frame_id = reference_frame_;
+    marker.ns = ns;
+    marker.id = 1;
+    marker.type = visualization_msgs::Marker::SPHERE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = x;
+    marker.pose.position.y = y;
+    marker.pose.position.z = nominal_z_;
+    marker.scale.x = radius*2.0;
+    marker.scale.y = radius*2.0;
+    marker.scale.z = radius*2.0;
+    marker.color.r = r;
+    marker.color.g = g;
+    marker.color.b = b;
+    marker.color.a = 0.5;
+    marker.lifetime = ros::Duration(180.0);
+    marker_publisher_.publish(marker);
+}
+
 void SwarmViz::visualizeCircles(std::string ns, std::vector<double> x,
                 std::vector<double> y, std::vector<int> hues)
 {

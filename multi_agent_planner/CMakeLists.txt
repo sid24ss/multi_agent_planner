@@ -30,6 +30,7 @@ rosbuild_add_library(multi_agent_planner
                                             src/StateReps/GraphState.cpp
                                             src/StateReps/SwarmState.cpp
                                             src/StateReps/GoalState.cpp
+                                            src/StateReps/GoalRegionState.cpp
                                             
                                             src/MotionPrimitives/NavMotionPrimitive.cpp
                                             src/MotionPrimitives/NavAdaptiveMotionPrimitive.cpp

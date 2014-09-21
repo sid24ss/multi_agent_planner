@@ -1,8 +1,8 @@
 #include <multi_agent_planner/CollisionSpaceMgr.h>
 #include <multi_agent_planner/LoggerNames.h>
 #include <multi_agent_planner/Constants.h>
-#include <multi_agent_planner/Utilities.h>
 #include <multi_agent_planner/Visualizer.h>
+#include <multi_agent_planner/Utilities.h>
 #include <boost/foreach.hpp>
 #include <stdexcept>
 #include <vector>
@@ -139,17 +139,38 @@ bool CollisionSpaceMgr::checkSwarmDistortion(const SwarmState& swarm_state) cons
     auto robots_list = swarm_state.robots_pose();
     for (size_t i = 0; i < static_cast<size_t>(SwarmState::NUM_ROBOTS); i++) {
         for (size_t j = 0; j < static_cast<size_t>(SwarmState::NUM_ROBOTS); j++) {
-            // get the relative position it should be in
-            auto desired_coords = SwarmState::REL_POSITIONS[i][j].coords();
-            double desired_norm = vectorNorm(desired_coords);
             // get the current distance
             double current_norm = ContRobotState::distance(
                                             robots_list[i].getContRobotState(),
                                             robots_list[j].getContRobotState()
                                         );
-            if (current_norm > desired_norm + m_fatal_distortion_distance)
+            if (current_norm > m_fatal_distortion_distance)
                 return false;
         }
+    }
+    return true;
+}
+
+/**
+ * @brief checks for validity of the line segment between the two points
+ * @details gets the Bresenham Line points and checks if any of them go through
+ * an obstacle
+ * 
+ * @param x1 input start x
+ * @param y1 input start y
+ * @param x2 input end x
+ * @param y2 input end y
+ * @return true if the segment has no collision, false if it goes through an
+ * obstacle
+ */
+bool CollisionSpaceMgr::isValidLineSegment(int x1, int y1, int x2, int y2) const
+{
+    int z_i = NOMINAL_Z/ContRobotState::getResolution();
+    auto pts = std::move(getBresenhamLinePoints(x1, y1, x2, y2));
+    for (auto& pt : pts) {
+        double dist_temp = m_occupancy_grid->getDistance(pt.first, pt.second, z_i);
+        if (dist_temp <= 0.005)
+            return false;
     }
     return true;
 }

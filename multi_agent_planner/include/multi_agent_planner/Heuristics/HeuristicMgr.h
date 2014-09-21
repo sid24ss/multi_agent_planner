@@ -2,6 +2,7 @@
 #include <multi_agent_planner/StateReps/GraphState.h>
 #include <multi_agent_planner/OccupancyGridUser.h>
 #include <multi_agent_planner/StateReps/GoalState.h>
+#include <multi_agent_planner/StateReps/GoalRegionState.h>
 #include <multi_agent_planner/Heuristics/AbstractHeuristic.h>
 #include <multi_agent_planner/LoggerNames.h>
 #include <multi_agent_planner/Visualizer.h>
@@ -42,7 +43,7 @@ namespace multi_agent_planner {
             void update2DHeuristicMaps(const std::vector<unsigned char>& data);
 
             // TODO: Multiple goals should just take the goal state and the heuristic ID.
-            void setGoal(GoalState& state);
+            void setGoal(GoalRegionState& state);
 
             // Get the heuristic value
             void getGoalHeuristic(const GraphStatePtr& state,
@@ -64,7 +65,7 @@ namespace multi_agent_planner {
         inline void setCollisionSpaceMgr(CSpaceMgrPtr cspace_mgr){ m_cspace_mgr = cspace_mgr;};
  
         private:
-            GoalState m_goal;
+            GoalRegionState m_goal;
             std::vector<AbstractHeuristicPtr> m_heuristics;
             stringintmap m_heuristic_map;
 

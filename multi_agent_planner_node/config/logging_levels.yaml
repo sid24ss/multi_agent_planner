@@ -5,8 +5,8 @@ debug:
         collision_space: debug
         kinematics: info
         hashmanager: info
-        search: info
-        motionprimitives: info
+        search: debug
+        motionprimitives: debug
         heuristics: info
-        pathpostprocessor: info
+        pathpostprocessor: debug
         policygenerator: info

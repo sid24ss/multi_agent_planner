@@ -96,18 +96,23 @@ void HeuristicMgr::update3DHeuristicMaps(){
     }
 }
 
-void HeuristicMgr::setGoal(GoalState& goal_state){
+void HeuristicMgr::setGoal(GoalRegionState& goal_state){
     // Save goal state for future use
     m_goal = goal_state;
-    auto robots_list = goal_state.getSwarmState().robots_pose();
+    auto goal_coords = goal_state.getGoalState();
+    ContRobotState goal_robot_c(goal_coords);
+    DiscRobotState goal_robot_d = goal_robot_c.getDiscRobotState();
     // set the right goal for each of the heuristics for the leaders
     for (int i = 0; i < NUM_LEADERS; i++) {
         std::stringstream ss;
         ss << "bfs2d_" << SwarmState::LEADER_IDS[i];
-        DiscRobotState d_state = robots_list[SwarmState::LEADER_IDS[i]].getDiscRobotState();
-        m_heuristics[m_heuristic_map[ss.str()]]->setGoal(d_state.x(), d_state.y());
+        m_heuristics[m_heuristic_map[ss.str()]]->setGoal(
+                                        goal_robot_d.x(),
+                                        goal_robot_d.y());
         ROS_DEBUG_NAMED(HEUR_LOG, "[HEUR_LOG] setting goal %d %d for leader_id %d",
-                                    d_state.x(), d_state.y(), SwarmState::LEADER_IDS[i]);
+                                    goal_robot_d.x(),
+                                    goal_robot_d.y(),
+                                    SwarmState::LEADER_IDS[i]);
     }
 }
 

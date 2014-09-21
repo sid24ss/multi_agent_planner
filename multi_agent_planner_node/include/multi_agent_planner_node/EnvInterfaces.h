@@ -5,7 +5,6 @@
 #include <multi_agent_planner/SearchRequest.h>
 #include <multi_agent_planner/Environment.h>
 #include <multi_agent_planner/Constants.h>
-#include <multi_agent_planner/Utilities.h>
 // #include <multi_agent_planner/StatsWriter.h>
 #include <sbpl/planners/araplanner.h>
 #include <sbpl/planners/mha_planner.h>

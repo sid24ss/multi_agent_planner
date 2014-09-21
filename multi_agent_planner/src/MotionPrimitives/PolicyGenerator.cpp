@@ -1,8 +1,7 @@
 #include <multi_agent_planner/MotionPrimitives/PolicyGenerator.h>
 #include <multi_agent_planner/LoggerNames.h>
-#include <multi_agent_planner/Constants.h>
-#include <multi_agent_planner/Utilities.h>
 #include <costmap_2d/cost_values.h>
+#include <multi_agent_planner/Utilities.h>
 #include <cassert>
 #include <cmath>
 
@@ -34,8 +33,40 @@ bool PolicyGenerator::applyPolicy(const GraphState& leader_moved_state,
         policies[i] = getRobotPolicy(robots_list, leader_id, i);
     }
     // now set the robotstate based on the policies
-    for(size_t i = 0; i < robots_list.size(); ++i) {
+    for (size_t i = 0; i < robots_list.size(); ++i) {
         robots_list[i] = RobotState(robots_list[i].getContRobotState() + policies[i]);
+    }
+    for(size_t i = 0; i < robots_list.size(); ++i) {
+        // implicit ordering available
+        if (i == leader_id)
+            continue;
+        for (size_t j = 0; j < robots_list.size(); ++j) {
+            if (j == i)
+                continue;
+            // get collision distance and check if less than fatal distance
+            double dist = ContRobotState::distance(
+                                    robots_list[i].getContRobotState(),
+                                    robots_list[j].getContRobotState());
+            if (dist <= 2*m_robot_params.robot_radius + 
+                            m_robot_params.fatal_collision_distance) {
+                // need to snap
+                // push robot i back out from j
+                double ratio = (2*m_robot_params.robot_radius + m_robot_params.
+                            fatal_collision_distance) / dist;
+                // find the directions
+                double x_dir = static_cast<double>(
+                    sgn(robots_list[i].getContRobotState().x() 
+                    - robots_list[j].getContRobotState().x()));
+                double y_dir = static_cast<double>(
+                    sgn(robots_list[i].getContRobotState().y() 
+                    - robots_list[j].getContRobotState().y()));
+                ContRobotState push_away;
+                push_away.x(x_dir * dist * ratio);
+                push_away.y(y_dir * dist * ratio);
+                robots_list[i] = RobotState(robots_list[i].getContRobotState() +
+                    push_away);
+            }
+        }
     }
     SwarmState successor_swarm(robots_list);
     successor_swarm.setLeader(leader_id);
@@ -49,7 +80,7 @@ ContRobotState PolicyGenerator::getRobotPolicy(const std::vector<RobotState>& ro
     assert(robot_id != leader_id);
     // Step 1 : we first want the move-action; this is the action that makes
     // us move where the leader is moving toward
-    ContMotion move_component = getLeaderComponent(robots_list,
+    ContMotion move_component = getFollowLeaderComponent(robots_list,
                                                     robot_id,
                                                     leader_id);
     // Step 2: get other robots' influence for this robot
@@ -80,6 +111,14 @@ std::vector <double> PolicyGenerator::getFollowLeaderComponent(
     double leader_x = robots_list[leader_id].getContRobotState().x();
     double leader_y = robots_list[leader_id].getContRobotState().y();
     ContRobotState cont_robot_state = robots_list[robot_id].getContRobotState();
+    // check visibility
+    DiscRobotState disc_leader = robots_list[leader_id].getDiscRobotState();
+    DiscRobotState disc_r_state = robots_list[robot_id].getDiscRobotState();
+    if (!m_collision_space->isValidLineSegment(disc_r_state.x(),
+                                               disc_r_state.y(),
+                                               disc_leader.x(),
+                                               disc_leader.y()))
+        return ContMotion(ROBOT_DOF, 0);
     // compute the policy
     ContMotion move_component(ROBOT_DOF,0);
     move_component[RobotStateElement::X] = leader_x - cont_robot_state.x();
@@ -98,7 +137,7 @@ std::vector <double> PolicyGenerator::getFollowLeaderComponent(
     return move_component;
 }
 
-std::vector <double> PolicyGenerator::getLeaderComponent(
+std::vector <double> PolicyGenerator::getFormationLeaderComponent(
                                     const std::vector<RobotState>& robots_list,
                                     int robot_id,
                                     int leader_id)

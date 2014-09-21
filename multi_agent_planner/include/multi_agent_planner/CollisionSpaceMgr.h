@@ -30,6 +30,7 @@ namespace multi_agent_planner {
             void updateMap(const arm_navigation_msgs::CollisionMap& map);
             bool loadMap(const std::vector<Eigen::Vector3d>& points);
             double getRobotRadius() const { return m_robot_radius; }
+            bool isValidLineSegment(int x1, int y1, int x2, int y2) const;
 
         private:
             double m_robot_radius;

@@ -32,7 +32,7 @@ namespace multi_agent_planner {
                                     const std::vector<RobotState>& robots_list,
                                     int robot_id,
                                     int leader_id);
-            std::vector <double> getLeaderComponent(
+            std::vector <double> getFormationLeaderComponent(
                                     const std::vector<RobotState>& robots_list,
                                     int robot_id,
                                     int leader_id);
