@@ -86,70 +86,16 @@ void Environment::GetSuccs(int sourceStateID, std::vector<int>* succIDs,
 {
     assert(sourceStateID != GOAL_STATE);
     throw std::runtime_error("Shouldn't be calling this for lazy!");
-    // need to do this because planner starts queues from 0 (anchor), 1 ... N
-    // int leader_id = SwarmState::LEADER_IDS[q_id];
-
-    // ROS_DEBUG_NAMED(SEARCH_LOG, 
-    //         "==================Expanding state %d==================", 
-    //                 sourceStateID);
-    // succIDs->clear();
-    // succIDs->reserve(m_mprims.getMotionPrims().size());
-    // costs->clear();
-    // costs->reserve(m_mprims.getMotionPrims().size());
-
-    // GraphStatePtr source_state = m_hash_mgr->getGraphState(sourceStateID);
-    // ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
-    // source_state->swarm_state().printToDebug(SEARCH_LOG);
-    // if (m_param_catalog.m_visualization_params.expansions) {
-    //     SwarmState exp_swarm = source_state->swarm_state();
-    //     exp_swarm.visualize();
-    //     usleep(5000);
-    // }
-    // for (auto mprim : m_mprims.getMotionPrims()) {
-    //     // ROS_DEBUG_NAMED(SEARCH_LOG, "Applying motion:");
-    //     // mprim->printEndCoord();
-    //     GraphStatePtr successor;
-    //     TransitionData t_data;
-    //     if (!mprim->apply(*source_state, leader_id, successor, t_data)) {
-    //         ROS_DEBUG_NAMED(MPRIM_LOG, "couldn't apply mprim");
-    //         continue;
-    //     }
-
-    //     if (m_cspace_mgr->isValidSuccessor(*successor) &&
-    //         m_cspace_mgr->isValidTransitionStates(t_data)){
-    //         ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
-    //         source_state->printToDebug(SEARCH_LOG);
-    //         m_hash_mgr->save(successor);
-    //         ROS_DEBUG_NAMED(MPRIM_LOG, "successor state with id %d is:", 
-    //                         successor->id());
-    //         successor->printToDebug(MPRIM_LOG);
-
-    //         if (m_goal->isSatisfiedBy(successor)){
-    //             m_goal->storeAsSolnState(successor);
-    //             ROS_DEBUG_NAMED(SEARCH_LOG, "Found potential goal at state %d %d", successor->id(),
-    //                 mprim->cost());
-    //             succIDs->push_back(GOAL_STATE);
-    //         } else {
-    //             succIDs->push_back(successor->id());
-    //         }
-    //         costs->push_back(mprim->cost());
-    //         ROS_DEBUG_NAMED(SEARCH_LOG, "motion succeeded with cost %d", mprim->cost());
-    //     } else {
-    //         //successor->robot_pose().visualize();
-    //         ROS_DEBUG_NAMED(SEARCH_LOG, "successor failed collision checking");
-    //     }
-    // }
 }
 
-void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
-                        std::vector<int>* costs, std::vector<bool>* isTrueCost){
-    int q_id = 0;
-    GetLazySuccs(sourceStateID, succIDs, costs, isTrueCost, q_id);
-}
+// void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
+//                         std::vector<int>* costs, std::vector<bool>* isTrueCost){
+//     int q_id = 0;
+//     GetLazySuccs(sourceStateID, succIDs, costs, isTrueCost, q_id);
+// }
 
-void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
-                        std::vector<int>* costs, std::vector<bool>* isTrueCost,
-                        int q_id)
+void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* succIDs, 
+                        std::vector<int>* costs, std::vector<bool>* isTrueCost)
 {
     if (q_id == 0) {
         throw std::runtime_error("Expanding anchor is not implemented yet!");
@@ -226,15 +172,15 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             // isLeaderChangeRequired
             // NOTE : We do it here because you don't need to change the leader
             // for the adaptive motion primitive
-            bool leader_change_required = 
-            m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
-            if (leader_change_required) {
-                // ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
-                successor->setLeader(leader_id);
-                t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
-            } else {
+            // bool leader_change_required = 
+            // m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
+            // if (leader_change_required) {
+            //     // ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
+            //     successor->setLeader(leader_id);
+            //     t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
+            // } else {
                 successor->setLeader(source_state->getLeader());
-            }
+            // }
         } else {
             successor = leader_moved_state;
             mprim->computeTData(*source_state, leader_id, successor, t_data);
@@ -273,6 +219,7 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
         // ROS_DEBUG_NAMED(SEARCH_LOG, "size of succsIDs %ld, costs : %ld", 
         //     succIDs->size(), costs->size());
     }
+    std::cin.get();
 }
 
 /*
@@ -324,6 +271,25 @@ int Environment::GetTrueCost(int parentID, int childID){
     // // assert(matchesEndID);
 
     // return total_cost;
+}
+
+void Environment::TransferFunction(int transfer_to, const std::vector<int>& stateList,
+                std::vector<int>* transferredList, std::vector<int>* extraCosts)
+{
+    if (transfer_to == 0)
+        throw new std::runtime_error("Cannot use transfer function for anchor!");
+    transferredList->clear();
+    extraCosts->clear();
+    // change the leader to this.
+    int leader_id = SwarmState::LEADER_IDS.at(transfer_to - 1);
+    for (auto& stateID : stateList) {
+        GraphStatePtr source_state = m_hash_mgr->getGraphState(stateID);
+        GraphStatePtr transferred_state(new GraphState(*source_state));
+        transferred_state->setLeader(leader_id);
+        m_hash_mgr->save(transferred_state);
+        transferredList->push_back(transferred_state->id());
+        extraCosts->push_back(m_param_catalog.m_motion_primitive_params.change_leader_cost);
+    }
 }
 
 bool Environment::setStartGoal(SearchRequestPtr search_request,

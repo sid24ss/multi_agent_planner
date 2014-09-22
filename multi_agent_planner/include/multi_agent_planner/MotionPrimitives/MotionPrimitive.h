@@ -22,10 +22,10 @@ namespace multi_agent_planner {
                                 int leader_id,
                                 GraphStatePtr& successor) = 0;
 
-            virtual void computeTData( const GraphState& graph_state, 
+            static void computeTData( const GraphState& graph_state, 
                                 int leader_id,
                                 GraphStatePtr& successor,
-                                TransitionData& t_data) = 0;
+                                TransitionData& t_data);
 
             virtual void print() const = 0;
             virtual void setBaseCost(int cost) { m_base_cost = cost; }

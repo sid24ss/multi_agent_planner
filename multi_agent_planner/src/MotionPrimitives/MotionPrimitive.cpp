@@ -19,6 +19,27 @@ double MotionPrimitive::getDisplacement() {
     return ContRobotState::distance(c_origin, c_displaced);
 }
 
+void MotionPrimitive::computeTData(const GraphState& source_state,
+                                        int leader_id,
+                                        GraphStatePtr& successor,
+                                        TransitionData& t_data)
+{
+    // this function fills the intermediate swarm states
+    auto start_swarm = source_state.swarm_state();
+    auto end_swarm = successor->swarm_state();
+
+    std::vector<SwarmState> interm_swarm_steps;
+    // gives only the intermediate swarm steps. And TData should have only those
+    // anyway.
+    // NOTE: If TData should have the start and the end as well, this is where
+    // you need to push them in.
+    SwarmState::interpolate(start_swarm, end_swarm, interm_swarm_steps);
+
+    for (auto& interm_swarm_step : interm_swarm_steps)
+        interm_swarm_step.setLeader(start_swarm.getLeader());
+    t_data.interm_swarm_steps(interm_swarm_steps);
+}
+
 void MotionPrimitive::printIntermSteps() const {
     BOOST_FOREACH(auto step, m_interm_steps){
         std::stringstream ss;

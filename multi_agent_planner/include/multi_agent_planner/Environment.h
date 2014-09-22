@@ -34,10 +34,9 @@ namespace multi_agent_planner {
                 std::vector<int>* costs);
             void GetSuccs(int sourceStateID, std::vector<int>* succIDs, 
                 std::vector<int>* costs, int leader_id);
-            virtual void GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
+            virtual void GetLazySuccs(int leader_id, int sourceStateID, std::vector<int>* succIDs, 
                 std::vector<int>* costs, std::vector<bool>* isTrueCost);
-            virtual void GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
-                std::vector<int>* costs, std::vector<bool>* isTrueCost, int leader_id);
+            virtual void TransferFunction(int transfer_to, const std::vector<int>& stateList, std::vector<int>* transferredList, std::vector<int>* extraCosts);
             virtual int GetTrueCost(int parentID, int childID);
             std::vector<SwarmState> reconstructPath(std::vector<int> 
                 state_ids);

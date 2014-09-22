@@ -16,10 +16,6 @@ namespace multi_agent_planner {
                                 int leader_id,
                                 GraphStatePtr& successor);
             virtual void print() const ;
-            virtual void computeTData(const GraphState& graph_state, 
-                                int leader_id,
-                                GraphStatePtr& successor,
-                                TransitionData& t_data);
             virtual MPrim_Type::Type getPrimitiveType() const { return
                 MPrim_Type::NAV; };
     };

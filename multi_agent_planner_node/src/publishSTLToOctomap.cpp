@@ -144,11 +144,11 @@ void addEnvironmentComponents(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud){
     addCuboid(pclCloud, 0, 4, 0, 5.00, 0.04, 0.5, true);
     addCuboid(pclCloud, 2, 2, 0, 5.00, 0.04, 0.5, true);
     // third corridor
-    addCuboid(pclCloud, 5, 4, 0, 0.04, 1.00, 0.5, true);
-    addCuboid(pclCloud, 7, 2, 0, 0.04, 5.00, 0.5, true);
+    // addCuboid(pclCloud, 5, 4, 0, 0.04, 1.00, 0.5, true);
+    // addCuboid(pclCloud, 7, 2, 0, 0.04, 5.00, 0.5, true);
     // fourth corridor
-    addCuboid(pclCloud, 0, 5, 0, 5.00, 0.04, 0.5, true);
-    addCuboid(pclCloud, 0, 7, 0, 7.00, 0.04, 0.5, true);
+    // addCuboid(pclCloud, 0, 5, 0, 5.00, 0.04, 0.5, true);
+    // addCuboid(pclCloud, 0, 7, 0, 7.00, 0.04, 0.5, true);
 }
 
 vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
