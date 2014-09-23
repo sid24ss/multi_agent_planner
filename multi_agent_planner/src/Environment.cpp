@@ -241,8 +241,8 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
             t_data.cost(mprim->getBaseCost());
         }
         successor->printToDebug(SEARCH_LOG);
-        successor->swarm_state().visualize();
-        std::cin.get();
+        // successor->swarm_state().visualize();
+        // std::cin.get();
 
         // save the successor to the hash manager
         // generate the edge

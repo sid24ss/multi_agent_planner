@@ -14,13 +14,13 @@ robot_description:
   # swarm can't get distorted more than this! If any robot goes more than fatal_distortion_distance away from the reference point in RELATIVE_POSITIONS, it is invalid
   fatal_distortion_distance: 2.5
   # this describes how far the other robots can be before I start caring about not moving closer when executing my policy. Must be greater than the fatal_collision_distance (doesn't make sense otherwise! - I care about loss once I've collided?)
-  neighbor_influence_distance: 0.25
+  neighbor_influence_distance: 0.3
   # the envt_compliance_factor defines how much the robots can respond to the obstacles around when executing their policies. A factor of 1 implies that they can't move any more than their nominalvel_mpersecs (say, 0.05m) at each step.
   envt_compliance_factor: 2.0
   # the leader_attraction_factor defines how much the robots can move to keep up with the leader.
   leader_attraction_factor: 0.9
   # the neighbor_repel_factor decides how much the robots comply to the position of the other robots
-  neighbor_repel_factor: 1.0
+  neighbor_repel_factor: 3.0
 
 collision_space:
   reference_frame: map
