@@ -29,7 +29,7 @@ int main(int argc, char** argv){
   if (argc >= 3)
     trial_id = std::atoi(argv[2]);
 
-  int test_num_to_run;
+  int test_num_to_run = -1;
   if (argc == 4)
     test_num_to_run = std::atoi(argv[3]);
 
@@ -77,7 +77,7 @@ int main(int argc, char** argv){
               &req.swarm_goal[RobotStateElement::Y]) <= 0)
       break;
 
-    if (test_num != test_num_to_run){
+    if (test_num != test_num_to_run && test_num_to_run!=-1){
       printf("(skipping %d)\n", test_num);
       continue;
     }

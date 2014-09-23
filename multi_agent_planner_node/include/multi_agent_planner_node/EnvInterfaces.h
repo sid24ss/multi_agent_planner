@@ -71,6 +71,7 @@ namespace multi_agent_planner_node {
 
             std::vector<signed char> m_final_map;
             std::vector<unsigned char> m_cropped_map;
+            unsigned char** m_grid;
 
             ros::Subscriber interrupt_sub_;
             boost::mutex mutex;

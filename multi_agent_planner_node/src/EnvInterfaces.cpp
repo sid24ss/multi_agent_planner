@@ -82,6 +82,24 @@ bool EnvInterfaces::GenerateExperimentsFile(std_srvs::Empty::Request &req, std_s
     if (m_collision_space_interface->getCollisionSpace()->isValid(swarm_start)
         && m_collision_space_interface->getCollisionSpace()->isValid(swarm_goal))
     {
+        bool valid_inflation = true;
+        for (size_t i = 0; i < swarm_start.robots_pose().size(); ++i) {
+            auto disc_robot = swarm_start.robots_pose()[i].getDiscRobotState();
+            if (m_grid[disc_robot.x()][disc_robot.y()] >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE){
+                valid_inflation = false;
+                break;
+            }
+        }
+        for (size_t i = 0; i < swarm_goal.robots_pose().size() &&
+            valid_inflation; ++i) {
+            auto disc_robot = swarm_goal.robots_pose()[i].getDiscRobotState();
+            if (m_grid[disc_robot.x()][disc_robot.y()] >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE){
+                valid_inflation = false;
+                break;
+            }
+        }
+        if (!valid_inflation)
+            continue;
         swarm_start.visualize();
         swarm_goal.visualize();
         // huzzah! We have a valid start goal
@@ -404,4 +422,13 @@ void EnvInterfaces::loadNavMap(const nav_msgs::OccupancyGridPtr& map){
 
     m_env->getPolicyGenerator()->update2DHeuristicMaps(m_cropped_map);
     m_env->getHeuristicMgr()->update2DHeuristicMaps(m_cropped_map);
+
+    // save as grid for use when generating random start-goals
+    m_grid = new unsigned char*[dimX + 1];
+    for (int i=0; i < dimX + 1; i++){
+        m_grid[i] = new unsigned char[dimY + 1];
+        for (int j=0; j < dimY + 1; j++){
+            m_grid[i][j] = (m_cropped_map[j*(dimX + 1)+i]);
+        }
+    }
 }

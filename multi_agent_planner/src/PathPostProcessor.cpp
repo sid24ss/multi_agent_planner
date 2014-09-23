@@ -36,8 +36,8 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
     // in the heap, we have to look it up.
     GraphStatePtr soln_state = goal_state.getSolnState();
     for (size_t i=0; i < soln_path.size()-1; i++){
-        MotionPrimitivePtr mprim = edge_cache.at(std::make_pair(soln_path[i],
-            soln_path[i+1]));
+        // MotionPrimitivePtr mprim = edge_cache.at(std::make_pair(soln_path[i],
+        //     soln_path[i+1]));
         bool last_state_before_goal = (i + 1) == soln_path.size() - 1;
         // TransitionData best_transition;
         GraphStatePtr source_state = m_hash_mgr->getGraphState(soln_path[i]);
@@ -54,7 +54,7 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
 
         TransitionData t_data;
         // get the leader
-        int leader_id;
+        int leader_id = source_state->swarm_state().getLeader();
         // if ((i + 1) == soln_path.size() -1) {
         //     leader_id = source_state->swarm_state().getLeader();
         //     mprim->apply(*source_state, leader_id, real_next_successor);
@@ -62,7 +62,6 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
         // } else {
         //     leader_id = real_next_successor->swarm_state().getLeader();
         // }
-        leader_id = real_next_successor->swarm_state().getLeader();
 
         ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "real_next_successor (%d) : ", real_next_successor->id());
         if(source_state->getLeader() != real_next_successor->getLeader())
@@ -84,7 +83,7 @@ std::vector<SwarmState> PathPostProcessor::reconstructPath(
                                     // *leader_moved_state, leader_id, successor);
             // successor->setLeader(leader_id);
         // }
-        mprim->computeTData(*source_state, leader_id, real_next_successor, t_data);
+        MotionPrimitive::computeTData(*source_state, leader_id, real_next_successor, t_data);
         // mprim->computeTData(*source_state, leader_id, successor, t_data);
         // ROS_DEBUG_NAMED(POSTPROCESSOR_LOG, "successor:");
         // successor->printToDebug(POSTPROCESSOR_LOG);
@@ -125,7 +124,7 @@ void PathPostProcessor::visualizeFinalPath(std::vector<SwarmState> path) {
     // path is a vector of SwarmStates; state is a SwarmState
     for (auto& state : path){
         state.visualize();
-        usleep(50000);
+        usleep(10000);
     }
 }
 

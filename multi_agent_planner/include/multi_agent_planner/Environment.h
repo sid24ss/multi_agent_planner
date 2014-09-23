@@ -15,7 +15,7 @@
 #include <vector>
 #include <memory>
 
-#define EPS1 15
+#define EPS1 10
 #define EPS2 1.1
 
 namespace multi_agent_planner {
@@ -35,10 +35,9 @@ namespace multi_agent_planner {
                 std::vector<int>* costs);
             void GetSuccs(int sourceStateID, std::vector<int>* succIDs, 
                 std::vector<int>* costs, int leader_id);
-            virtual void GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
+            virtual void GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* succIDs, 
                 std::vector<int>* costs, std::vector<bool>* isTrueCost);
-            virtual void GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
-                std::vector<int>* costs, std::vector<bool>* isTrueCost, int leader_id);
+            virtual void TransferFunction(int transfer_to, const std::vector<int>& stateList, std::vector<int>* transferredList, std::vector<int>* extraCosts);
             virtual int GetTrueCost(int parentID, int childID);
             std::vector<SwarmState> reconstructPath(std::vector<int> 
                 state_ids);
@@ -78,7 +77,7 @@ namespace multi_agent_planner {
             bool InitializeMDPCfg(MDPConfig *MDPCfg){ return true; };
             int  GetFromToHeuristic(int FromStateID, int ToStateID){ throw std::runtime_error("unimplemented");  };
             int  GetGoalHeuristic(int stateID);
-            int  GetGoalHeuristic(int leader_id, int stateID);
+            int  GetGoalHeuristic(int q_id, int stateID);
             int  GetStartHeuristic(int stateID) { throw std::runtime_error("unimplemented"); };
             void GetPreds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV){};
             void SetAllActionsandAllOutcomes(CMDPSTATE* state){};
