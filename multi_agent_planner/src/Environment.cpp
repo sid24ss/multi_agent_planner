@@ -157,14 +157,15 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
             int policy_cost = m_policy_generator->computePolicyCost(*source_state,
                 leader_id, successor);
             // Step 4 : compute the TData
-            mprim->computeTData(*source_state, leader_id, successor, t_data);
+            MotionPrimitive::computeTData(*source_state, leader_id, successor, t_data);
             // ROS_DEBUG_NAMED(SEARCH_LOG, "policy_cost : %d", policy_cost);
             // We need to set the cost of the tData because the policyGenerator
             // is not aware of the cost of the mprim
             t_data.cost(mprim->getBaseCost() + policy_cost);
 
             if(!m_cspace_mgr->isValidSuccessor(*successor) ||
-                        !m_cspace_mgr->isValidTransitionStates(t_data)) {
+                !m_cspace_mgr->isValidTransitionStates(t_data) ||
+                !m_cspace_mgr->checkSwarmVisibility(successor->swarm_state(),leader_id)) {
                 continue;
             }
             // generate bool leader_change_required after checking if we need to
@@ -222,7 +223,7 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
         // ROS_DEBUG_NAMED(SEARCH_LOG, "size of succsIDs %ld, costs : %ld", 
         //     succIDs->size(), costs->size());
     }
-    // std::cin.get();
+    std::cin.get();
 }
 
 /*

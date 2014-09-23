@@ -152,6 +152,28 @@ bool CollisionSpaceMgr::checkSwarmDistortion(const SwarmState& swarm_state) cons
 }
 
 /**
+ * @brief checks for visibility of each swarm member to the leader
+ * 
+ * @param swarm_state the swarm state to check visibility for
+ * @return true if all have line of sight, false if now
+ */
+bool CollisionSpaceMgr::checkSwarmVisibility(const SwarmState& swarm_state,
+                                            int leader_id) const
+{
+    auto robots_list = swarm_state.robots_pose();
+    auto leader_disc_state = robots_list[leader_id].getDiscRobotState();
+    for (size_t i = 0; i < static_cast<size_t>(SwarmState::NUM_ROBOTS); i++) {
+        if (static_cast<int>(i) == leader_id)
+            continue;
+        auto d_current_robot = robots_list[i].getDiscRobotState();
+        if (!isValidLineSegment(d_current_robot.x(), d_current_robot.y(),
+                                leader_disc_state.x(), leader_disc_state.y()))
+            return false;
+    }
+    return true;
+}
+
+/**
  * @brief checks for validity of the line segment between the two points
  * @details gets the Bresenham Line points and checks if any of them go through
  * an obstacle
