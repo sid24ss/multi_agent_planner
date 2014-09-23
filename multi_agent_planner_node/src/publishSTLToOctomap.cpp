@@ -91,27 +91,28 @@ void addRandomObstacles(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud, int
     double obstacleSizeYMax = 2;
     double obstacleSizeYMin = 0.1;
 
-    double obstacleBoundsXMin = 0 + obstacleSizeXMax/2;
-    double obstacleBoundsXMax = dimX - obstacleSizeXMax/2;
+    // 0.8 is here for extra padding, because of the bounds of the environment.
+    double obstacleBoundsXMin = 0.8 + obstacleSizeXMax/2;
+    double obstacleBoundsXMax = dimX - 0.8 - obstacleSizeXMax/2;
     
-    double obstacleBoundsYMin = 0 + obstacleSizeYMax/2;
-    double obstacleBoundsYMax = dimY - obstacleSizeYMax/2;
+    double obstacleBoundsYMin = 0.8 + obstacleSizeYMax/2;
+    double obstacleBoundsYMax = dimY - 0.8 - obstacleSizeYMax/2;
 
     srand(seed);
 
     for (int i = 0; i < num_obstacles; ++i){
         // Generate size
-        double dimX = randomDouble(obstacleSizeXMin, obstacleSizeXMax);
-        double dimY = randomDouble(obstacleSizeYMin, obstacleSizeYMax);
-        double dimZ = 0.2;
+        double obs_dimX = randomDouble(obstacleSizeXMin, obstacleSizeXMax);
+        double obs_dimY = randomDouble(obstacleSizeYMin, obstacleSizeYMax);
+        double obs_dimZ = 0.2;
 
         // generate position and adjust to center
-        double X = randomDouble(obstacleBoundsXMin, obstacleBoundsXMax) - dimX/2;
-        double Y = randomDouble(obstacleBoundsYMin, obstacleBoundsYMax) - dimY/2;
+        double X = randomDouble(obstacleBoundsXMin, obstacleBoundsXMax) - obs_dimX/2;
+        double Y = randomDouble(obstacleBoundsYMin, obstacleBoundsYMax) - obs_dimY/2;
         double Z = 0.0;
 
         // Now, we can add this surface.
-        addCuboid(pclCloud, X, Y, Z, dimX, dimY, dimZ, false);
+        addCuboid(pclCloud, X, Y, Z, obs_dimX, obs_dimY, obs_dimZ, false);
     }
 }
 
@@ -144,11 +145,11 @@ void addEnvironmentComponents(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud){
     addCuboid(pclCloud, 0, 4, 0, 5.00, 0.04, 0.5, true);
     addCuboid(pclCloud, 2, 2, 0, 5.00, 0.04, 0.5, true);
     // third corridor
-    // addCuboid(pclCloud, 5, 4, 0, 0.04, 1.00, 0.5, true);
-    // addCuboid(pclCloud, 7, 2, 0, 0.04, 5.00, 0.5, true);
+    addCuboid(pclCloud, 5, 4, 0, 0.04, 1.00, 0.5, true);
+    addCuboid(pclCloud, 7, 2, 0, 0.04, 5.00, 0.5, true);
     // fourth corridor
-    // addCuboid(pclCloud, 0, 5, 0, 5.00, 0.04, 0.5, true);
-    // addCuboid(pclCloud, 0, 7, 0, 7.00, 0.04, 0.5, true);
+    addCuboid(pclCloud, 0, 5, 0, 5.00, 0.04, 0.5, true);
+    addCuboid(pclCloud, 0, 7, 0, 7.00, 0.04, 0.5, true);
 }
 
 vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
@@ -256,7 +257,7 @@ vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
             nh.setParam("/multi_agent_planner_node/experiments/out_path", out_path);
             out_path.append("/env.yaml");
             int num_obstacles_min = 8;
-            int num_obstacles_max = 15;
+            int num_obstacles_max = 12;
             int num_obstacles = num_obstacles_min + 
                                 rand()%(num_obstacles_max - num_obstacles_min + 1);
             unsigned int seed = static_cast<unsigned int>(time(NULL));

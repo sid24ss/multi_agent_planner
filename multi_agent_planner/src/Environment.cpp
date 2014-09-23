@@ -219,7 +219,7 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
         // ROS_DEBUG_NAMED(SEARCH_LOG, "size of succsIDs %ld, costs : %ld", 
         //     succIDs->size(), costs->size());
     }
-    std::cin.get();
+    // std::cin.get();
 }
 
 /*
@@ -316,7 +316,7 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     ROS_INFO_NAMED(SEARCH_LOG, "Start state set to:");
     swarm_start.printToDebug(SEARCH_LOG);
     swarm_start.visualize();
-    std::cin.get();
+    // std::cin.get();
 
     m_goal = search_request->createGoalState();
     if(!m_cspace_mgr->isValid(m_goal->getSwarmState())) {
@@ -335,7 +335,7 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     m_goal->getSwarmState().printToDebug(SEARCH_LOG);
     m_goal->getSwarmState().printContToDebug(SEARCH_LOG);
     m_goal->getSwarmState().visualize();
-    std::cin.get();
+    // std::cin.get();
 
     // informs the heuristic about the goal
     m_heur_mgr->setGoal(*m_goal);

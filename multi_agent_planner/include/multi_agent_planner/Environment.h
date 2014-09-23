@@ -14,7 +14,7 @@
 #include <vector>
 #include <memory>
 
-#define EPS1 15
+#define EPS1 10
 #define EPS2 1.1
 
 namespace multi_agent_planner {
@@ -75,7 +75,7 @@ namespace multi_agent_planner {
             bool InitializeMDPCfg(MDPConfig *MDPCfg){ return true; };
             int  GetFromToHeuristic(int FromStateID, int ToStateID){ throw std::runtime_error("unimplemented");  };
             int  GetGoalHeuristic(int stateID);
-            int  GetGoalHeuristic(int leader_id, int stateID);
+            int  GetGoalHeuristic(int q_id, int stateID);
             int  GetStartHeuristic(int stateID) { throw std::runtime_error("unimplemented"); };
             void GetPreds(int TargetStateID, std::vector<int>* PredIDV, std::vector<int>* CostV){};
             void SetAllActionsandAllOutcomes(CMDPSTATE* state){};
