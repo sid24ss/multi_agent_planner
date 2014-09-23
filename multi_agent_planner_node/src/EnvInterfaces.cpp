@@ -31,7 +31,7 @@ EnvInterfaces::EnvInterfaces(std::shared_ptr<multi_agent_planner::Environment> e
     m_collision_space_interface->mutex = &mutex;
     getParams();
     bool forward_search = true;
-    m_ara_planner.reset(new ARAPlanner(m_env.get(), forward_search));
+    m_ara_planner.reset(new LazyARAPlanner(m_env.get(), forward_search));
     m_mha_planner.reset(new MHAPlanner(m_env.get(), NUM_LEADERS+1, forward_search));
     m_costmap_pub = m_nodehandle.advertise<nav_msgs::OccupancyGrid>("costmap_pub", 1);
     m_costmap_publisher.reset(new costmap_2d::Costmap2DPublisher(m_nodehandle,1,"/map"));
@@ -140,8 +140,7 @@ bool EnvInterfaces::runMHAPlanner(
     std::string planner_prefix,
     GetSwarmPlan::Request &req,
     GetSwarmPlan::Response &res,
-    SearchRequestParamsPtr search_request,
-    int counter) {
+    SearchRequestParamsPtr search_request) {
 
     int start_id, goal_id;
     bool forward_search = true;
@@ -158,8 +157,8 @@ bool EnvInterfaces::runMHAPlanner(
     m_mha_planner.reset(new MHAPlanner(m_env.get(), planner_queues, forward_search));
     total_planning_time = clock();
     if (!m_env->configureRequest(search_request, start_id, goal_id)){
-        ROS_ERROR("Unable to configure request for %s! Trial ID: %d",
-         planner_prefix.c_str(), counter);
+        ROS_ERROR("Unable to configure request for %s!",
+         planner_prefix.c_str());
         return false;
     }
     m_mha_planner->set_start(start_id);
@@ -216,10 +215,9 @@ bool EnvInterfaces::planPathCallback(GetSwarmPlan::Request &req,
 
     res.stats_field_names.resize(18);
     res.stats.resize(18);
-    int counter = 42;
     bool isPlanFound;
 
-    isPlanFound = runMHAPlanner("smha_", req, res, search_request, counter);
+    isPlanFound = runMHAPlanner("smha_", req, res, search_request);
     return isPlanFound;
 }
 

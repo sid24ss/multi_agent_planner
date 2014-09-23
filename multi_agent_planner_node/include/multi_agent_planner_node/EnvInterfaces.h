@@ -7,8 +7,9 @@
 #include <multi_agent_planner/Constants.h>
 #include <multi_agent_planner/Utilities.h>
 // #include <multi_agent_planner/StatsWriter.h>
-#include <sbpl/planners/araplanner.h>
+// #include <sbpl/planners/araplanner.h>
 #include <sbpl/planners/mha_planner.h>
+#include <sbpl/planners/lazyARA.h>
 #include <sbpl/planners/planner.h>
 #include <tf/transform_listener.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -52,8 +53,7 @@ namespace multi_agent_planner_node {
                   std::string planner_prefix,
                   GetSwarmPlan::Request &req,
                   GetSwarmPlan::Response &res,
-                  multi_agent_planner::SearchRequestParamsPtr search_request,
-                  int counter);
+                  multi_agent_planner::SearchRequestParamsPtr search_request);
             
             ros::NodeHandle m_nodehandle;
             InterfaceParams m_params;
@@ -64,7 +64,7 @@ namespace multi_agent_planner_node {
             ros::ServiceServer m_plan_service;
             ros::ServiceServer m_write_exp_service;
 
-            std::unique_ptr<SBPLPlanner> m_ara_planner;
+            std::unique_ptr<LazyARAPlanner> m_ara_planner;
             std::unique_ptr<MHAPlanner> m_mha_planner;
 
             ros::Subscriber m_nav_map;
