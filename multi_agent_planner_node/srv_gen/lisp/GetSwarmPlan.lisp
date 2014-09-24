@@ -47,6 +47,11 @@
     :initarg :dec_eps
     :type cl:float
     :initform 0.0)
+   (sbpl_planner
+    :reader sbpl_planner
+    :initarg :sbpl_planner
+    :type cl:fixnum
+    :initform 0)
    (planner_type
     :reader planner_type
     :initarg :planner_type
@@ -106,6 +111,11 @@
 (cl:defmethod dec_eps-val ((m <GetSwarmPlan-request>))
   (roslisp-msg-protocol:msg-deprecation-warning "Using old-style slot reader multi_agent_planner_node-srv:dec_eps-val is deprecated.  Use multi_agent_planner_node-srv:dec_eps instead.")
   (dec_eps m))
+
+(cl:ensure-generic-function 'sbpl_planner-val :lambda-list '(m))
+(cl:defmethod sbpl_planner-val ((m <GetSwarmPlan-request>))
+  (roslisp-msg-protocol:msg-deprecation-warning "Using old-style slot reader multi_agent_planner_node-srv:sbpl_planner-val is deprecated.  Use multi_agent_planner_node-srv:sbpl_planner instead.")
+  (sbpl_planner m))
 
 (cl:ensure-generic-function 'planner_type-val :lambda-list '(m))
 (cl:defmethod planner_type-val ((m <GetSwarmPlan-request>))
@@ -196,6 +206,9 @@
     (cl:write-byte (cl:ldb (cl:byte 8 40) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 48) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 56) bits) ostream))
+  (cl:let* ((signed (cl:slot-value msg 'sbpl_planner)) (unsigned (cl:if (cl:< signed 0) (cl:+ signed 256) signed)))
+    (cl:write-byte (cl:ldb (cl:byte 8 0) unsigned) ostream)
+    )
   (cl:let* ((signed (cl:slot-value msg 'planner_type)) (unsigned (cl:if (cl:< signed 0) (cl:+ signed 256) signed)))
     (cl:write-byte (cl:ldb (cl:byte 8 0) unsigned) ostream)
     )
@@ -296,6 +309,9 @@
     (cl:setf (cl:slot-value msg 'dec_eps) (roslisp-utils:decode-double-float-bits bits)))
     (cl:let ((unsigned 0))
       (cl:setf (cl:ldb (cl:byte 8 0) unsigned) (cl:read-byte istream))
+      (cl:setf (cl:slot-value msg 'sbpl_planner) (cl:if (cl:< unsigned 128) unsigned (cl:- unsigned 256))))
+    (cl:let ((unsigned 0))
+      (cl:setf (cl:ldb (cl:byte 8 0) unsigned) (cl:read-byte istream))
       (cl:setf (cl:slot-value msg 'planner_type) (cl:if (cl:< unsigned 128) unsigned (cl:- unsigned 256))))
     (cl:let ((unsigned 0))
       (cl:setf (cl:ldb (cl:byte 8 0) unsigned) (cl:read-byte istream))
@@ -310,16 +326,16 @@
   "multi_agent_planner_node/GetSwarmPlanRequest")
 (cl:defmethod roslisp-msg-protocol:md5sum ((type (cl:eql '<GetSwarmPlan-request>)))
   "Returns md5sum for a message object of type '<GetSwarmPlan-request>"
-  "b7f0a26069c6e8c4eb641e5486a11198")
+  "a841673a82e79b1e83929033134098f9")
 (cl:defmethod roslisp-msg-protocol:md5sum ((type (cl:eql 'GetSwarmPlan-request)))
   "Returns md5sum for a message object of type 'GetSwarmPlan-request"
-  "b7f0a26069c6e8c4eb641e5486a11198")
+  "a841673a82e79b1e83929033134098f9")
 (cl:defmethod roslisp-msg-protocol:message-definition ((type (cl:eql '<GetSwarmPlan-request>)))
   "Returns full string definition for message of type '<GetSwarmPlan-request>"
-  (cl:format cl:nil "int8 planning_mode~%float64 allocated_planning_time~%~%~%float64[] swarm_start~%float64[] swarm_goal~%~%~%float64 tolerance~%~%float64 initial_eps~%float64 final_eps~%float64 dec_eps~%~%int8 planner_type~%int8 meta_search_type~%~%~%~%"))
+  (cl:format cl:nil "int8 planning_mode~%float64 allocated_planning_time~%~%float64[] swarm_start~%float64[] swarm_goal~%~%~%float64 tolerance~%~%float64 initial_eps~%float64 final_eps~%float64 dec_eps~%~%int8 sbpl_planner~%int8 planner_type~%int8 meta_search_type~%~%~%~%"))
 (cl:defmethod roslisp-msg-protocol:message-definition ((type (cl:eql 'GetSwarmPlan-request)))
   "Returns full string definition for message of type 'GetSwarmPlan-request"
-  (cl:format cl:nil "int8 planning_mode~%float64 allocated_planning_time~%~%~%float64[] swarm_start~%float64[] swarm_goal~%~%~%float64 tolerance~%~%float64 initial_eps~%float64 final_eps~%float64 dec_eps~%~%int8 planner_type~%int8 meta_search_type~%~%~%~%"))
+  (cl:format cl:nil "int8 planning_mode~%float64 allocated_planning_time~%~%float64[] swarm_start~%float64[] swarm_goal~%~%~%float64 tolerance~%~%float64 initial_eps~%float64 final_eps~%float64 dec_eps~%~%int8 sbpl_planner~%int8 planner_type~%int8 meta_search_type~%~%~%~%"))
 (cl:defmethod roslisp-msg-protocol:serialization-length ((msg <GetSwarmPlan-request>))
   (cl:+ 0
      1
@@ -330,6 +346,7 @@
      8
      8
      8
+     1
      1
      1
 ))
@@ -344,6 +361,7 @@
     (cl:cons ':initial_eps (initial_eps msg))
     (cl:cons ':final_eps (final_eps msg))
     (cl:cons ':dec_eps (dec_eps msg))
+    (cl:cons ':sbpl_planner (sbpl_planner msg))
     (cl:cons ':planner_type (planner_type msg))
     (cl:cons ':meta_search_type (meta_search_type msg))
 ))
@@ -455,10 +473,10 @@
   "multi_agent_planner_node/GetSwarmPlanResponse")
 (cl:defmethod roslisp-msg-protocol:md5sum ((type (cl:eql '<GetSwarmPlan-response>)))
   "Returns md5sum for a message object of type '<GetSwarmPlan-response>"
-  "b7f0a26069c6e8c4eb641e5486a11198")
+  "a841673a82e79b1e83929033134098f9")
 (cl:defmethod roslisp-msg-protocol:md5sum ((type (cl:eql 'GetSwarmPlan-response)))
   "Returns md5sum for a message object of type 'GetSwarmPlan-response"
-  "b7f0a26069c6e8c4eb641e5486a11198")
+  "a841673a82e79b1e83929033134098f9")
 (cl:defmethod roslisp-msg-protocol:message-definition ((type (cl:eql '<GetSwarmPlan-response>)))
   "Returns full string definition for message of type '<GetSwarmPlan-response>"
   (cl:format cl:nil "~%~%string[] stats_field_names~%float64[] stats~%~%~%~%"))

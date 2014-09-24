@@ -36,11 +36,10 @@ namespace multi_agent_planner_node {
             void bindWriteExperimentToEnv(std::string service_name);
             bool bindCollisionSpaceToTopic(std::string topic_name);
             void bindNavMapToTopic(std::string topic_name);
-            void packageMHAStats(std::vector<std::string>& stat_names,
+            void packageStats(std::vector<std::string>& stat_names,
                               std::vector<double>& stats,
-                              int solution_cost,
                               size_t solution_size,
-                              double total_planning_time);
+                              bool mha_planner);
              bool GenerateExperimentsFile(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 
         private:
@@ -50,7 +49,10 @@ namespace multi_agent_planner_node {
                            double width, double height);
             void interruptPlannerCallback(std_msgs::EmptyConstPtr);
             bool runMHAPlanner(
-                  std::string planner_prefix,
+                  GetSwarmPlan::Request &req,
+                  GetSwarmPlan::Response &res,
+                  multi_agent_planner::SearchRequestParamsPtr search_request);
+            bool runARAPlanner(
                   GetSwarmPlan::Request &req,
                   GetSwarmPlan::Response &res,
                   multi_agent_planner::SearchRequestParamsPtr search_request);

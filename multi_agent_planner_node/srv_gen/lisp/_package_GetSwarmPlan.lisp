@@ -15,6 +15,8 @@
           FINAL_EPS
           DEC_EPS-VAL
           DEC_EPS
+          SBPL_PLANNER-VAL
+          SBPL_PLANNER
           PLANNER_TYPE-VAL
           PLANNER_TYPE
           META_SEARCH_TYPE-VAL

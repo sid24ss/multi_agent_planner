@@ -7,6 +7,7 @@
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "testPlanningRequest");
+
     ros::NodeHandle n;
     ros::ServiceClient client = n.serviceClient<multi_agent_planner_node::GetSwarmPlan>("/sbpl_planning/plan_path");
     multi_agent_planner_node::GetSwarmPlan srv;
@@ -25,6 +26,10 @@ int main(int argc, char** argv){
 
     srv.request.meta_search_type = mha_planner::MetaSearchType::ROUND_ROBIN;
     srv.request.planner_type = mha_planner::PlannerType::SMHA;
+    srv.request.sbpl_planner = multi_agent_planner::PlannerType::MHA;
+    if (argc == 2) {
+        srv.request.sbpl_planner = std::atoi(argv[1]);
+    }
 
     ROS_INFO("Sending request at : %s",
         boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::local_time()).c_str());

@@ -7,12 +7,12 @@
 using namespace multi_agent_planner;
 
 void printUsage(){
-  printf("usage: runTests path_to_test_file.yaml [trial_id] [test_num]\n");
+  printf("usage: runTests path_to_test_file.yaml [sbpl_planner] [trial_id] [test_num]\n");
 }
 
 
 int main(int argc, char** argv){
-  if(argc < 2 || argc > 4){
+  if(argc < 2 || argc > 5){
     printUsage();
     return 1;
   }
@@ -26,12 +26,12 @@ int main(int argc, char** argv){
   filename = argv[1];
 
   int trial_id = 42;
-  if (argc >= 3)
-    trial_id = std::atoi(argv[2]);
+  if (argc >= 4)
+    trial_id = std::atoi(argv[3]);
 
   int test_num_to_run = -1;
-  if (argc == 4)
-    test_num_to_run = std::atoi(argv[3]);
+  if (argc == 5)
+    test_num_to_run = std::atoi(argv[4]);
 
   //planner parameters
   req.initial_eps = 2.0;
@@ -50,6 +50,10 @@ int main(int argc, char** argv){
 
   req.meta_search_type = mha_planner::MetaSearchType::ROUND_ROBIN;
   req.planner_type = mha_planner::PlannerType::SMHA;
+  req.sbpl_planner = multi_agent_planner::PlannerType::MHA;
+  if (argc >= 3) {
+      req.sbpl_planner = std::atoi(argv[2]);
+  }
 
   ros::service::waitForService("/sbpl_planning/plan_path",10);
   ros::ServiceClient planner = ros::NodeHandle().serviceClient<multi_agent_planner_node::GetSwarmPlan>("/sbpl_planning/plan_path", true);

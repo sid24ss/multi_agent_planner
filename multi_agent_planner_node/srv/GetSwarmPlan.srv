@@ -1,7 +1,6 @@
 int8 planning_mode
 float64 allocated_planning_time
 
-# added for full body experiments without gazebo
 float64[] swarm_start
 float64[] swarm_goal
 
@@ -12,6 +11,7 @@ float64 initial_eps
 float64 final_eps
 float64 dec_eps
 
+int8 sbpl_planner
 int8 planner_type
 int8 meta_search_type
 

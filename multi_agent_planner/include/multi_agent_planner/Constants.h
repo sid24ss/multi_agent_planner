@@ -45,5 +45,13 @@ namespace multi_agent_planner {
             CHANGE_LEADER
         };
     };
+
+    class PlannerType{
+    public:
+        enum Type {
+            MHA,
+            LAZYARA
+        };
+    };
     // TODO : SwarmStateElement
 }

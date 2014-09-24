@@ -6,12 +6,11 @@ import struct
 
 
 class GetSwarmPlanRequest(genpy.Message):
-  _md5sum = "e447130288004f6271471743fe509221"
+  _md5sum = "42f8041ca0c451e29c96c13bdbe88599"
   _type = "multi_agent_planner_node/GetSwarmPlanRequest"
   _has_header = False #flag to mark the presence of a Header object
   _full_text = """int8 planning_mode
 float64 allocated_planning_time
-
 
 float64[] swarm_start
 float64[] swarm_goal
@@ -23,13 +22,14 @@ float64 initial_eps
 float64 final_eps
 float64 dec_eps
 
+int8 sbpl_planner
 int8 planner_type
 int8 meta_search_type
 
 
 """
-  __slots__ = ['planning_mode','allocated_planning_time','swarm_start','swarm_goal','tolerance','initial_eps','final_eps','dec_eps','planner_type','meta_search_type']
-  _slot_types = ['int8','float64','float64[]','float64[]','float64','float64','float64','float64','int8','int8']
+  __slots__ = ['planning_mode','allocated_planning_time','swarm_start','swarm_goal','tolerance','initial_eps','final_eps','dec_eps','sbpl_planner','planner_type','meta_search_type']
+  _slot_types = ['int8','float64','float64[]','float64[]','float64','float64','float64','float64','int8','int8','int8']
 
   def __init__(self, *args, **kwds):
     """
@@ -39,7 +39,7 @@ int8 meta_search_type
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       planning_mode,allocated_planning_time,swarm_start,swarm_goal,tolerance,initial_eps,final_eps,dec_eps,planner_type,meta_search_type
+       planning_mode,allocated_planning_time,swarm_start,swarm_goal,tolerance,initial_eps,final_eps,dec_eps,sbpl_planner,planner_type,meta_search_type
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -64,6 +64,8 @@ int8 meta_search_type
         self.final_eps = 0.
       if self.dec_eps is None:
         self.dec_eps = 0.
+      if self.sbpl_planner is None:
+        self.sbpl_planner = 0
       if self.planner_type is None:
         self.planner_type = 0
       if self.meta_search_type is None:
@@ -77,6 +79,7 @@ int8 meta_search_type
       self.initial_eps = 0.
       self.final_eps = 0.
       self.dec_eps = 0.
+      self.sbpl_planner = 0
       self.planner_type = 0
       self.meta_search_type = 0
 
@@ -103,7 +106,7 @@ int8 meta_search_type
       pattern = '<%sd'%length
       buff.write(struct.pack(pattern, *self.swarm_goal))
       _x = self
-      buff.write(_struct_4d2b.pack(_x.tolerance, _x.initial_eps, _x.final_eps, _x.dec_eps, _x.planner_type, _x.meta_search_type))
+      buff.write(_struct_4d3b.pack(_x.tolerance, _x.initial_eps, _x.final_eps, _x.dec_eps, _x.sbpl_planner, _x.planner_type, _x.meta_search_type))
     except struct.error as se: self._check_types(struct.error("%s: '%s' when writing '%s'" % (type(se), str(se), str(_x))))
     except TypeError as te: self._check_types(ValueError("%s: '%s' when writing '%s'" % (type(te), str(te), str(_x))))
 
@@ -134,8 +137,8 @@ int8 meta_search_type
       self.swarm_goal = struct.unpack(pattern, str[start:end])
       _x = self
       start = end
-      end += 34
-      (_x.tolerance, _x.initial_eps, _x.final_eps, _x.dec_eps, _x.planner_type, _x.meta_search_type,) = _struct_4d2b.unpack(str[start:end])
+      end += 35
+      (_x.tolerance, _x.initial_eps, _x.final_eps, _x.dec_eps, _x.sbpl_planner, _x.planner_type, _x.meta_search_type,) = _struct_4d3b.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -159,7 +162,7 @@ int8 meta_search_type
       pattern = '<%sd'%length
       buff.write(self.swarm_goal.tostring())
       _x = self
-      buff.write(_struct_4d2b.pack(_x.tolerance, _x.initial_eps, _x.final_eps, _x.dec_eps, _x.planner_type, _x.meta_search_type))
+      buff.write(_struct_4d3b.pack(_x.tolerance, _x.initial_eps, _x.final_eps, _x.dec_eps, _x.sbpl_planner, _x.planner_type, _x.meta_search_type))
     except struct.error as se: self._check_types(struct.error("%s: '%s' when writing '%s'" % (type(se), str(se), str(_x))))
     except TypeError as te: self._check_types(ValueError("%s: '%s' when writing '%s'" % (type(te), str(te), str(_x))))
 
@@ -191,15 +194,15 @@ int8 meta_search_type
       self.swarm_goal = numpy.frombuffer(str[start:end], dtype=numpy.float64, count=length)
       _x = self
       start = end
-      end += 34
-      (_x.tolerance, _x.initial_eps, _x.final_eps, _x.dec_eps, _x.planner_type, _x.meta_search_type,) = _struct_4d2b.unpack(str[start:end])
+      end += 35
+      (_x.tolerance, _x.initial_eps, _x.final_eps, _x.dec_eps, _x.sbpl_planner, _x.planner_type, _x.meta_search_type,) = _struct_4d3b.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
 _struct_bd = struct.Struct("<bd")
-_struct_4d2b = struct.Struct("<4d2b")
+_struct_4d3b = struct.Struct("<4d3b")
 """autogenerated by genpy from multi_agent_planner_node/GetSwarmPlanResponse.msg. Do not edit."""
 import sys
 python3 = True if sys.hexversion > 0x03000000 else False
@@ -366,6 +369,6 @@ float64[] stats
 _struct_I = genpy.struct_I
 class GetSwarmPlan(object):
   _type          = 'multi_agent_planner_node/GetSwarmPlan'
-  _md5sum = 'b7f0a26069c6e8c4eb641e5486a11198'
+  _md5sum = 'a841673a82e79b1e83929033134098f9'
   _request_class  = GetSwarmPlanRequest
   _response_class = GetSwarmPlanResponse

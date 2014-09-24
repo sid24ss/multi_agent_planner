@@ -228,7 +228,7 @@ vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
     if(add_random_obstacles){
         if(!randomize_environment){
             string environment_obstacles_file;
-            ph.param<string>("/multi_agent_planner_node/experiments/environment_obstacles_file",environment_obstacles_file,"");
+            ph.param<string>("experiments/environment_obstacles_file",environment_obstacles_file,"");
             if(environment_obstacles_file.empty()){
               throw new std::runtime_error("rosparam randomize_environment was set to false, but then environment_obstacles_file was not set!");
             }

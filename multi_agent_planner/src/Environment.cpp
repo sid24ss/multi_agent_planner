@@ -88,21 +88,29 @@ void Environment::GetSuccs(int sourceStateID, std::vector<int>* succIDs,
     throw std::runtime_error("Shouldn't be calling this for lazy!");
 }
 
-// void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
-//                         std::vector<int>* costs, std::vector<bool>* isTrueCost){
-//     int q_id = 0;
-//     GetLazySuccs(sourceStateID, succIDs, costs, isTrueCost, q_id);
-// }
+void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
+                        std::vector<int>* costs, std::vector<bool>* isTrueCost){
+    int q_id = 0;
+    GetLazySuccs(q_id, sourceStateID, succIDs, costs, isTrueCost);
+}
 
 void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* succIDs, 
                         std::vector<int>* costs, std::vector<bool>* isTrueCost)
 {
-    if (q_id == 0) {
+    if (q_id == 0 && m_planner_type == PlannerType::MHA) {
         throw std::runtime_error("Expanding anchor is not implemented yet!");
     }
+    // get the source_state
+    GraphStatePtr source_state = m_hash_mgr->getGraphState(sourceStateID);
     // set the correct leader id.
-    int leader_id = SwarmState::LEADER_IDS.at(q_id -1);
-
+    int leader_id;
+    if (m_planner_type == PlannerType::MHA) {
+        leader_id = SwarmState::LEADER_IDS.at(q_id -1);
+        assert(leader_id == source_state->getLeader());
+    } else {
+        assert(q_id == 0);
+        leader_id = source_state->getLeader();
+    }
 
     ROS_DEBUG_NAMED(SEARCH_LOG, "==================Expanding state %d==================", 
                     sourceStateID);
@@ -113,16 +121,15 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
     costs->clear();
     costs->reserve(current_mprims.size());
 
-    GraphStatePtr source_state = m_hash_mgr->getGraphState(sourceStateID);
     // if we are expanding the start state, then no leaders would have been set
     // yet. So, we go ahead and expand it. The other condition to go ahead and
     // expand it is that the leader of the state is the current queue expanding it.
 
-    if (sourceStateID == m_start_state_id) {
-        // must set the leader to whichever queue is expanding it and continue
-        // to expand the state
-        source_state->setLeader(leader_id);
-    } 
+    // if (sourceStateID == m_start_state_id && m_planner_type==PlannerType::LAZYARA) {
+    //     // must set the leader to whichever queue is expanding it and continue
+    //     // to expand the state
+    //     source_state->setLeader(0);
+    // } 
 
     // debug and visualization
     // ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
@@ -215,10 +222,44 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
         // ROS_DEBUG_NAMED(SEARCH_LOG, "heuristic for q_id : %d for this state : %d",
         //     q_id, GetGoalHeuristic(q_id, successor->id()));
 
-        m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
-        // ROS_DEBUG_NAMED(SEARCH_LOG, "size of succsIDs %ld, costs : %ld", 
+        // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "size of succIDs %ld, costs : %ld", 
         //     succIDs->size(), costs->size());
     }
+    // if ARA, we need to make more successors
+    if (m_planner_type == PlannerType::Type::LAZYARA) {
+        std::vector <int> all_transferred_succs;
+        std::vector <int> all_transferred_costs;
+        all_transferred_succs.reserve((NUM_LEADERS-1)*succIDs->size());
+        all_transferred_costs.reserve((NUM_LEADERS-1)*succIDs->size());
+        for (int i = 1; i <= NUM_LEADERS; i++) {
+            if (SwarmState::LEADER_IDS.at(i-1) == leader_id)
+                continue;
+            std::vector <int> transferred_succs;
+            std::vector <int> transferred_costs;
+            TransferFunction(i, *succIDs, &transferred_succs, &transferred_costs);
+            // add the real costs to the extra costs
+            int j = 0;
+            std::for_each(transferred_costs.begin(), transferred_costs.end(),
+                [&j, &costs](int& val) { val+=costs->at(j++); });
+            assert(j == costs.size());
+            all_transferred_succs.insert(all_transferred_succs.end(),
+                transferred_succs.begin(), transferred_succs.end());
+            all_transferred_costs.insert(all_transferred_costs.end(),
+                transferred_costs.begin(), transferred_costs.end());
+        }
+        assert(all_transferred_succs.size() == (NUM_LEADERS-1)*succIDs.size());
+        assert(all_transferred_costs.size() == (NUM_LEADERS-1)*costs.size());
+        succIDs->insert(succIDs->end(), all_transferred_succs.begin(),
+            all_transferred_succs.end());
+        costs->insert(costs->end(), all_transferred_costs.begin(),
+            all_transferred_costs.end());
+        std::vector<bool> all_transferred_true_costs(all_transferred_costs.size(), true);
+        isTrueCost->insert(isTrueCost->end(), all_transferred_true_costs.begin(),
+            all_transferred_true_costs.end());
+    }
+    ROS_DEBUG_NAMED(SEARCH_LOG, "size of succIDs : %lu", succIDs->size());
+    ROS_DEBUG_NAMED(SEARCH_LOG, "size of costs : %lu", costs->size());
     // std::cin.get();
 }
 
@@ -273,15 +314,24 @@ int Environment::GetTrueCost(int parentID, int childID){
     // return total_cost;
 }
 
-void Environment::TransferFunction(int transfer_to, const std::vector<int>& stateList,
+/**
+ * @brief Transfers the state to the other queues. In this case, it's just
+ * changing the leader id
+ * 
+ * @param transfer_q_id is the q_id that you want to transfer to; NOT the leader
+ * @param extraCosts the cost of the transfer
+ */
+void Environment::TransferFunction(int transfer_q_id, const std::vector<int>& stateList,
                 std::vector<int>* transferredList, std::vector<int>* extraCosts)
 {
-    if (transfer_to == 0)
+    if (transfer_q_id == 0)
         throw new std::runtime_error("Cannot use transfer function for anchor!");
     transferredList->clear();
     extraCosts->clear();
+    transferredList->reserve(stateList.size());
+    extraCosts->reserve(stateList.size());
     // change the leader to this.
-    int leader_id = SwarmState::LEADER_IDS.at(transfer_to - 1);
+    int leader_id = SwarmState::LEADER_IDS.at(transfer_q_id - 1);
     for (auto& stateID : stateList) {
         GraphStatePtr source_state = m_hash_mgr->getGraphState(stateID);
         GraphStatePtr transferred_state(new GraphState(*source_state));
@@ -308,6 +358,8 @@ bool Environment::setStartGoal(SearchRequestPtr search_request,
     }
 
     GraphStatePtr start_graph_state = std::make_shared<GraphState>(swarm_start);
+    // HACK : setting the leader to the 0th leader arbitrarily
+    start_graph_state->setLeader(SwarmState::LEADER_IDS.at(0));
     m_hash_mgr->save(start_graph_state);
     start_id = start_graph_state->id();
     m_start_state_id = start_id;

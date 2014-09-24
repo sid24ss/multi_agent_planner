@@ -137,7 +137,6 @@ bool EnvInterfaces::GenerateExperimentsFile(std_srvs::Empty::Request &req, std_s
 }
 
 bool EnvInterfaces::runMHAPlanner(
-    std::string planner_prefix,
     GetSwarmPlan::Request &req,
     GetSwarmPlan::Response &res,
     SearchRequestParamsPtr search_request) {
@@ -154,15 +153,16 @@ bool EnvInterfaces::runMHAPlanner(
     planner_queues = static_cast<int>(SwarmState::LEADER_IDS.size()) + 1;
     ROS_INFO("Creating planner with %d queues", planner_queues);
     m_env->reset();
+    // set the planner type
+    m_env->setPlannerType(static_cast<multi_agent_planner::PlannerType::Type>(req.sbpl_planner));
     m_mha_planner.reset(new MHAPlanner(m_env.get(), planner_queues, forward_search));
     total_planning_time = clock();
     if (!m_env->configureRequest(search_request, start_id, goal_id)){
-        ROS_ERROR("Unable to configure request for %s!",
-         planner_prefix.c_str());
+        ROS_ERROR("Unable to configure request for mha_planner!");
         return false;
     }
     m_mha_planner->set_start(start_id);
-    ROS_INFO("setting %s goal id to %d", planner_prefix.c_str(), goal_id);
+    ROS_INFO("setting mha_planner goal id to %d", goal_id);
     m_mha_planner->set_goal(goal_id);
     m_mha_planner->force_planning_from_scratch();
     std::vector<int> soln;
@@ -179,18 +179,70 @@ bool EnvInterfaces::runMHAPlanner(
     isPlanFound = m_mha_planner->replan(&soln, replan_params, &soln_cost);
 
     if (isPlanFound) {
-        ROS_INFO("Plan found in %s Planner. Moving on to reconstruction.",
-            planner_prefix.c_str());
+        ROS_INFO("Plan found in mha_planner. Moving on to reconstruction.");
         states =  m_env->reconstructPath(soln);
         total_planning_time = clock() - total_planning_time;
-        packageMHAStats(stat_names, stats, soln_cost, states.size(),
-            total_planning_time);
+        bool mha_planner = true;
+        packageStats(stat_names, stats, states.size(), mha_planner);
         res.stats_field_names = stat_names;
         res.stats = stats;
     } else {
-        packageMHAStats(stat_names, stats, soln_cost, states.size(),
-            total_planning_time);
-        ROS_INFO("No plan found in %s!", planner_prefix.c_str());
+        // packageStats(stat_names, stats, soln_cost, states.size(),
+            // total_planning_time);
+        ROS_INFO("No plan found in mha_planner!");
+    }
+    return isPlanFound;
+}
+
+bool EnvInterfaces::runARAPlanner(
+    GetSwarmPlan::Request &req,
+    GetSwarmPlan::Response &res,
+    SearchRequestParamsPtr search_request) {
+
+    int start_id, goal_id;
+    bool forward_search = true;
+    clock_t total_planning_time;
+    bool isPlanFound;
+    std::vector<double> stats;
+    std::vector<std::string> stat_names;
+    std::vector<SwarmState> states;
+
+    m_env->reset();
+    // set the planner type
+    m_env->setPlannerType(static_cast<multi_agent_planner::PlannerType::Type>(req.sbpl_planner));
+    m_ara_planner.reset(new LazyARAPlanner(m_env.get(), forward_search));
+    total_planning_time = clock();
+    if (!m_env->configureRequest(search_request, start_id, goal_id)){
+        ROS_ERROR("Unable to configure request for LazyARAPlanner!");
+        return false;
+    }
+    m_ara_planner->set_start(start_id);
+    ROS_INFO("setting LazyARAPlanner goal id to %d", goal_id);
+    m_ara_planner->set_goal(goal_id);
+    m_ara_planner->force_planning_from_scratch();
+    
+    std::vector<int> soln;
+    int soln_cost;
+    ReplanParams replan_params(req.allocated_planning_time);
+    replan_params.initial_eps = EPS1*EPS2;
+    replan_params.final_eps = EPS1*EPS2;
+    replan_params.return_first_solution = false;
+
+    isPlanFound = m_ara_planner->replan(&soln, replan_params, &soln_cost);
+
+    if (isPlanFound) {
+        ROS_INFO("Plan found in LazyARAPlanner. Moving on to reconstruction.");
+        states =  m_env->reconstructPath(soln);
+        total_planning_time = clock() - total_planning_time;
+        bool mha_planner = false;
+        packageStats(stat_names, stats, states.size(), mha_planner);
+        res.stats_field_names = stat_names;
+        res.stats = stats;
+    } else {
+        // bool mha_planner = false;
+        // packageStats(stat_names, stats, soln_cost, states.size(),
+        //     total_planning_time, mha_planner);
+        ROS_INFO("No plan found in LazyARAPlanner!");
     }
     return isPlanFound;
 }
@@ -217,15 +269,18 @@ bool EnvInterfaces::planPathCallback(GetSwarmPlan::Request &req,
     res.stats.resize(18);
     bool isPlanFound;
 
-    isPlanFound = runMHAPlanner("smha_", req, res, search_request);
+    auto sbpl_planner = static_cast<multi_agent_planner::PlannerType::Type>(req.sbpl_planner);
+    if (sbpl_planner == multi_agent_planner::PlannerType::Type::MHA)
+        isPlanFound = runMHAPlanner(req, res, search_request);
+    else
+        isPlanFound = runARAPlanner(req, res, search_request);
     return isPlanFound;
 }
 
-void EnvInterfaces::packageMHAStats(std::vector<std::string>& stat_names,
+void EnvInterfaces::packageStats(std::vector<std::string>& stat_names,
                                  std::vector<double>& stats,
-                                 int solution_cost,
                                  size_t solution_size,
-                                 double total_planning_time)
+                                 bool mha_planner = true)
 {
     stat_names.resize(11);
     stats.resize(11);
@@ -241,24 +296,11 @@ void EnvInterfaces::packageMHAStats(std::vector<std::string>& stat_names,
     stat_names[9] = "path length";
     stat_names[10] = "num_leader_changes";
 
-    // TODO fix the total planning time
-    //stats[0] = totalPlanTime;
-    // TODO: Venkat. Handle the inital/final solution eps correctly when this becomes anytime someday.
-    
-    // stats[0] = total_planning_time/static_cast<double>(CLOCKS_PER_SEC);
-    // stats[1] = m_ara_planner->get_initial_eps_planning_time();
-    // stats[2] = m_ara_planner->get_initial_eps();
-    // stats[3] = m_ara_planner->get_n_expands_init_solution();
-    // stats[4] = m_ara_planner->get_final_eps_planning_time();
-    // stats[5] = m_ara_planner->get_final_epsilon();
-    // stats[6] = m_ara_planner->get_solution_eps();
-    // stats[7] = m_ara_planner->get_n_expands();
-    // stats[8] = static_cast<double>(solution_cost);
-    // stats[9] = static_cast<double>(solution_size);
-    
     std::vector<PlannerStats> planner_stats;
-    m_mha_planner->get_search_stats(&planner_stats);
-    ROS_INFO("planner stats size : %u", planner_stats.size());
+    if (mha_planner)
+        m_mha_planner->get_search_stats(&planner_stats);
+    else
+        m_ara_planner->get_search_stats(&planner_stats);
     // Take stats only for the first solution, since this is not anytime currently
     stats[0] = planner_stats[0].time;
     stats[1] = stats[0];

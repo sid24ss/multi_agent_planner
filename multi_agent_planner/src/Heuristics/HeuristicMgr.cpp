@@ -31,10 +31,6 @@ HeuristicMgr::~HeuristicMgr()
  */
 void HeuristicMgr::reset() {
     ROS_INFO_NAMED(HEUR_LOG, "Resetting the heuristic manager.");
-    for (auto& heur: m_heuristic_map) {
-        ROS_INFO_NAMED(HEUR_LOG, "shared_ptr count of %s is %d", heur.first.
-            c_str(), static_cast<int>(m_heuristics[heur.second].use_count()));
-    }
     m_heuristics.clear();
     m_heuristic_map.clear();
     initializeHeuristics();

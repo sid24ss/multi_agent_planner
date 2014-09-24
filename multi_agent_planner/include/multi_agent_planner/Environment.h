@@ -8,13 +8,14 @@
 #include <multi_agent_planner/MotionPrimitives/PolicyGenerator.h>
 #include <multi_agent_planner/Heuristics/HeuristicMgr.h>
 #include <multi_agent_planner/PathPostProcessor.h>
+#include <multi_agent_planner/Constants.h>
 #include <sbpl/headers.h>
 #include <ros/ros.h>
 #include <stdexcept>
 #include <vector>
 #include <memory>
 
-#define EPS1 10
+#define EPS1 15
 #define EPS2 1.1
 
 namespace multi_agent_planner {
@@ -34,7 +35,9 @@ namespace multi_agent_planner {
                 std::vector<int>* costs);
             void GetSuccs(int sourceStateID, std::vector<int>* succIDs, 
                 std::vector<int>* costs, int leader_id);
-            virtual void GetLazySuccs(int leader_id, int sourceStateID, std::vector<int>* succIDs, 
+            virtual void GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* succIDs, 
+                std::vector<int>* costs, std::vector<bool>* isTrueCost);
+            virtual void GetLazySuccs(int sourceStateID, std::vector<int>* succIDs, 
                 std::vector<int>* costs, std::vector<bool>* isTrueCost);
             virtual void TransferFunction(int transfer_to, const std::vector<int>& stateList, std::vector<int>* transferredList, std::vector<int>* extraCosts);
             virtual int GetTrueCost(int parentID, int childID);
@@ -43,7 +46,7 @@ namespace multi_agent_planner {
             inline int getLeaderChangeCount() const {return
                 m_num_leader_changes; }
             void reset();
-            // void setPlannerType(int planner_type);
+            void setPlannerType(PlannerType::Type planner_type) {m_planner_type = planner_type;}
             PolicyGeneratorPtr getPolicyGenerator() {return m_policy_generator;}
 
         protected:
@@ -65,8 +68,8 @@ namespace multi_agent_planner {
             std::vector<int> m_leader_ids;
             int m_start_state_id;
             int m_num_leader_changes;
+            multi_agent_planner::PlannerType::Type m_planner_type;
 
-            // int m_planner_type;
             // std::unordered_map<int, PlanningModes::modes> m_action_partition;
 
         // SBPL interface stuff

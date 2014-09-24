@@ -34,6 +34,7 @@ struct GetSwarmPlanRequest_ {
   , initial_eps(0.0)
   , final_eps(0.0)
   , dec_eps(0.0)
+  , sbpl_planner(0)
   , planner_type(0)
   , meta_search_type(0)
   {
@@ -48,6 +49,7 @@ struct GetSwarmPlanRequest_ {
   , initial_eps(0.0)
   , final_eps(0.0)
   , dec_eps(0.0)
+  , sbpl_planner(0)
   , planner_type(0)
   , meta_search_type(0)
   {
@@ -76,6 +78,9 @@ struct GetSwarmPlanRequest_ {
 
   typedef double _dec_eps_type;
   double dec_eps;
+
+  typedef int8_t _sbpl_planner_type;
+  int8_t sbpl_planner;
 
   typedef int8_t _planner_type_type;
   int8_t planner_type;
@@ -151,12 +156,12 @@ template<class ContainerAllocator>
 struct MD5Sum< ::multi_agent_planner_node::GetSwarmPlanRequest_<ContainerAllocator> > {
   static const char* value() 
   {
-    return "e447130288004f6271471743fe509221";
+    return "42f8041ca0c451e29c96c13bdbe88599";
   }
 
   static const char* value(const  ::multi_agent_planner_node::GetSwarmPlanRequest_<ContainerAllocator> &) { return value(); } 
-  static const uint64_t static_value1 = 0xe447130288004f62ULL;
-  static const uint64_t static_value2 = 0x71471743fe509221ULL;
+  static const uint64_t static_value1 = 0x42f8041ca0c451e2ULL;
+  static const uint64_t static_value2 = 0x9c96c13bdbe88599ULL;
 };
 
 template<class ContainerAllocator>
@@ -176,7 +181,6 @@ struct Definition< ::multi_agent_planner_node::GetSwarmPlanRequest_<ContainerAll
     return "int8 planning_mode\n\
 float64 allocated_planning_time\n\
 \n\
-\n\
 float64[] swarm_start\n\
 float64[] swarm_goal\n\
 \n\
@@ -187,6 +191,7 @@ float64 initial_eps\n\
 float64 final_eps\n\
 float64 dec_eps\n\
 \n\
+int8 sbpl_planner\n\
 int8 planner_type\n\
 int8 meta_search_type\n\
 \n\
@@ -265,6 +270,7 @@ template<class ContainerAllocator> struct Serializer< ::multi_agent_planner_node
     stream.next(m.initial_eps);
     stream.next(m.final_eps);
     stream.next(m.dec_eps);
+    stream.next(m.sbpl_planner);
     stream.next(m.planner_type);
     stream.next(m.meta_search_type);
   }
@@ -301,7 +307,7 @@ template<>
 struct MD5Sum<multi_agent_planner_node::GetSwarmPlan> {
   static const char* value() 
   {
-    return "b7f0a26069c6e8c4eb641e5486a11198";
+    return "a841673a82e79b1e83929033134098f9";
   }
 
   static const char* value(const multi_agent_planner_node::GetSwarmPlan&) { return value(); } 
@@ -321,7 +327,7 @@ template<class ContainerAllocator>
 struct MD5Sum<multi_agent_planner_node::GetSwarmPlanRequest_<ContainerAllocator> > {
   static const char* value() 
   {
-    return "b7f0a26069c6e8c4eb641e5486a11198";
+    return "a841673a82e79b1e83929033134098f9";
   }
 
   static const char* value(const multi_agent_planner_node::GetSwarmPlanRequest_<ContainerAllocator> &) { return value(); } 
@@ -341,7 +347,7 @@ template<class ContainerAllocator>
 struct MD5Sum<multi_agent_planner_node::GetSwarmPlanResponse_<ContainerAllocator> > {
   static const char* value() 
   {
-    return "b7f0a26069c6e8c4eb641e5486a11198";
+    return "a841673a82e79b1e83929033134098f9";
   }
 
   static const char* value(const multi_agent_planner_node::GetSwarmPlanResponse_<ContainerAllocator> &) { return value(); } 

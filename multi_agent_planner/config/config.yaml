@@ -2,11 +2,11 @@ planner:
   # assume 50 mm/sec
   nominalvel_mpersecs: 0.05
   # should be sufficiently high so that no robot that executes any policy actually jumps enough cells (say 3), and finds that the heuristic decrease (x EPS1) is greater than the cost of switching.
-  change_leader_cost: 600
+  change_leader_cost: 1000
 
 visualizations:
-  final_path: false
-  expansions: false
+  final_path: true
+  expansions: true
 
 robot_description:
   radius: 0.15
