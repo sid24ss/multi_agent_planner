@@ -9,7 +9,7 @@ using namespace boost;
 
 GraphState::GraphState(SwarmState swarm_state) :
     m_swarm_state(swarm_state),
-    m_coords(PLANNING_DOF+1, 0)
+    m_coords(PLANNING_DOF, 0)
 {
     updateStateFromSwarmState();
 }
@@ -58,18 +58,18 @@ void GraphState::swarm_state(SwarmState swarm_state) {
 
 void GraphState::updateStateFromSwarmState() {
     m_coords = m_swarm_state.coords();
-    m_coords.push_back(m_swarm_state.getLeader());
+    // m_coords.push_back(m_swarm_state.getLeader());
 }
 
 void GraphState::updateSwarmStateFromGraphState() {
-    std::vector<int> swarm_coords(m_coords.begin(), m_coords.end()-1);
-    m_swarm_state.coords(swarm_coords);
-    m_swarm_state.setLeader(m_coords.back());
-    // m_swarm_state.coords(m_coords);
+    // std::vector<int> swarm_coords(m_coords.begin(), m_coords.end()-1);
+    // m_swarm_state.coords(swarm_coords);
+    // m_swarm_state.setLeader(m_coords.back());
+    m_swarm_state.coords(m_coords);
 }
 
 void GraphState::setLeader(int l) {
-    m_coords.back() = l;
+    // m_coords.back() = l;
     m_swarm_state.setLeader(l);
 }
 
@@ -78,6 +78,6 @@ std::vector<int> GraphState::getCoords() const{
 }
 
 int GraphState::getLeader() const {
-    assert(m_coords.back() == m_swarm_state.getLeader());
+    // assert(m_coords.back() == m_swarm_state.getLeader());
     return m_swarm_state.getLeader();
 }

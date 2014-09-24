@@ -33,6 +33,8 @@ namespace multi_agent_planner {
             // internal m_heuristics vector.
             void add2DHeur(std::string name, const int cost_multiplier = 1);
 
+            void addEuclHeur(std::string name, const int cost_multiplier);
+
             // Updates the collision map for the heuristics that need them.
             // Doesn't take in an argument because each 3D heuristic shares the
             // occupancy grid singleton.

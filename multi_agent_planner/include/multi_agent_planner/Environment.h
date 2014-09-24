@@ -56,6 +56,11 @@ namespace multi_agent_planner {
             void configurePlanningDomain();
             void configureQuerySpecificParams(SearchRequestPtr search_request);
             void generateStartState(SearchRequestPtr search_request);
+            bool generateAndSaveSuccessor(const GraphStatePtr source_state,
+                                    MotionPrimitivePtr mprim,
+                                    int leader_id,
+                                    GraphStatePtr& successor,
+                                    TransitionData& t_data);
 
             ParameterCatalog m_param_catalog;
             CSpaceMgrPtr m_cspace_mgr;

@@ -276,7 +276,7 @@ bool PolicyGenerator::isLeaderChangeRequired(const GraphState& source_state, con
     bool leader_change_required = false;
     int desired_leader = source_state.getLeader();
     if (desired_leader == leader_id)
-        return leader_change_required;
+        return false;
     GraphStatePtr leader_moved_state;
     // apply the mprim with this guy as the leader
     if (!mprim->apply(source_state, desired_leader, leader_moved_state))

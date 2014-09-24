@@ -25,7 +25,7 @@
 
   <node pkg="multi_agent_planner_node" type="stlToOctomap"
   name="stlToOctomap" args="$(find multi_agent_planner_node)/maps/empty_map.dae">
-    <param name="add_random_obstacles" value="false"/>
+    <param name="add_random_obstacles" value="true"/>
     <param name="randomize_environment" value="false"/>
     <param name="experiments/environment_obstacles_file" value="$(find multi_agent_planner_node)/experiments/env_2.yaml" />
   </node>

@@ -39,6 +39,7 @@ rosbuild_add_library(multi_agent_planner
                                             src/MotionPrimitives/MotionPrimitivesMgr.cpp
 
                                             src/Heuristics/BFS2DHeuristic.cpp
+                                            src/Heuristics/EuclideanHeuristic.cpp
                                             src/Heuristics/AbstractHeuristic.cpp
                                             src/Heuristics/HeuristicMgr.cpp
                                             src/Heuristics/2Dgridsearch.cpp

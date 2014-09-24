@@ -139,128 +139,157 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
         source_state->swarm_state().visualize();
         usleep(10000);
     }
+    if (m_planner_type == PlannerType::Type::MHA) {
+        for (auto mprim : current_mprims){
+            GraphStatePtr successor;
+            TransitionData t_data;
+            
+            bool generate_succ = generateAndSaveSuccessor(source_state, mprim,
+                leader_id, successor, t_data);
 
-    for (auto mprim : current_mprims){
-        GraphStatePtr successor, leader_moved_state;
-        TransitionData t_data;
-        // Each MPrim is applied in 4 steps.
-
-        // Step 1 : Apply the mprim motion to just the leader. This generates a
-        // leader_moved_state
-        if (!mprim->apply(*source_state, leader_id, leader_moved_state)){
-            continue;
-        }
-        // if this is an adaptive primitive that succeeded, we should just skip
-        // ahead to the end
-        bool is_adaptive = (mprim->getPrimitiveType() == MPrim_Type::NAVAMP);
-        if (!is_adaptive) {
-            // Step 2 : For the policy, we assume that none of the followers have moved. We
-            // take in the leader_moved_state and generate the policy, which gives
-            // us the successor.
-            if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor)) {
+            if(!generate_succ)
                 continue;
-            }
-            // Step 3 : compute the cost of the policy
-            int policy_cost = m_policy_generator->computePolicyCost(*source_state,
-                leader_id, successor);
-            // Step 4 : compute the TData
-            mprim->computeTData(*source_state, leader_id, successor, t_data);
-            // ROS_DEBUG_NAMED(SEARCH_LOG, "policy_cost : %d", policy_cost);
-            // We need to set the cost of the tData because the policyGenerator
-            // is not aware of the cost of the mprim
-            t_data.cost(mprim->getBaseCost() + policy_cost);
 
-            if(!m_cspace_mgr->isValidSuccessor(*successor) ||
-                        !m_cspace_mgr->isValidTransitionStates(t_data)) {
-                continue;
-            }
-            // generate bool leader_change_required after checking if we need to
-            // really do it. This is done by calling PolicyGenerator::
-            // isLeaderChangeRequired
-            // NOTE : We do it here because you don't need to change the leader
-            // for the adaptive motion primitive
-            // bool leader_change_required = 
-            // m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
-            // if (leader_change_required) {
-            //     // ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required.");
-            //     successor->setLeader(leader_id);
-            //     t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
-            // } else {
+            bool leader_change_required = 
+            m_policy_generator->isLeaderChangeRequired(*source_state, *successor, leader_id, mprim);
+            if (leader_change_required) {
+                ROS_DEBUG_NAMED(SEARCH_LOG, "Leader change required to %d.", leader_id);
+                successor->setLeader(leader_id);
+                t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
+            } else {
                 successor->setLeader(source_state->getLeader());
-            // }
-        } else {
-            successor = leader_moved_state;
-            mprim->computeTData(*source_state, leader_id, successor, t_data);
-            t_data.cost(mprim->getBaseCost());
+            }
+            successor->swarm_state().printToDebug(SEARCH_LOG);
+
+            if (m_goal->isSatisfiedBy(successor)){
+                m_goal->storeAsSolnState(successor);
+                ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
+                "cost: %d", source_state->id(), successor->id(), t_data.cost());
+                succIDs->push_back(GOAL_STATE);
+            } else {
+                succIDs->push_back(successor->id());
+            }
+            ROS_DEBUG_NAMED(SEARCH_LOG, "cost : %d", t_data.cost());
+            costs->push_back(t_data.cost());
+            isTrueCost->push_back(true);
+
+            if (leader_change_required) {
+                // generate more successors for the original leader
+                int old_leader_id = source_state->getLeader();
+                GraphStatePtr other_successor;
+                TransitionData other_tdata;
+                bool other_succ_gen = generateAndSaveSuccessor(source_state,
+                            mprim, old_leader_id, other_successor, other_tdata);
+                if (!other_succ_gen)
+                    continue;
+                other_successor->setLeader(old_leader_id);
+                if (m_goal->isSatisfiedBy(successor)){
+                    m_goal->storeAsSolnState(successor);
+                    ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
+                    "cost: %d", source_state->id(), successor->id(), t_data.cost());
+                    succIDs->push_back(GOAL_STATE);
+                } else {
+                    succIDs->push_back(other_successor->id());
+                }
+                costs->push_back(other_tdata.cost());
+                isTrueCost->push_back(true);
+                other_successor->swarm_state().printToDebug(SEARCH_LOG);
+                ROS_DEBUG_NAMED(SEARCH_LOG, "cost : %d", other_tdata.cost());
+            }
         }
-        successor->printToDebug(SEARCH_LOG);
-
-        // save the successor to the hash manager
-        // generate the edge
-        // push back to succIDs
-        // push back to costs
-        // set isTrueCost
-        // add to edge cache
-        // NOTE : You probably don't have to mess with the part below this as
-        // long as you have the right successor in the `successor` variable.
-        m_hash_mgr->save(successor);
-        Edge key;
-        if (m_goal->isSatisfiedBy(successor)){
-          m_goal->storeAsSolnState(successor);
-          ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
-            "cost: %d", source_state->id(), successor->id(), t_data.cost());
-          succIDs->push_back(GOAL_STATE);
-          key = Edge(sourceStateID, GOAL_STATE);
-        } else {
-          succIDs->push_back(successor->id());
-          key = Edge(sourceStateID, successor->id());
-        }
-        costs->push_back(t_data.cost());
-        // ROS_DEBUG_NAMED(SEARCH_LOG, "cost to successor : %d", t_data.cost());
-        isTrueCost->push_back(true);
-
-        // ROS_DEBUG_NAMED(SEARCH_LOG, "heuristic for q_id : %d for this state : %d",
-        //     q_id, GetGoalHeuristic(q_id, successor->id()));
-
-        // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
-        // ROS_DEBUG_NAMED(SEARCH_LOG, "size of succIDs %ld, costs : %ld", 
-        //     succIDs->size(), costs->size());
     }
-    // if ARA, we need to make more successors
+    
     if (m_planner_type == PlannerType::Type::LAZYARA) {
-        std::vector <int> all_transferred_succs;
-        std::vector <int> all_transferred_costs;
-        all_transferred_succs.reserve((NUM_LEADERS-1)*succIDs->size());
-        all_transferred_costs.reserve((NUM_LEADERS-1)*succIDs->size());
-        for (int i = 1; i <= NUM_LEADERS; i++) {
-            if (SwarmState::LEADER_IDS.at(i-1) == leader_id)
-                continue;
-            std::vector <int> transferred_succs;
-            std::vector <int> transferred_costs;
-            TransferFunction(i, *succIDs, &transferred_succs, &transferred_costs);
-            // add the real costs to the extra costs
-            int j = 0;
-            std::for_each(transferred_costs.begin(), transferred_costs.end(),
-                [&j, &costs](int& val) { val+=costs->at(j++); });
-            assert(j == costs.size());
-            all_transferred_succs.insert(all_transferred_succs.end(),
-                transferred_succs.begin(), transferred_succs.end());
-            all_transferred_costs.insert(all_transferred_costs.end(),
-                transferred_costs.begin(), transferred_costs.end());
+        for (int i = 0; i < NUM_LEADERS; i++) {
+            int current_leader_id = SwarmState::LEADER_IDS.at(i);
+            for (auto mprim : current_mprims){
+                GraphStatePtr successor;
+                TransitionData t_data;
+                
+                bool generate_succ = generateAndSaveSuccessor(source_state, mprim,
+                    current_leader_id, successor, t_data);
+                if(!generate_succ)
+                    continue;
+                if (current_leader_id != leader_id) {
+                    t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
+                }
+                successor->setLeader(current_leader_id);
+                if (m_goal->isSatisfiedBy(successor)){
+                    m_goal->storeAsSolnState(successor);
+                    ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
+                    "cost: %d", source_state->id(), successor->id(), t_data.cost());
+                    succIDs->push_back(GOAL_STATE);
+                } else {
+                    succIDs->push_back(successor->id());
+                }
+                costs->push_back(t_data.cost());
+                isTrueCost->push_back(true);
+            }
         }
-        assert(all_transferred_succs.size() == (NUM_LEADERS-1)*succIDs.size());
-        assert(all_transferred_costs.size() == (NUM_LEADERS-1)*costs.size());
-        succIDs->insert(succIDs->end(), all_transferred_succs.begin(),
-            all_transferred_succs.end());
-        costs->insert(costs->end(), all_transferred_costs.begin(),
-            all_transferred_costs.end());
-        std::vector<bool> all_transferred_true_costs(all_transferred_costs.size(), true);
-        isTrueCost->insert(isTrueCost->end(), all_transferred_true_costs.begin(),
-            all_transferred_true_costs.end());
     }
     ROS_DEBUG_NAMED(SEARCH_LOG, "size of succIDs : %lu", succIDs->size());
     ROS_DEBUG_NAMED(SEARCH_LOG, "size of costs : %lu", costs->size());
-    // std::cin.get();
+    std::cin.get();
+}
+
+bool Environment::generateAndSaveSuccessor(const GraphStatePtr source_state,
+                                    MotionPrimitivePtr mprim,
+                                    int leader_id,
+                                    GraphStatePtr& successor,
+                                    TransitionData& t_data)
+{
+    GraphStatePtr leader_moved_state;
+    // Each MPrim is applied in 4 steps.
+
+    // Step 1 : Apply the mprim motion to just the leader. This generates a
+    // leader_moved_state
+    if (!mprim->apply(*source_state, leader_id, leader_moved_state)){
+        return false;
+    }
+    // if this is an adaptive primitive that succeeded, we should just skip
+    // ahead to the end
+    bool is_adaptive = (mprim->getPrimitiveType() == MPrim_Type::NAVAMP);
+    if (!is_adaptive) {
+        // Step 2 : For the policy, we assume that none of the followers have moved. We
+        // take in the leader_moved_state and generate the policy, which gives
+        // us the successor.
+        if (!m_policy_generator->applyPolicy(*leader_moved_state, leader_id, successor)) {
+            return false;
+        }
+        // Step 3 : compute the cost of the policy
+        int policy_cost = m_policy_generator->computePolicyCost(*source_state,
+            leader_id, successor);
+        // Step 4 : compute the TData
+        mprim->computeTData(*source_state, leader_id, successor, t_data);
+        // ROS_DEBUG_NAMED(SEARCH_LOG, "policy_cost : %d", policy_cost);
+        // We need to set the cost of the tData because the policyGenerator
+        // is not aware of the cost of the mprim
+        t_data.cost(mprim->getBaseCost() + policy_cost);
+
+        if(!m_cspace_mgr->isValidSuccessor(*successor) ||
+                    !m_cspace_mgr->isValidTransitionStates(t_data)) {
+            return false;
+        }
+    } else {
+        successor = leader_moved_state;
+        mprim->computeTData(*source_state, leader_id, successor, t_data);
+        t_data.cost(mprim->getBaseCost());
+    }
+    assert(successor != NULL);
+    successor->printToDebug(SEARCH_LOG);
+
+    // save the successor to the hash manager
+    // generate the edge
+    // push back to succIDs
+    // push back to costs
+    // set isTrueCost
+    // add to edge cache
+    // NOTE : You probably don't have to mess with the part below this as
+    // long as you have the right successor in the `successor` variable.
+    m_hash_mgr->save(successor);
+    // ROS_DEBUG_NAMED(SEARCH_LOG,"Generated successor with id %d", successor->id());
+    // Edge key;
+    return true;
 }
 
 /*

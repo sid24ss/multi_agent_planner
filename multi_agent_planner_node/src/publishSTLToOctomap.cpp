@@ -140,7 +140,7 @@ void addStartStateRegionToParamServer(){
 void addEnvironmentComponents(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud){
     // first corridor
     addCuboid(pclCloud, 0, 0, 0, 0.04, 4, 0.5, true);
-    addCuboid(pclCloud, 2, 0, 0, 0.04, 2.0, 0.5, true);
+    addCuboid(pclCloud, 2, 0, 0, 0.04, 2, 0.5, true);
     // second corridor
     addCuboid(pclCloud, 0, 4, 0, 5.00, 0.04, 0.5, true);
     addCuboid(pclCloud, 2, 2, 0, 5.00, 0.04, 0.5, true);
@@ -150,6 +150,9 @@ void addEnvironmentComponents(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud){
     // fourth corridor
     addCuboid(pclCloud, 0, 5, 0, 5.00, 0.04, 0.5, true);
     addCuboid(pclCloud, 0, 7, 0, 7.00, 0.04, 0.5, true);
+    // protrusion
+    // addCuboid(pclCloud, 1, 2.7, 0, 1.00, 0.04, 0.5, true);
+    // addCuboid(pclCloud, 1, 1.5, 0, 0.04, 1.3, 0.5, true);
 }
 
 vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){

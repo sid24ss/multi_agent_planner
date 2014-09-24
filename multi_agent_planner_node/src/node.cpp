@@ -104,7 +104,7 @@ void setLoggersFromParamServer(ros::NodeHandle nh){
     changeLoggerLevel(std::string("ros.multi_agent_planner_node") + 
                                   std::string(".") + 
                                   std::string(MPRIM_LOG), level);
-    ROS_DEBUG_NAMED(CONFIG_LOG, "search logging level set to %s", level.c_str());
+    ROS_DEBUG_NAMED(CONFIG_LOG, "mprim logging level set to %s", level.c_str());
 
     nh.param<std::string>("debug/logging/heuristics", 
                           level, "info");
@@ -114,7 +114,7 @@ void setLoggersFromParamServer(ros::NodeHandle nh){
     changeLoggerLevel(std::string("ros.multi_agent_planner_node") + 
                                   std::string(".") + 
                                   std::string(HEUR_LOG), level);
-    ROS_DEBUG_NAMED(CONFIG_LOG, "search logging level set to %s", level.c_str());
+    ROS_DEBUG_NAMED(CONFIG_LOG, "heuristics logging level set to %s", level.c_str());
 
     nh.param<std::string>("debug/logging/pathpostprocessor", 
                           level, "info");
@@ -124,7 +124,7 @@ void setLoggersFromParamServer(ros::NodeHandle nh){
     changeLoggerLevel(std::string("ros.multi_agent_planner_node") + 
                                   std::string(".") + 
                                   std::string(POSTPROCESSOR_LOG), level);
-    ROS_DEBUG_NAMED(CONFIG_LOG, "search logging level set to %s", level.c_str());
+    ROS_DEBUG_NAMED(CONFIG_LOG, "pathpostprocessor logging level set to %s", level.c_str());
 
     nh.param<std::string>("debug/logging/policygenerator", 
                           level, "info");
@@ -134,7 +134,7 @@ void setLoggersFromParamServer(ros::NodeHandle nh){
     changeLoggerLevel(std::string("ros.multi_agent_planner_node") + 
                                   std::string(".") + 
                                   std::string(POLICYGEN_LOG), level);
-    ROS_DEBUG_NAMED(CONFIG_LOG, "search logging level set to %s", level.c_str());
+    ROS_DEBUG_NAMED(CONFIG_LOG, "policygenerator logging level set to %s", level.c_str());
 }
 
 int main(int argc, char** argv){

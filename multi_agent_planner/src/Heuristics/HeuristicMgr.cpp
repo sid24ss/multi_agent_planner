@@ -3,6 +3,7 @@
 #include <multi_agent_planner/StateReps/GoalState.h>
 #include <multi_agent_planner/Heuristics/HeuristicMgr.h>
 #include <multi_agent_planner/Heuristics/BFS2DHeuristic.h>
+#include <multi_agent_planner/Heuristics/EuclideanHeuristic.h>
 #include <costmap_2d/cost_values.h>
 #include <memory>
 #include <vector>
@@ -59,6 +60,14 @@ void HeuristicMgr::add2DHeur(std::string name, const int cost_multiplier){
     m_heuristics.push_back(new_2d_heur);
     m_heuristic_map[name] = static_cast<int>(m_heuristics.size() - 1);
 }
+
+void HeuristicMgr::addEuclHeur(std::string name, const int cost_multiplier = 1){
+    EuclideanHeuristicPtr eucl_heur = std::make_shared<EuclideanHeuristic>();
+    eucl_heur->setCostMultiplier(cost_multiplier);
+    m_heuristics.push_back(eucl_heur);
+    m_heuristic_map[name] = static_cast<int>(m_heuristics.size() - 1);
+}
+
 
 // most heuristics won't need both 2d and 3d maps. however, the abstract
 // heuristic type has function stubs for both of them so we don't need to pick
