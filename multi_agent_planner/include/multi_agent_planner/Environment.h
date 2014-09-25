@@ -48,6 +48,7 @@ namespace multi_agent_planner {
             void reset();
             void setPlannerType(PlannerType::Type planner_type) {m_planner_type = planner_type;}
             PolicyGeneratorPtr getPolicyGenerator() {return m_policy_generator;}
+            size_t getNumGeneratedSuccessors() {return m_num_generated_succs; }
 
         protected:
             bool setStartGoal(SearchRequestPtr search_request, 
@@ -74,6 +75,7 @@ namespace multi_agent_planner {
             int m_start_state_id;
             int m_num_leader_changes;
             multi_agent_planner::PlannerType::Type m_planner_type;
+            size_t m_num_generated_succs;
 
             // std::unordered_map<int, PlanningModes::modes> m_action_partition;
 

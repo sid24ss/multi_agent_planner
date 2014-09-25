@@ -282,19 +282,20 @@ void EnvInterfaces::packageStats(std::vector<std::string>& stat_names,
                                  size_t solution_size,
                                  bool mha_planner = true)
 {
-    stat_names.resize(11);
-    stats.resize(11);
-    stat_names[0] = "total plan time";
-    stat_names[1] = "initial solution planning time";
-    stat_names[2] = "epsilon 1";
-    stat_names[3] = "initial solution expansions";
-    stat_names[4] = "final epsilon planning time";
-    stat_names[5] = "epsilon 2";
-    stat_names[6] = "solution epsilon";
+    stat_names.resize(12);
+    stats.resize(12);
+    stat_names[0] = "total_plan_time";
+    stat_names[1] = "initial_solution_planning_time";
+    stat_names[2] = "epsilon_1";
+    stat_names[3] = "initial_solution_expansions";
+    stat_names[4] = "final_epsilon_planning_time";
+    stat_names[5] = "epsilon_2";
+    stat_names[6] = "solution_epsilon";
     stat_names[7] = "expansions";
-    stat_names[8] = "solution cost";
-    stat_names[9] = "path length";
+    stat_names[8] = "solution_cost";
+    stat_names[9] = "path_length";
     stat_names[10] = "num_leader_changes";
+    stat_names[11] = "num_gen_successors";
 
     std::vector<PlannerStats> planner_stats;
     if (mha_planner)
@@ -313,6 +314,7 @@ void EnvInterfaces::packageStats(std::vector<std::string>& stat_names,
     stats[8] = static_cast<double>(planner_stats[0].cost);
     stats[9] = static_cast<double>(solution_size);
     stats[10] = m_env->getLeaderChangeCount();
+    stats[11] = m_env->getNumGeneratedSuccessors();
 }
 
 bool EnvInterfaces::bindCollisionSpaceToTopic(std::string topic_name){

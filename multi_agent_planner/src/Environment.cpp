@@ -13,7 +13,8 @@ using namespace multi_agent_planner;
 Environment::Environment(ros::NodeHandle nh)
     :   m_hash_mgr(new HashManager(&StateID2IndexMapping)),
         m_nodehandle(nh), m_mprims(m_goal),
-        m_heur_mgr(new HeuristicMgr())
+        m_heur_mgr(new HeuristicMgr()),
+        m_num_generated_succs(0)
 {
         m_param_catalog.fetch(nh);
         configurePlanningDomain();
@@ -29,6 +30,8 @@ void Environment::reset() {
     // m_heur_mgr->setCollisionSpaceMgr(m_cspace_mgr);
     m_hash_mgr.reset(new HashManager(&StateID2IndexMapping));
     m_edges.clear();
+    m_num_leader_changes = 0;
+    m_num_generated_succs = 0;
 }
 
 bool Environment::configureRequest(SearchRequestParamsPtr search_request_params,
@@ -62,16 +65,25 @@ int Environment::GetGoalHeuristic(int q_id, int stateID) {
         stateID, q_id);
     successor->printToDebug(HEUR_LOG);
     int heur;
-    if (q_id == 0) {
-        std::vector<int> values;
-        // get the admissible heuristic - max of all the leader ones.
-        m_heur_mgr->getGoalHeuristic(successor, values);
-        heur = *std::max_element(values.begin(), values.end());
-    } else {
-        std::stringstream ss;
-        ss << "bfs2d_" << SwarmState::LEADER_IDS.at(q_id - 1);
-        heur = m_heur_mgr->getGoalHeuristic(successor, ss.str(), SwarmState::LEADER_IDS.at(q_id - 1));
+    std::vector<int> values;
+    m_heur_mgr->getGoalHeuristic(successor, values);
+    int max_heur = *std::max_element(values.begin(), values.end());
+    if (q_id == 0)
+        return max_heur;
+    else {
+        return std::max(max_heur, static_cast<int>(1.1*values.at(SwarmState::LEADER_IDS.at(q_id - 1
+                    ))));
     }
+    // if (q_id == 0) {
+    //     std::vector<int> values;
+    //     // get the admissible heuristic - max of all the leader ones.
+    //     m_heur_mgr->getGoalHeuristic(successor, values);
+    //     heur = *std::max_element(values.begin(), values.end());
+    // } else {
+    //     std::stringstream ss;
+    //     ss << "bfs2d_" << SwarmState::LEADER_IDS.at(q_id - 1);
+    //     heur = m_heur_mgr->getGoalHeuristic(successor, ss.str(), SwarmState::LEADER_IDS.at(q_id - 1));
+    // }
     ROS_DEBUG_NAMED(HEUR_LOG, "heuristic : %d", heur);
     return heur;
 }
@@ -229,7 +241,8 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
     }
     ROS_DEBUG_NAMED(SEARCH_LOG, "size of succIDs : %lu", succIDs->size());
     ROS_DEBUG_NAMED(SEARCH_LOG, "size of costs : %lu", costs->size());
-    std::cin.get();
+    m_num_generated_succs += succIDs->size();
+    // std::cin.get();
 }
 
 bool Environment::generateAndSaveSuccessor(const GraphStatePtr source_state,
