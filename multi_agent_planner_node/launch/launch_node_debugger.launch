@@ -27,7 +27,7 @@
   name="stlToOctomap" args="$(find multi_agent_planner_node)/maps/empty_map.dae">
     <param name="add_random_obstacles" value="true"/>
     <param name="randomize_environment" value="false"/>
-    <param name="experiments/environment_obstacles_file" value="$(find multi_agent_planner_node)/experiments/env_4.yaml" />
+    <param name="experiments/environment_obstacles_file" value="$(find multi_agent_planner_node)/experiments/env_7.yaml" />
   </node>
   
   <node pkg="multi_agent_planner_node" type="node" name="multi_agent_planner_node" output="screen" launch-prefix="gdb -ex run --args">
@@ -35,6 +35,7 @@
       <rosparam command="load" file="$(find multi_agent_planner)/config/config.yaml" />
       <rosparam command="load" file="$(find multi_agent_planner)/config/swarm_config.yaml" />
       <rosparam file="$(find multi_agent_planner)/config/costmap_2d.yaml" command="load" ns="costmap_2d" />
+      <rosparam file="$(find multi_agent_planner)/config/costmap_2d_swarm_inscribed.yaml" command="load" ns="costmap_2d_swarm_inscribed" />
   </node>
   <node pkg="tf" type="static_transform_publisher" name="map_to_base_broadcaster" args="0 0 0 0 0 0 map base_link 100" />
   

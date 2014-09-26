@@ -69,10 +69,14 @@ int Environment::GetGoalHeuristic(int q_id, int stateID) {
     m_heur_mgr->getGoalHeuristic(successor, values);
     int max_heur = *std::max_element(values.begin(), values.end());
     if (q_id == 0)
-        return max_heur;
-    else {
-        return std::max(max_heur, static_cast<int>(1.1*values.at(SwarmState::LEADER_IDS.at(q_id - 1
-                    ))));
+        heur = max_heur;
+    else if (q_id <= NUM_LEADERS) {
+        heur = std::max(max_heur,
+            static_cast<int>(1.1*values.at(SwarmState::LEADER_IDS.at(q_id - 1))));
+    } else {
+        // inscribed radius
+        heur = m_heur_mgr->getGoalHeuristic(successor, "swarm_inscribed_heur",
+            SwarmState::MIDDLE_GUY);
     }
     // if (q_id == 0) {
     //     std::vector<int> values;
@@ -85,6 +89,17 @@ int Environment::GetGoalHeuristic(int q_id, int stateID) {
     //     heur = m_heur_mgr->getGoalHeuristic(successor, ss.str(), SwarmState::LEADER_IDS.at(q_id - 1));
     // }
     ROS_DEBUG_NAMED(HEUR_LOG, "heuristic : %d", heur);
+
+    // if (q_id == 6) {
+    //     ROS_DEBUG_NAMED(HEUR_LOG, "debug : ");
+    //     for (int i = 0; i < NUM_LEADERS; i++) {
+    //         std::stringstream ss;
+    //         ss << "bfs2d_" << SwarmState::LEADER_IDS.at(i);
+    //         int debug_h = m_heur_mgr->getGoalHeuristic(successor, ss.str(), SwarmState::LEADER_IDS.at(i));
+    //         ROS_DEBUG_NAMED(HEUR_LOG, "%s heur for robot %d is : %d", ss.str().
+    //             c_str(), SwarmState::LEADER_IDS.at(i), debug_h);
+    //     }
+    // }
     return heur;
 }
 
@@ -109,16 +124,24 @@ void Environment::GetLazySuccs(int sourceStateID, std::vector<int>* succIDs,
 void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* succIDs, 
                         std::vector<int>* costs, std::vector<bool>* isTrueCost)
 {
-    if (q_id == 0 && m_planner_type == PlannerType::MHA) {
-        throw std::runtime_error("Expanding anchor is not implemented yet!");
-    }
     // get the source_state
     GraphStatePtr source_state = m_hash_mgr->getGraphState(sourceStateID);
+
+    // load MPrims
+    MPrimList current_mprims = m_mprims.getMotionPrims();
+    succIDs->clear();
+    succIDs->reserve(NUM_LEADERS*current_mprims.size());
+    costs->clear();
+    costs->reserve(NUM_LEADERS*current_mprims.size());
+
     // set the correct leader id.
-    int leader_id;
+    int leader_id = -1;
     if (m_planner_type == PlannerType::MHA) {
-        leader_id = SwarmState::LEADER_IDS.at(q_id -1);
-        assert(leader_id == source_state->getLeader());
+        if (q_id <= NUM_LEADERS && q_id > 0)
+            leader_id = SwarmState::LEADER_IDS.at(q_id -1);
+        else
+            leader_id = source_state->getLeader();
+        // assert(leader_id == source_state->getLeader());
     } else {
         assert(q_id == 0);
         leader_id = source_state->getLeader();
@@ -127,11 +150,48 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
     ROS_DEBUG_NAMED(SEARCH_LOG, "==================Expanding state %d==================", 
                     sourceStateID);
     ROS_DEBUG_NAMED(SEARCH_LOG, "expanding leader : %d, q_id : %d", leader_id, q_id);
-    MPrimList current_mprims = m_mprims.getMotionPrims();
-    succIDs->clear();
-    succIDs->reserve(current_mprims.size());
-    costs->clear();
-    costs->reserve(current_mprims.size());
+    
+    source_state->swarm_state().printToDebug(SEARCH_LOG);
+    if(m_param_catalog.m_visualization_params.expansions){
+        source_state->swarm_state().visualize();
+        usleep(10000);
+    }
+    bool done_expanding = false;
+    // these are kinda redundant. If it's lazyARA, q_id will always be 0;
+    // readability!
+    if (q_id == 0 || m_planner_type == PlannerType::LAZYARA) {
+        for (int i = 0; i < NUM_LEADERS; i++) {
+            int current_leader_id = SwarmState::LEADER_IDS.at(i);
+            for (auto mprim : current_mprims){
+                GraphStatePtr successor;
+                TransitionData t_data;
+                
+                bool generate_succ = generateAndSaveSuccessor(source_state, mprim,
+                    current_leader_id, successor, t_data);
+                if(!generate_succ)
+                    continue;
+                if (current_leader_id != leader_id) {
+                    t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
+                }
+                successor->setLeader(current_leader_id);
+                // Edge key;
+                if (m_goal->isSatisfiedBy(successor)){
+                    m_goal->storeAsSolnState(successor);
+                    ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
+                    "cost: %d", source_state->id(), successor->id(), t_data.cost());
+                    succIDs->push_back(GOAL_STATE);
+                    // key = Edge(sourceStateID, GOAL_STATE);
+                } else {
+                    succIDs->push_back(successor->id());
+                    // key = Edge(sourceStateID, successor->id());
+                }
+                // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
+                costs->push_back(t_data.cost());
+                isTrueCost->push_back(true);
+            }
+        }
+        done_expanding = true;
+    }
 
     // if we are expanding the start state, then no leaders would have been set
     // yet. So, we go ahead and expand it. The other condition to go ahead and
@@ -146,12 +206,7 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
     // debug and visualization
     // ROS_DEBUG_NAMED(SEARCH_LOG, "Source state is:");
     // source_state->printToDebug(SEARCH_LOG);
-    source_state->swarm_state().printToDebug(SEARCH_LOG);
-    if(m_param_catalog.m_visualization_params.expansions){
-        source_state->swarm_state().visualize();
-        usleep(10000);
-    }
-    if (m_planner_type == PlannerType::Type::MHA) {
+    if (m_planner_type == PlannerType::Type::MHA && !done_expanding) {
         for (auto mprim : current_mprims){
             GraphStatePtr successor;
             TransitionData t_data;
@@ -173,15 +228,19 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
             }
             successor->swarm_state().printToDebug(SEARCH_LOG);
 
+            // Edge key;
             if (m_goal->isSatisfiedBy(successor)){
                 m_goal->storeAsSolnState(successor);
                 ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
                 "cost: %d", source_state->id(), successor->id(), t_data.cost());
                 succIDs->push_back(GOAL_STATE);
+                // key = Edge(sourceStateID, GOAL_STATE);
             } else {
                 succIDs->push_back(successor->id());
+                // key = Edge(sourceStateID, successor->id());
             }
             ROS_DEBUG_NAMED(SEARCH_LOG, "cost : %d", t_data.cost());
+            // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
             costs->push_back(t_data.cost());
             isTrueCost->push_back(true);
 
@@ -195,14 +254,18 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
                 if (!other_succ_gen)
                     continue;
                 other_successor->setLeader(old_leader_id);
+                // Edge key;
                 if (m_goal->isSatisfiedBy(successor)){
                     m_goal->storeAsSolnState(successor);
                     ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
                     "cost: %d", source_state->id(), successor->id(), t_data.cost());
                     succIDs->push_back(GOAL_STATE);
+                    // key = Edge(sourceStateID, GOAL_STATE);
                 } else {
                     succIDs->push_back(other_successor->id());
+                    // key = Edge(sourceStateID, successor->id());
                 }
+                // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
                 costs->push_back(other_tdata.cost());
                 isTrueCost->push_back(true);
                 other_successor->swarm_state().printToDebug(SEARCH_LOG);
@@ -210,35 +273,7 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
             }
         }
     }
-    
-    if (m_planner_type == PlannerType::Type::LAZYARA) {
-        for (int i = 0; i < NUM_LEADERS; i++) {
-            int current_leader_id = SwarmState::LEADER_IDS.at(i);
-            for (auto mprim : current_mprims){
-                GraphStatePtr successor;
-                TransitionData t_data;
-                
-                bool generate_succ = generateAndSaveSuccessor(source_state, mprim,
-                    current_leader_id, successor, t_data);
-                if(!generate_succ)
-                    continue;
-                if (current_leader_id != leader_id) {
-                    t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
-                }
-                successor->setLeader(current_leader_id);
-                if (m_goal->isSatisfiedBy(successor)){
-                    m_goal->storeAsSolnState(successor);
-                    ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
-                    "cost: %d", source_state->id(), successor->id(), t_data.cost());
-                    succIDs->push_back(GOAL_STATE);
-                } else {
-                    succIDs->push_back(successor->id());
-                }
-                costs->push_back(t_data.cost());
-                isTrueCost->push_back(true);
-            }
-        }
-    }
+
     ROS_DEBUG_NAMED(SEARCH_LOG, "size of succIDs : %lu", succIDs->size());
     ROS_DEBUG_NAMED(SEARCH_LOG, "size of costs : %lu", costs->size());
     m_num_generated_succs += succIDs->size();
@@ -273,7 +308,7 @@ bool Environment::generateAndSaveSuccessor(const GraphStatePtr source_state,
         int policy_cost = m_policy_generator->computePolicyCost(*source_state,
             leader_id, successor);
         // Step 4 : compute the TData
-        mprim->computeTData(*source_state, leader_id, successor, t_data);
+        MotionPrimitive::computeTData(*source_state, leader_id, successor, t_data);
         // ROS_DEBUG_NAMED(SEARCH_LOG, "policy_cost : %d", policy_cost);
         // We need to set the cost of the tData because the policyGenerator
         // is not aware of the cost of the mprim
@@ -285,7 +320,7 @@ bool Environment::generateAndSaveSuccessor(const GraphStatePtr source_state,
         }
     } else {
         successor = leader_moved_state;
-        mprim->computeTData(*source_state, leader_id, successor, t_data);
+        MotionPrimitive::computeTData(*source_state, leader_id, successor, t_data);
         t_data.cost(mprim->getBaseCost());
     }
     assert(successor != NULL);
@@ -300,8 +335,8 @@ bool Environment::generateAndSaveSuccessor(const GraphStatePtr source_state,
     // NOTE : You probably don't have to mess with the part below this as
     // long as you have the right successor in the `successor` variable.
     m_hash_mgr->save(successor);
+
     // ROS_DEBUG_NAMED(SEARCH_LOG,"Generated successor with id %d", successor->id());
-    // Edge key;
     return true;
 }
 
@@ -310,50 +345,8 @@ bool Environment::generateAndSaveSuccessor(const GraphStatePtr source_state,
  * know the motion primitive used
  */
 int Environment::GetTrueCost(int parentID, int childID){
-    throw std::runtime_error("not doing lazy at the moment!");
-    return 0;
-    // TransitionData t_data;
+    TransitionData t_data;
 
-    // if (m_edges.find(Edge(parentID, childID)) == m_edges.end()){
-    //   ROS_ERROR("transition hasn't been found between %d and %d??", parentID, childID);
-    //     assert(false);
-    // }
-    // PathPostProcessor postprocessor(m_hash_mgr, m_cspace_mgr);
-
-    // ROS_DEBUG_NAMED(SEARCH_LOG, "evaluating edge (%d %d)", parentID, childID);
-    // GraphStatePtr source_state = m_hash_mgr->getGraphState(parentID);
-    // GraphStatePtr real_next_successor = m_hash_mgr->getGraphState(childID);
-    // GraphStatePtr successor, tmp;
-    // tmp = source_state;
-    // // MotionPrimitivePtr mprim = m_edges.at(Edge(parentID, childID));
-    // int total_cost = 0;
-    // for (auto&& mprim : m_edges.at(Edge(parentID, childID))) {
-    //     if (!mprim->apply(*tmp, successor, t_data)){
-    //         return -1;
-    //     }
-    //     bool valid_successor = (m_cspace_mgr->isValidSuccessor(*successor, t_data) && 
-    //                             m_cspace_mgr->isValidTransitionStates(t_data));
-    //     if (!valid_successor){
-    //         return -1;
-    //     }
-    //     total_cost += t_data.cost();
-    //     tmp = successor;
-    // }
-    // // mprim->printEndCoord();
-    // // mprim->print();
-    // //source_state->printToInfo(SEARCH_LOG);
-    // //successor->printToInfo(SEARCH_LOG);
-    // successor->id(m_hash_mgr->getStateID(successor));
-
-    // // right before this point, the successor's graph state does not match the
-    // // stored robot state (because we modified the graph state without calling
-    // // ik and all that). this call updates the stored robot pose.
-    // real_next_successor->robot_pose(successor->robot_pose());
-
-    // // bool matchesEndID = (successor->id() == childID) || (childID == GOAL_STATE);
-    // // assert(matchesEndID);
-
-    // return total_cost;
 }
 
 /**

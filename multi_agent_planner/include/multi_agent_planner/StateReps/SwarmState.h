@@ -35,6 +35,7 @@ namespace multi_agent_planner {
                 std::vector<SwarmState>& interm_swarm_steps);
 
             static int NUM_ROBOTS;
+            static int MIDDLE_GUY;
             // Note : relative positions [from][to]
             static std::vector<std::vector<ContRobotState> > REL_POSITIONS;
             static std::vector<int> LEADER_IDS;

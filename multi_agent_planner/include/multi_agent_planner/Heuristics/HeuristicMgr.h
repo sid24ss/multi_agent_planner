@@ -42,6 +42,7 @@ namespace multi_agent_planner {
 
             // Updates the 2D map for the heuristics that need them
             void update2DHeuristicMaps(const std::vector<unsigned char>& data);
+            void updateAdditional2DMaps(const std::vector<unsigned char>& data);
 
             // TODO: Multiple goals should just take the goal state and the heuristic ID.
             void setGoal(GoalState& state);
@@ -79,6 +80,7 @@ namespace multi_agent_planner {
             // Saving the goal and the grid for MHA heuristics
             unsigned char** m_grid;
             std::vector<unsigned char> m_grid_data;
+            std::vector<unsigned char> m_additional_grid_data;
 
             CSpaceMgrPtr m_cspace_mgr;
     };

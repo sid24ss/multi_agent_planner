@@ -36,6 +36,7 @@ rosbuild_gensrv()
 #rosbuild_add_executable(example examples/example.cpp)
 rosbuild_add_executable(node src/node.cpp src/EnvInterfaces.cpp
                              src/CollisionSpaceInterface.cpp
+                             src/NavMapHandler.cpp
                         )
 target_link_libraries(node multi_agent_planner ${SBPL_LIBRARIES})
 

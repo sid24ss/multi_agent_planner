@@ -90,7 +90,7 @@ int main(int argc, char** argv){
     if (isPlanFound) {
       std::stringstream stats_file_name;
       stats_file_name << "swarm_stats_" << trial_id << ".csv";
-      StatsWriter::writeStatsToFile(stats_file_name.str().c_str(), first, res.stats_field_names, res.stats);
+      StatsWriter::writeStatsToFile(stats_file_name.str().c_str(), first, res.stats_field_names, res.stats,test_num);
       first = false;
     }
   }

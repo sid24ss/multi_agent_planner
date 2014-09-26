@@ -1,13 +1,12 @@
 #pragma once
 #include <multi_agent_planner_node/CollisionSpaceInterface.h>
+#include <multi_agent_planner_node/NavMapHandler.h>
 #include <multi_agent_planner_node/GetSwarmPlan.h>
 #include <multi_agent_planner/PathPostProcessor.h>
 #include <multi_agent_planner/SearchRequest.h>
 #include <multi_agent_planner/Environment.h>
 #include <multi_agent_planner/Constants.h>
 #include <multi_agent_planner/Utilities.h>
-// #include <multi_agent_planner/StatsWriter.h>
-// #include <sbpl/planners/araplanner.h>
 #include <sbpl/planners/mha_planner.h>
 #include <sbpl/planners/lazyARA.h>
 #include <sbpl/planners/planner.h>
@@ -44,9 +43,6 @@ namespace multi_agent_planner_node {
 
         private:
             void loadNavMap(const nav_msgs::OccupancyGridPtr& map);
-            void crop2DMap(const nav_msgs::MapMetaData& map_info, const std::vector<unsigned char>& v,
-                           double new_origin_x, double new_origin_y,
-                           double width, double height);
             void interruptPlannerCallback(std_msgs::EmptyConstPtr);
             bool runMHAPlanner(
                   GetSwarmPlan::Request &req,
@@ -70,10 +66,8 @@ namespace multi_agent_planner_node {
             std::unique_ptr<MHAPlanner> m_mha_planner;
 
             ros::Subscriber m_nav_map;
-            ros::Publisher m_costmap_pub;
 
-            std::vector<signed char> m_final_map;
-            std::vector<unsigned char> m_cropped_map;
+            std::unique_ptr<NavMapHandler> m_navmap_handler;
             unsigned char** m_grid;
 
             ros::Subscriber interrupt_sub_;
@@ -81,7 +75,7 @@ namespace multi_agent_planner_node {
             
             // Doesn't really need to store the Costmap2D object. Simply has
             // to update the costmap of the heurMgr.
-            std::unique_ptr<costmap_2d::Costmap2DROS> m_costmap_ros;
-            std::unique_ptr<costmap_2d::Costmap2DPublisher> m_costmap_publisher;
+            // std::unique_ptr<costmap_2d::Costmap2DROS> m_costmap_ros;
+            // std::unique_ptr<costmap_2d::Costmap2DPublisher> m_costmap_publisher;
     };
 }

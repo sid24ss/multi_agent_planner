@@ -15,6 +15,7 @@ using namespace boost;
 // ugly as hell.
 extern std::vector<int> multi_agent_planner::SwarmState::LEADER_IDS;
 extern int multi_agent_planner::SwarmState::NUM_ROBOTS;
+extern int multi_agent_planner::SwarmState::MIDDLE_GUY;
 extern std::vector<std::vector<multi_agent_planner::ContRobotState> > multi_agent_planner::SwarmState::REL_POSITIONS;
 
 // constructor automatically launches the collision space interface, which only
@@ -23,18 +24,13 @@ extern std::vector<std::vector<multi_agent_planner::ContRobotState> > multi_agen
 EnvInterfaces::EnvInterfaces(std::shared_ptr<multi_agent_planner::Environment> env, ros::NodeHandle nh) :
     m_nodehandle(nh),
     m_env(env), m_collision_space_interface(new CollisionSpaceInterface(env->getCollisionSpace(), env->getHeuristicMgr())),
-    // This costmap_ros object listens to the map topic as defined
-    // in the costmap_2d.yaml file.
-    m_costmap_ros(new costmap_2d::Costmap2DROS("costmap_2d", m_tf))
-
+    m_navmap_handler(new NavMapHandler(m_nodehandle))
 {
     m_collision_space_interface->mutex = &mutex;
     getParams();
     bool forward_search = true;
     m_ara_planner.reset(new LazyARAPlanner(m_env.get(), forward_search));
     m_mha_planner.reset(new MHAPlanner(m_env.get(), NUM_LEADERS+1, forward_search));
-    m_costmap_pub = m_nodehandle.advertise<nav_msgs::OccupancyGrid>("costmap_pub", 1);
-    m_costmap_publisher.reset(new costmap_2d::Costmap2DPublisher(m_nodehandle,1,"/map"));
 
     interrupt_sub_ = nh.subscribe("/sbpl_planning/interrupt", 1, &EnvInterfaces::interruptPlannerCallback,this);
 }
@@ -150,7 +146,9 @@ bool EnvInterfaces::runMHAPlanner(
     std::vector<SwarmState> states;
 
     int planner_queues;
-    planner_queues = static_cast<int>(SwarmState::LEADER_IDS.size()) + 1;
+    planner_queues = static_cast<int>(SwarmState::LEADER_IDS.size())
+                    + 1 /*anchor */
+                    + 1 /*swarm_inscribed*/;
     ROS_INFO("Creating planner with %d queues", planner_queues);
     m_env->reset();
     // set the planner type
@@ -329,49 +327,6 @@ void EnvInterfaces::bindNavMapToTopic(std::string topic){
     m_nav_map = m_nodehandle.subscribe(topic, 1, &EnvInterfaces::loadNavMap, this);
 }
 
-void EnvInterfaces::crop2DMap(const nav_msgs::MapMetaData& map_info, const
-    std::vector<unsigned char>& v, double new_origin_x, double new_origin_y,
-                              double width, double height)
-{
-    ROS_DEBUG_NAMED(CONFIG_LOG, "to be cropped to : %f (width), %f (height)", width, height);
-    std::vector<std::vector<unsigned char> > tmp_map(map_info.height);
-    for (unsigned int i=0; i < map_info.height; i++){
-        for (unsigned int j=0; j < map_info.width; j++){
-            tmp_map[i].push_back(v[i*map_info.width+j]);
-        }
-    }
-
-    double res = map_info.resolution;
-    ROS_DEBUG_NAMED(CONFIG_LOG, "resolution : %f", res);
-    int new_origin_x_idx = (new_origin_x-map_info.origin.position.x)/res;
-    int new_origin_y_idx = (new_origin_y-map_info.origin.position.y)/res;
-    int new_width = static_cast<int>((width/res) + 1 + 0.5);
-    int new_height = static_cast<int>((height/res) + 1 + 0.5);
-    ROS_DEBUG_NAMED(HEUR_LOG, "new origin: %d %d, new_width and new_height: %d %d",
-                              new_origin_x_idx, new_origin_y_idx, new_width, 
-                              new_height);
-    ROS_DEBUG_NAMED(HEUR_LOG, "size of map %lu %lu", tmp_map.size(), 
-                                                     tmp_map[0].size());
-
-    std::vector<std::vector<unsigned char> > new_map(new_height);
-    int row_count = 0;
-    for (int i=new_origin_y_idx; i < new_origin_y_idx + new_height; i++){
-        for (int j=new_origin_x_idx; j < new_origin_x_idx + new_width; j++){
-            new_map[row_count].push_back(tmp_map[i][j]);
-        }
-        row_count++;
-    }
-    m_final_map.clear();
-    m_cropped_map.clear();
-    // m_final_map.resize(new_width * new_height);
-    for (size_t i=0; i < new_map.size(); i++){
-        for (size_t j=0; j < new_map[i].size(); j++){
-            m_final_map.push_back(static_cast<signed char>(double(new_map[i][j])/254.0*100.0));
-            m_cropped_map.push_back(new_map[i][j]);
-        }
-    }
-    ROS_DEBUG_NAMED(HEUR_LOG, "size of final map: %lu", m_final_map.size());
-}
 
 void EnvInterfaces::loadNavMap(const nav_msgs::OccupancyGridPtr& map){
     boost::unique_lock<boost::mutex> lock(mutex);
@@ -379,6 +334,7 @@ void EnvInterfaces::loadNavMap(const nav_msgs::OccupancyGridPtr& map){
                     map->info.width, map->info.height, map->info.resolution);
     ROS_DEBUG_NAMED(CONFIG_LOG, "origin is at %f %f", map->info.origin.position.x,
                                                       map->info.origin.position.y);
+    m_navmap_handler->loadNavMap(map);
 
     // look up the values from the occup grid parameters
     // This stuff is in cells.
@@ -387,90 +343,30 @@ void EnvInterfaces::loadNavMap(const nav_msgs::OccupancyGridPtr& map){
         dimZ);
     ROS_DEBUG_NAMED(CONFIG_LOG, "Size of OccupancyGrid : %d %d %d", dimX, dimY,
         dimZ);
+    m_navmap_handler->setOccupancyDims(dimX, dimY);
 
-    // Get the underlying costmap in the cost_map object.
-    // Publish for visualization. Publishing is done for the entire (uncropped) costmap.
-    costmap_2d::Costmap2D cost_map;
-    m_costmap_ros->getCostmapCopy(cost_map);
+    m_navmap_handler->addCostmap("costmap_2d");
+    m_navmap_handler->addCostmap("costmap_2d_swarm_inscribed");
 
-    // Normalize and convert to array.
-    for (unsigned int j = 0; j < cost_map.getSizeInCellsY(); ++j)
-    {
-        for (unsigned int i = 0; i < cost_map.getSizeInCellsX(); ++i)
-        {
-            // Row major. X is row wise, Y is column wise.
-            int c = cost_map.getCost(i,j);
-
-            // Set unknowns to free space (we're dealing with static maps for
-            // now)
-            if (c == costmap_2d::NO_INFORMATION) {
-                c = costmap_2d::FREE_SPACE;
-            }
-            // c = (c == (costmap_2d::NO_INFORMATION)) ? (costmap_2d::FREE_SPACE) : (c);
-
-            // Re-set the cost.
-            cost_map.setCost(i,j,c);
-        }
-    }
-
-    // Re-inflate because we modified the unknown cells to be free space.
-    // API : center point of window x, center point of window y, size_x ,
-    // size_y
-    cost_map.reinflateWindow(dimX*map->info.resolution/2, dimY*map->info.resolution/2, dimX*map->info.resolution, dimY*map->info.resolution);
-
-    std::vector<unsigned char> uncropped_map;
-    for (unsigned int j = 0; j < cost_map.getSizeInCellsY(); ++j)
-    {
-        for (unsigned int i = 0; i < cost_map.getSizeInCellsX(); ++i)
-        {
-          uncropped_map.push_back(cost_map.getCost(i,j));
-        }
-    }
-
-    m_costmap_publisher->updateCostmapData(cost_map, m_costmap_ros->getRobotFootprint());
-
-    // Publish the full costmap
-    // topic : /multi_agent_planner_node/inflated_obstacles (RViz: Grid
-    // Cells)
-    m_costmap_publisher->publishCostmap();
-    // topic : /multi_agent_planner_node/robot_footprint (RViz: polygon)
-    m_costmap_publisher->publishFootprint();
-
-    // TODO: Check if this is the right thing to do : Take the resolution from
-    // the map for the occupancy grid's values.
-    double width = dimX*map->info.resolution;
-    double height = dimY*map->info.resolution;
+    // get the bigger inflation
+    std::vector<unsigned char> inscribed_inflation;
+    m_navmap_handler->getInflatedMap("costmap_2d_swarm_inscribed", inscribed_inflation);
+    m_env->getHeuristicMgr()->updateAdditional2DMaps(inscribed_inflation);
     
-    crop2DMap(map->info, uncropped_map, 0, 0, width, height);
-    
-    // Don't want to publish this.
-    nav_msgs::OccupancyGrid costmap_pub;
-    costmap_pub.header.frame_id = "/map";
-    costmap_pub.header.stamp = ros::Time::now();
-    costmap_pub.info.map_load_time = ros::Time::now();
-    costmap_pub.info.resolution = map->info.resolution;
-    // done in the crop function too.
-    costmap_pub.info.width = (width/map->info.resolution+1 + 0.5);
-    costmap_pub.info.height = (height/map->info.resolution+1 + 0.5);
-    costmap_pub.info.origin.position.x = 0;
-    costmap_pub.info.origin.position.y = 0;
-    costmap_pub.data = m_final_map;
 
-    // Publish the cropped version of the costmap; publishes
-    // /multi_agent_planner/costmap_pub
-    ROS_INFO_NAMED(CONFIG_LOG, "Publishing the final map that's supposed to fit"
-        " within the occupancy grid.");
-    m_costmap_pub.publish(costmap_pub);
+    // get the smaller inflation
+    std::vector<unsigned char> cropped_map;
+    m_navmap_handler->getInflatedMap("costmap_2d", cropped_map);
 
-    m_env->getPolicyGenerator()->update2DHeuristicMaps(m_cropped_map);
-    m_env->getHeuristicMgr()->update2DHeuristicMaps(m_cropped_map);
+    m_env->getPolicyGenerator()->update2DHeuristicMaps(cropped_map);
+    m_env->getHeuristicMgr()->update2DHeuristicMaps(cropped_map);
 
     // save as grid for use when generating random start-goals
     m_grid = new unsigned char*[dimX + 1];
     for (int i=0; i < dimX + 1; i++){
         m_grid[i] = new unsigned char[dimY + 1];
         for (int j=0; j < dimY + 1; j++){
-            m_grid[i][j] = (m_cropped_map[j*(dimX + 1)+i]);
+            m_grid[i][j] = (cropped_map[j*(dimX + 1)+i]);
         }
     }
 }

@@ -37,6 +37,7 @@ void HeuristicMgr::reset() {
     initializeHeuristics();
     // update3DHeuristicMaps();
     update2DHeuristicMaps(m_grid_data);
+    updateAdditional2DMaps(m_additional_grid_data);
 }
 
 void HeuristicMgr::initializeHeuristics() {
@@ -48,6 +49,11 @@ void HeuristicMgr::initializeHeuristics() {
         ss << "bfs2d_" << SwarmState::LEADER_IDS[i];
         int cost_multiplier = 1;
         add2DHeur(ss.str(), cost_multiplier);
+    }
+    // add the swarm inscribed heuristic
+    {
+        int cost_multiplier = 1;
+        add2DHeur("swarm_inscribed_heur", cost_multiplier);
     }
 }
 
@@ -86,10 +92,23 @@ void HeuristicMgr::update2DHeuristicMaps(const std::vector<unsigned char>& data)
     }
     m_grid_data.assign(data.begin(), data.end());
 
-    for (size_t i = 0; i < m_heuristics.size(); ++i){
-        m_heuristics[i]->update2DHeuristicMap(data);
+    for (int i = 0; i < NUM_LEADERS; ++i){
+        std::stringstream ss;
+        ss << "bfs2d_" << SwarmState::LEADER_IDS[i];
+        m_heuristics[m_heuristic_map[ss.str()]]->update2DHeuristicMap(data);
+        ROS_DEBUG_NAMED(HEUR_LOG, "Updating 2DHeuristicMap for %s", ss.str().c_str());
     }
     ROS_DEBUG_NAMED(HEUR_LOG, "Size of m_heuristics: %ld", m_heuristics.size());
+}
+
+void HeuristicMgr::updateAdditional2DMaps(const std::vector<unsigned char>& data)
+{
+    // store for later use.
+    m_additional_grid_data.assign(data.begin(), data.end());
+
+    int idx = m_heuristic_map.at("swarm_inscribed_heur");
+    m_heuristics[idx]->update2DHeuristicMap(data);
+    ROS_DEBUG_NAMED(HEUR_LOG, "Updating additionalmap for map at %d", idx);
 }
 
 /**
@@ -113,6 +132,12 @@ void HeuristicMgr::setGoal(GoalState& goal_state){
         m_heuristics[m_heuristic_map[ss.str()]]->setGoal(d_state.x(), d_state.y());
         ROS_DEBUG_NAMED(HEUR_LOG, "[HEUR_LOG] setting goal %d %d for leader_id %d",
                                     d_state.x(), d_state.y(), SwarmState::LEADER_IDS[i]);
+    }
+    {
+        // choose the middle guy
+        auto d_state = robots_list[SwarmState::MIDDLE_GUY].getDiscRobotState();
+        m_heuristics[m_heuristic_map["swarm_inscribed_heur"]]->setGoal(
+                                                d_state.x(), d_state.y());
     }
 }
 
@@ -147,6 +172,10 @@ void HeuristicMgr::getGoalHeuristic(const GraphStatePtr& state,
                                     getGoalHeuristic(state, SwarmState::LEADER_IDS[i])
                         );
     }
+    // since we arbitrarily chose 0 as the robot to plan for while initializing
+    // the heuristic, we just compute the heuristic for that robot
+    // values.push_back(m_heuristics[m_heuristic_map.at("swarm_inscribed_heur")]->
+    //     getGoalHeuristic(state, SwarmState::LEADER_IDS[0]));
 }
 
 int HeuristicMgr::getGoalHeuristic(const GraphStatePtr& state, std::string name,
