@@ -5,8 +5,8 @@ planner:
   change_leader_cost: 600
 
 visualizations:
-  final_path: true
-  expansions: true
+  final_path: false
+  expansions: false
 
 robot_description:
   radius: 0.15
