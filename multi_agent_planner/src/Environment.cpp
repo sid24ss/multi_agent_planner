@@ -32,6 +32,7 @@ void Environment::reset() {
     m_edges.clear();
     m_num_leader_changes = 0;
     m_num_generated_succs = 0;
+    m_num_evaluated_succs = 0;
 }
 
 bool Environment::configureRequest(SearchRequestParamsPtr search_request_params,
@@ -174,20 +175,20 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
                     t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
                 }
                 successor->setLeader(current_leader_id);
-                // Edge key;
+                Edge key;
                 if (m_goal->isSatisfiedBy(successor)){
                     m_goal->storeAsSolnState(successor);
                     ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
                     "cost: %d", source_state->id(), successor->id(), t_data.cost());
                     succIDs->push_back(GOAL_STATE);
-                    // key = Edge(sourceStateID, GOAL_STATE);
+                    key = Edge(sourceStateID, GOAL_STATE);
                 } else {
                     succIDs->push_back(successor->id());
-                    // key = Edge(sourceStateID, successor->id());
+                    key = Edge(sourceStateID, successor->id());
                 }
-                // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
+                m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
                 costs->push_back(t_data.cost());
-                isTrueCost->push_back(true);
+                isTrueCost->push_back(false);
             }
         }
         done_expanding = true;
@@ -228,21 +229,21 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
             }
             successor->swarm_state().printToDebug(SEARCH_LOG);
 
-            // Edge key;
+            Edge key;
             if (m_goal->isSatisfiedBy(successor)){
                 m_goal->storeAsSolnState(successor);
                 ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
                 "cost: %d", source_state->id(), successor->id(), t_data.cost());
                 succIDs->push_back(GOAL_STATE);
-                // key = Edge(sourceStateID, GOAL_STATE);
+                key = Edge(sourceStateID, GOAL_STATE);
             } else {
                 succIDs->push_back(successor->id());
-                // key = Edge(sourceStateID, successor->id());
+                key = Edge(sourceStateID, successor->id());
             }
             ROS_DEBUG_NAMED(SEARCH_LOG, "cost : %d", t_data.cost());
-            // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
+            m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
             costs->push_back(t_data.cost());
-            isTrueCost->push_back(true);
+            isTrueCost->push_back(false);
 
             if (leader_change_required) {
                 // generate more successors for the original leader
@@ -254,20 +255,20 @@ void Environment::GetLazySuccs(int q_id, int sourceStateID, std::vector<int>* su
                 if (!other_succ_gen)
                     continue;
                 other_successor->setLeader(old_leader_id);
-                // Edge key;
+                Edge key;
                 if (m_goal->isSatisfiedBy(successor)){
                     m_goal->storeAsSolnState(successor);
                     ROS_INFO("Found potential goal at: source->id %d, successor->id %d, "
                     "cost: %d", source_state->id(), successor->id(), t_data.cost());
                     succIDs->push_back(GOAL_STATE);
-                    // key = Edge(sourceStateID, GOAL_STATE);
+                    key = Edge(sourceStateID, GOAL_STATE);
                 } else {
                     succIDs->push_back(other_successor->id());
-                    // key = Edge(sourceStateID, successor->id());
+                    key = Edge(sourceStateID, other_successor->id());
                 }
-                // m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
+                m_edges.insert(std::map<Edge, MotionPrimitivePtr>::value_type(key, mprim));
                 costs->push_back(other_tdata.cost());
-                isTrueCost->push_back(true);
+                isTrueCost->push_back(false);
                 other_successor->swarm_state().printToDebug(SEARCH_LOG);
                 ROS_DEBUG_NAMED(SEARCH_LOG, "cost : %d", other_tdata.cost());
             }
@@ -305,25 +306,26 @@ bool Environment::generateAndSaveSuccessor(const GraphStatePtr source_state,
             return false;
         }
         // Step 3 : compute the cost of the policy
-        int policy_cost = m_policy_generator->computePolicyCost(*source_state,
-            leader_id, successor);
+        // int policy_cost = m_policy_generator->computePolicyCost(*source_state,
+            // leader_id, successor);
         // Step 4 : compute the TData
-        MotionPrimitive::computeTData(*source_state, leader_id, successor, t_data);
+        // MotionPrimitive::computeTData(*source_state, leader_id, successor, t_data);
         // ROS_DEBUG_NAMED(SEARCH_LOG, "policy_cost : %d", policy_cost);
         // We need to set the cost of the tData because the policyGenerator
         // is not aware of the cost of the mprim
-        t_data.cost(mprim->getBaseCost() + policy_cost);
+        // t_data.cost(mprim->getBaseCost() + policy_cost);
+        t_data.cost(mprim->getBaseCost());
 
-        if(!m_cspace_mgr->isValidSuccessor(*successor) ||
-                    !m_cspace_mgr->isValidTransitionStates(t_data)) {
-            return false;
-        }
+        // if(!m_cspace_mgr->isValidSuccessor(*successor) ||
+        //             !m_cspace_mgr->isValidTransitionStates(t_data)) {
+        //     return false;
+        // }
     } else {
         successor = leader_moved_state;
-        MotionPrimitive::computeTData(*source_state, leader_id, successor, t_data);
+        // MotionPrimitive::computeTData(*source_state, leader_id, successor, t_data);
         t_data.cost(mprim->getBaseCost());
     }
-    assert(successor != NULL);
+    // assert(successor != NULL);
     successor->printToDebug(SEARCH_LOG);
 
     // save the successor to the hash manager
@@ -345,8 +347,43 @@ bool Environment::generateAndSaveSuccessor(const GraphStatePtr source_state,
  * know the motion primitive used
  */
 int Environment::GetTrueCost(int parentID, int childID){
+    m_num_evaluated_succs++;
     TransitionData t_data;
+    GraphStatePtr source_state = m_hash_mgr->getGraphState(parentID);
+    GraphStatePtr successor = m_hash_mgr->getGraphState(childID);
+    if (m_edges.find(Edge(parentID, childID)) == m_edges.end()){
+        ROS_ERROR("transition hasn't been found between %d and %d??", parentID, childID);
+        assert(false);
+    }
+    MotionPrimitivePtr mprim = m_edges.at(Edge(parentID, childID));
+    bool is_adaptive = (mprim->getPrimitiveType() == MPrim_Type::NAVAMP);
+    
+    t_data.cost(mprim->getBaseCost());
+    // we can use the successor's leader_id because that always is set to the
+    // leader that would get us here on expansion
+    int leader_id = successor->getLeader();
+    int policy_cost = m_policy_generator->computePolicyCost(*source_state,
+        leader_id, successor);
 
+    // compute the TData
+    MotionPrimitive::computeTData(*source_state, leader_id, successor, t_data);
+    
+    if (!is_adaptive)
+        t_data.cost(t_data.cost() + policy_cost);
+
+    if (childID == GOAL_STATE)
+        return t_data.cost();
+
+    if(!m_cspace_mgr->isValidSuccessor(*successor) ||
+                !m_cspace_mgr->isValidTransitionStates(t_data)) {
+        return -1;
+    }
+
+    if (leader_id != source_state->getLeader())
+        t_data.cost(t_data.cost() + m_param_catalog.m_motion_primitive_params.change_leader_cost);
+
+    ROS_DEBUG_NAMED(SEARCH_LOG, "truecost : %d-%d is %d", parentID, childID, t_data.cost());
+    return t_data.cost();
 }
 
 /**

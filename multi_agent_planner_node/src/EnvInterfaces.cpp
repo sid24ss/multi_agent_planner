@@ -280,8 +280,8 @@ void EnvInterfaces::packageStats(std::vector<std::string>& stat_names,
                                  size_t solution_size,
                                  bool mha_planner = true)
 {
-    stat_names.resize(12);
-    stats.resize(12);
+    stat_names.resize(13);
+    stats.resize(13);
     stat_names[0] = "total_plan_time";
     stat_names[1] = "initial_solution_planning_time";
     stat_names[2] = "epsilon_1";
@@ -294,6 +294,7 @@ void EnvInterfaces::packageStats(std::vector<std::string>& stat_names,
     stat_names[9] = "path_length";
     stat_names[10] = "num_leader_changes";
     stat_names[11] = "num_gen_successors";
+    stat_names[12] = "num_evaluated_successors";
 
     std::vector<PlannerStats> planner_stats;
     if (mha_planner)
@@ -313,6 +314,7 @@ void EnvInterfaces::packageStats(std::vector<std::string>& stat_names,
     stats[9] = static_cast<double>(solution_size);
     stats[10] = m_env->getLeaderChangeCount();
     stats[11] = m_env->getNumGeneratedSuccessors();
+    stats[12] = m_env->getNumEvaluatedSuccessors();
 }
 
 bool EnvInterfaces::bindCollisionSpaceToTopic(std::string topic_name){

@@ -16,7 +16,8 @@ class TrialStat(object):
                 'solution_cost': 9,
                 'path_length' : 10,
                 'num_leader_changes' : 11,
-                'num_generated_successors' : 12 }
+                'num_generated_successors' : 12,
+                'num_evaluated_successors' : 13 }
 
     def __getitem__(self, key):
         if not key in TrialStat.IDXMAP.keys():
@@ -127,6 +128,10 @@ class StatsAggregator(object):
         total_planning_time = sum([env_stat.compute_on_list('total_planning_time', sum) for env_stat in self._env_stats])
         self._stats['avg_planning_time'] = total_planning_time / success_count
 
+        num_evaluated_successors = sum([env_stat.compute_on_list('num_evaluated_successors', sum) for env_stat in self._env_stats])
+        num_generated_successors = sum([env_stat.compute_on_list('num_generated_successors', sum) for env_stat in self._env_stats])
+        self._stats['evaluated_to_generated'] = num_evaluated_successors/num_generated_successors
+
     def print_stats(self):
         print 'Planner : %s' % self.planner_name
         for (k,v) in self._stats.items():
@@ -166,7 +171,7 @@ class StatsAggregator(object):
         
         print 'Comparing %s with %s' % (self.planner_name, other.planner_name)
         print '-----'
-        print 'Number of common trials : %d' % self.count_common_trials(other)
+        print 'Number of common trials: %d' % self.count_common_trials(other)
         # get the planning time average ratio
         (planning_time_ratio, num_common) = self.aggregate_env_stat('total_planning_time', other)
         print 'Average planning time ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, planning_time_ratio)
@@ -190,6 +195,10 @@ class StatsAggregator(object):
         # get the num generated successors average ratio
         (num_generated_successors_ratio, num_common) = self.aggregate_env_stat('num_generated_successors', other)
         print 'Average num_generated_successors_ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, num_generated_successors_ratio)
+
+        # get the num evaluated successors average ratio
+        (num_evaluated_successors_ratio, num_common) = self.aggregate_env_stat('num_evaluated_successors', other)
+        print 'Average num_evaluated_successors_ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, num_evaluated_successors_ratio)
 
     def __init__(self, planner_name):
         super(StatsAggregator, self).__init__()
