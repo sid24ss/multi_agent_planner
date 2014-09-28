@@ -62,7 +62,7 @@ int Environment::GetGoalHeuristic(int q_id, int stateID) {
     if(m_goal->isSatisfiedBy(successor) || stateID == GOAL_STATE){
         return 0;
     }
-    ROS_DEBUG_NAMED(HEUR_LOG, "heur asked for: %d, at q_id %d", 
+    ROS_DEBUG_NAMED(HEUR_LOG, "heur asked for state %d, at q_id %d", 
         stateID, q_id);
     successor->printToDebug(HEUR_LOG);
     int heur;
@@ -73,7 +73,7 @@ int Environment::GetGoalHeuristic(int q_id, int stateID) {
         heur = max_heur;
     else if (q_id <= NUM_LEADERS) {
         heur = std::max(max_heur,
-            static_cast<int>(1.1*values.at(SwarmState::LEADER_IDS.at(q_id - 1))));
+            static_cast<int>(1.3*values.at(q_id - 1)));
     } else {
         // inscribed radius
         heur = m_heur_mgr->getGoalHeuristic(successor, "swarm_inscribed_heur",

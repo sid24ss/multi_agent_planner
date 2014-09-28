@@ -16,7 +16,7 @@
 #include <memory>
 
 #define EPS1 15
-#define EPS2 1.5
+#define EPS2 4
 
 namespace multi_agent_planner {
     /*! \brief Implements a complete environment used by the SBPL planner.

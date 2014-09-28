@@ -42,7 +42,7 @@ SBPL2DGridSearch::SBPL2DGridSearch(int width_x, int height_y, float cellsize_m,
     double radius)
 {
     iteration_ = 0;
-    searchStates2D_ = NULL;
+    searchStates2D_.clear();
 
     width_ = width_x;
     height_ = height_y;
@@ -119,14 +119,16 @@ bool SBPL2DGridSearch::createSearchStates2D(void)
 {
     int x, y;
 
-    if (searchStates2D_ != NULL) {
+    if (!searchStates2D_.empty()) {
         SBPL_ERROR("ERROR: We already have a non-NULL search states array\n");
         return false;
     }
 
-    searchStates2D_ = new SBPL_2DGridSearchState*[width_];
+    // searchStates2D_ = new SBPL_2DGridSearchState*[width_];
+    searchStates2D_.resize(width_);
     for (x = 0; x < width_; x++) {
-        searchStates2D_[x] = new SBPL_2DGridSearchState[height_];
+        // searchStates2D_[x] = new SBPL_2DGridSearchState[height_];
+        searchStates2D_[x].resize(height_);
         for (y = 0; y < height_; y++) {
             searchStates2D_[x][y].iterationaccessed = iteration_;
             searchStates2D_[x][y].x = x;
@@ -154,15 +156,7 @@ void SBPL2DGridSearch::destroy()
     }
 
     // destroy the 2D states:
-    if (searchStates2D_ != NULL) {
-        for (int x = 0; x < width_; x++) {
-            if (searchStates2D_[x] != NULL)
-                delete[] searchStates2D_[x];
-            searchStates2D_[x] = NULL;
-        }
-        delete[] searchStates2D_;
-        searchStates2D_ = NULL;
-    }
+    searchStates2D_.clear();
 
     if (OPEN2DBLIST_ != NULL) {
         delete OPEN2DBLIST_;

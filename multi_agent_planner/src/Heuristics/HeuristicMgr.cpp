@@ -47,12 +47,12 @@ void HeuristicMgr::initializeHeuristics() {
         // leader.
         std::stringstream ss;
         ss << "bfs2d_" << SwarmState::LEADER_IDS[i];
-        int cost_multiplier = 1;
+        int cost_multiplier = 4;
         add2DHeur(ss.str(), cost_multiplier);
     }
     // add the swarm inscribed heuristic
     {
-        int cost_multiplier = 1;
+        int cost_multiplier = 4;
         add2DHeur("swarm_inscribed_heur", cost_multiplier);
     }
 }
@@ -172,10 +172,6 @@ void HeuristicMgr::getGoalHeuristic(const GraphStatePtr& state,
                                     getGoalHeuristic(state, SwarmState::LEADER_IDS[i])
                         );
     }
-    // since we arbitrarily chose 0 as the robot to plan for while initializing
-    // the heuristic, we just compute the heuristic for that robot
-    // values.push_back(m_heuristics[m_heuristic_map.at("swarm_inscribed_heur")]->
-    //     getGoalHeuristic(state, SwarmState::LEADER_IDS[0]));
 }
 
 int HeuristicMgr::getGoalHeuristic(const GraphStatePtr& state, std::string name,

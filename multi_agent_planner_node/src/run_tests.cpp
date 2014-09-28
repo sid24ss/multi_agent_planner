@@ -46,7 +46,7 @@ int main(int argc, char** argv){
   req.initial_eps = 2.0;
   req.tolerance = .02;
 
-  req.allocated_planning_time = 30;
+  req.allocated_planning_time = 60;
 
   req.meta_search_type = mha_planner::MetaSearchType::ROUND_ROBIN;
   req.planner_type = mha_planner::PlannerType::SMHA;

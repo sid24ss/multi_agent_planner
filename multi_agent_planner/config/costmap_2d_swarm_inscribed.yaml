@@ -15,6 +15,8 @@ lethal_cost_threshold: 50
 # Bug in costmap_2d!
 unknown_cost_value: 255
 track_unknown_space: true
-inflation_radius: 0.63
-robot_radius: 0.58
+inflation_radius: 2.0
+robot_radius: 1.8
+# inflation_radius: 0.63
+# robot_radius: 0.58
 # cost_scaling_factor: 10.0

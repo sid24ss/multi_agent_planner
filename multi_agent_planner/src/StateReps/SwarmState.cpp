@@ -138,7 +138,7 @@ void SwarmState::configureSwarmState(const SwarmDescriptionParams& params) {
             robot_rel_position[j] = c_robot_state;
         }
     }
-    SwarmState::MIDDLE_GUY = 3;
+    SwarmState::MIDDLE_GUY = 20;
 }
 
 /**

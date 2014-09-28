@@ -1,0 +1,62 @@
+experiments:
+
+  - test: test_0
+    start:
+      position: 12.602816 5.915744
+    goal:
+      position: 11.746488 11.976601
+
+  - test: test_1
+    start:
+      position: 9.189597 4.440474
+    goal:
+      position: 9.563284 7.864308
+
+  - test: test_2
+    start:
+      position: 9.293947 4.215891
+    goal:
+      position: 11.790031 4.611868
+
+  - test: test_3
+    start:
+      position: 9.442196 3.437055
+    goal:
+      position: 10.509299 4.753007
+
+  - test: test_4
+    start:
+      position: 10.132140 7.244254
+    goal:
+      position: 7.229037 4.574335
+
+  - test: test_5
+    start:
+      position: 5.206738 2.769337
+    goal:
+      position: 9.136588 9.407368
+
+  - test: test_6
+    start:
+      position: 10.960940 4.925617
+    goal:
+      position: 11.106577 3.033192
+
+  - test: test_7
+    start:
+      position: 8.650358 8.898172
+    goal:
+      position: 9.998349 4.331667
+
+  - test: test_8
+    start:
+      position: 10.913254 2.085873
+    goal:
+      position: 9.046632 7.386326
+
+  - test: test_9
+    start:
+      position: 7.477882 1.818882
+    goal:
+      position: 2.073577 5.406639
+

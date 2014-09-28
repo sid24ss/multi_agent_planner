@@ -99,6 +99,7 @@ void NavMapHandler::crop2DMap(const std::vector<unsigned char>& v,
                               std::vector<unsigned char>& cropped_map)
 {
     ROS_DEBUG_NAMED(CONFIG_LOG, "to be cropped to : %f (width), %f (height)", width, height);
+    ROS_DEBUG_NAMED(CONFIG_LOG, "m_map_info : %d width, %d height", m_map_info.width, m_map_info.height);
     // make a grid out of the data
     std::vector<std::vector<unsigned char> > tmp_map(m_map_info.height);
     for (unsigned int i=0; i < m_map_info.height; i++){

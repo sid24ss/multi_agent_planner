@@ -24,6 +24,12 @@ class TrialStat(object):
             raise KeyError("no field called %s" % key)
         return self._data[TrialStat.IDXMAP[key]]
 
+    def __str__(self):
+        return str(self._data[TrialStat.IDXMAP['id']])
+
+    def __repr__(self):
+        return self.__str__()
+
     def __init__(self, raw_data):
         super(TrialStat, self).__init__()
         self._data = raw_data

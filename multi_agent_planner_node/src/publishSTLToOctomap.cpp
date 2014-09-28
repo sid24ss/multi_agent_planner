@@ -19,8 +19,8 @@ using namespace boost::filesystem;
 using namespace std;
 using namespace multi_agent_planner;
 
-const double dimX = 10;
-const double dimY = 10;
+const double dimX = 15;
+const double dimY = 15;
 
 bool getVoxelsFromMesh(std::string resource, 
         geometry_msgs::Pose pose, 
@@ -84,19 +84,21 @@ void addRandomObstacles(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud, int
     num_obstacles, unsigned int seed){
     ros::NodeHandle nh;
 
+    double swarm_padding = 0.0;
+
     // Add the surface - these are generated only within these bounds.
-    double obstacleSizeXMax = 2;
+    double obstacleSizeXMax = 1.5;
     double obstacleSizeXMin = 0.1;
 
-    double obstacleSizeYMax = 2;
+    double obstacleSizeYMax = 1.5;
     double obstacleSizeYMin = 0.1;
 
     // 0.8 is here for extra padding, because of the bounds of the environment.
-    double obstacleBoundsXMin = 0.8 + obstacleSizeXMax/2;
-    double obstacleBoundsXMax = dimX - 0.8 - obstacleSizeXMax/2;
+    double obstacleBoundsXMin = swarm_padding + obstacleSizeXMax/2;
+    double obstacleBoundsXMax = dimX - swarm_padding - obstacleSizeXMax/2;
     
-    double obstacleBoundsYMin = 0.8 + obstacleSizeYMax/2;
-    double obstacleBoundsYMax = dimY - 0.8 - obstacleSizeYMax/2;
+    double obstacleBoundsYMin = swarm_padding + obstacleSizeYMax/2;
+    double obstacleBoundsYMax = dimY - swarm_padding - obstacleSizeYMax/2;
 
     srand(seed);
 
@@ -139,20 +141,21 @@ void addStartStateRegionToParamServer(){
 
 void addEnvironmentComponents(pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud){
     // first corridor
-    addCuboid(pclCloud, 0, 0, 0, 0.04, 4, 0.5, true);
-    addCuboid(pclCloud, 2, 0, 0, 0.04, 2, 0.5, true);
+    // addCuboid(pclCloud, 0, 0, 0, 0.04, 4, 0.5, true);
+    // addCuboid(pclCloud, 2, 0, 0, 0.04, 2, 0.5, true);
     // second corridor
-    addCuboid(pclCloud, 0, 4, 0, 5.00, 0.04, 0.5, true);
-    addCuboid(pclCloud, 2, 2, 0, 5.00, 0.04, 0.5, true);
+    // addCuboid(pclCloud, 0, 4, 0, 5.00, 0.04, 0.5, true);
+    // addCuboid(pclCloud, 2, 2, 0, 5.00, 0.04, 0.5, true);
     // third corridor
-    addCuboid(pclCloud, 5, 4, 0, 0.04, 1.00, 0.5, true);
-    addCuboid(pclCloud, 7, 2, 0, 0.04, 5.00, 0.5, true);
+    // addCuboid(pclCloud, 5, 4, 0, 0.04, 1.00, 0.5, true);
+    // addCuboid(pclCloud, 7, 2, 0, 0.04, 5.00, 0.5, true);
     // fourth corridor
-    addCuboid(pclCloud, 0, 5, 0, 5.00, 0.04, 0.5, true);
-    addCuboid(pclCloud, 0, 7, 0, 7.00, 0.04, 0.5, true);
+    // addCuboid(pclCloud, 0, 5, 0, 5.00, 0.04, 0.5, true);
+    // addCuboid(pclCloud, 0, 7, 0, 7.00, 0.04, 0.5, true);
     // protrusion
     // addCuboid(pclCloud, 1, 2.7, 0, 1.00, 0.04, 0.5, true);
     // addCuboid(pclCloud, 1, 1.5, 0, 0.04, 1.3, 0.5, true);
+    addCuboid(pclCloud, 0, 0, 0, 0.04, 5, 0.5, true);
 }
 
 vector<Eigen::Vector3d> getVoxelsFromFile(std::string filename){
