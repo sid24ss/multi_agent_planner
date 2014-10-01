@@ -5,7 +5,7 @@ planner:
   change_leader_cost: 600
 
 visualizations:
-  final_path: false
+  final_path: true
   expansions: false
 
 robot_description:

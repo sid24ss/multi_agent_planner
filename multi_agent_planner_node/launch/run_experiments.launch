@@ -36,6 +36,7 @@
       <rosparam command="load" file="$(find multi_agent_planner)/config/config.yaml" />
       <rosparam command="load" file="$(find multi_agent_planner)/config/swarm_config.yaml" />
       <rosparam file="$(find multi_agent_planner)/config/costmap_2d.yaml" command="load" ns="costmap_2d" />
+      <rosparam file="$(find multi_agent_planner)/config/costmap_2d_swarm_inscribed.yaml" command="load" ns="costmap_2d_swarm_inscribed" />
   </node>
   <node pkg="tf" type="static_transform_publisher" name="map_to_base_broadcaster" args="0 0 0 0 0 0 map base_link 100" />
   

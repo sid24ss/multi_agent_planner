@@ -22,7 +22,10 @@ class TrialStat(object):
     def __getitem__(self, key):
         if not key in TrialStat.IDXMAP.keys():
             raise KeyError("no field called %s" % key)
-        return self._data[TrialStat.IDXMAP[key]]
+        data = self._data[TrialStat.IDXMAP[key]]
+        if (data == 0.0) and key == 'total_planning_time':
+            data += 0.01
+        return data
 
     def __init__(self, raw_data):
         super(TrialStat, self).__init__()
@@ -68,16 +71,21 @@ class EnvStat(object):
     def compare_with(self, name, other):
         if not isinstance(other, EnvStat):
             raise TypeError("Not an EnvStat object!")
-        average_ratio = float(0)
+        sum_value_this = 0
+        sum_value_other = 0
         total_common = 0
         for trial in self.trial_stats:
             other_trial = other.get_trial(trial['id'])
             if other_trial is None:
                 continue
-            ratio = float(trial[name]) / other_trial[name]
-            average_ratio = float(total_common*average_ratio + ratio)/(total_common + 1)
-            total_common = total_common + 1
-        return (average_ratio, total_common)
+            # ratio = float(trial[name]) / other_trial[name]
+            sum_value_this += trial[name]
+            sum_value_other += other_trial[name]
+            # average_ratio = float(total_common*average_ratio + ratio)/(total_common + 1)
+            total_common += 1
+        avg_value_this = sum_value_this / total_common
+        avg_value_other = sum_value_other / total_common
+        return (avg_value_this, avg_value_other, total_common)
 
 
 class StatsAggregator(object):
@@ -151,15 +159,18 @@ class StatsAggregator(object):
         if not isinstance(other_stats_aggr, StatsAggregator):
             raise TypeError("Invalid type!")
         total_common = 0
-        average_ratio = float(0)
+        avg_value_this = float(0)
+        avg_value_other = float(0)
         for env in self._env_stats:
             other_env = other_stats_aggr.get_env(env.id)
             if other_env is None:
                 continue
-            (ratio, num_common) = env.compare_with(name, other_env)
-            average_ratio = float(total_common*average_ratio + ratio*num_common)/(total_common + num_common)
-            total_common = total_common + num_common
-        return (average_ratio, total_common)
+            (avg_this, avg_other, num_common) = env.compare_with(name, other_env)
+            # average_ratio = float(total_common*average_ratio + ratio*num_common)/(total_common + num_common)
+            avg_value_this = (avg_value_this*total_common + avg_this*num_common) / (total_common + num_common)
+            avg_value_other = (avg_value_other*total_common + avg_other*num_common) / (total_common + num_common)
+            total_common += num_common
+        return (avg_value_this, avg_value_other, total_common)
 
 
     def compare_with(self, other):
@@ -173,32 +184,32 @@ class StatsAggregator(object):
         print '-----'
         print 'Number of common trials: %d' % self.count_common_trials(other)
         # get the planning time average ratio
-        (planning_time_ratio, num_common) = self.aggregate_env_stat('total_planning_time', other)
-        print 'Average planning time ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, planning_time_ratio)
+        (avg_planning_time_this, avg_planning_time_other, num_common) = self.aggregate_env_stat('total_planning_time', other)
+        print 'Average planning time (%s/%s):\t %0.2f & %0.2f' %(self.planner_name, other.planner_name, avg_planning_time_this, avg_planning_time_other)
 
         # get the expansions average ratio
-        (expansions_ratio, num_common) = self.aggregate_env_stat('expansions', other)
-        print 'Average expansions_ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, expansions_ratio)
+        (avg_expansions_this, avg_expansions_other, num_common) = self.aggregate_env_stat('expansions', other)
+        print 'Average expansions (%s/%s):\t %0.2f & %0.2f' %(self.planner_name, other.planner_name, avg_expansions_this, avg_expansions_other)
 
         # get the solution_cost average ratio
-        (solution_cost_ratio, num_common) = self.aggregate_env_stat('solution_cost', other)
-        print 'Average solution_cost_ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, solution_cost_ratio)
+        (avg_solution_cost_this, avg_solution_cost_other, num_common) = self.aggregate_env_stat('solution_cost', other)
+        print 'Average solution_cost (%s/%s):\t %0.2f & %0.2f' %(self.planner_name, other.planner_name, avg_solution_cost_this, avg_solution_cost_other)
 
         # get the path length average ratio
-        (path_length_ratio, num_common) = self.aggregate_env_stat('path_length', other)
-        print 'Average path_length_ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, path_length_ratio)
+        (avg_path_length_this, avg_path_length_other, num_common) = self.aggregate_env_stat('path_length', other)
+        print 'Average path_length (%s/%s):\t %0.2f & %0.2f' %(self.planner_name, other.planner_name, avg_path_length_this, avg_path_length_other)
 
         # get the num leader change average ratio
-        # (num_leader_changes_ratio, num_common) = self.aggregate_env_stat('num_leader_changes', other)
-        # print 'Average num_leader_changes_ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, num_leader_changes_ratio)
+        (avg_num_leader_changes_this, avg_num_leader_changes_other, num_common) = self.aggregate_env_stat('num_leader_changes', other)
+        print 'Average num_leader_changes (%s/%s):\t %0.2f & %0.2f' %(self.planner_name, other.planner_name, avg_num_leader_changes_this, avg_num_leader_changes_other)
 
         # get the num generated successors average ratio
-        (num_generated_successors_ratio, num_common) = self.aggregate_env_stat('num_generated_successors', other)
-        print 'Average num_generated_successors_ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, num_generated_successors_ratio)
+        (avg_num_generated_successors_this, avg_num_generated_successors_other, num_common) = self.aggregate_env_stat('num_generated_successors', other)
+        print 'Average num_generated_successors (%s/%s):\t %0.2f & %0.2f' %(self.planner_name, other.planner_name, avg_num_generated_successors_this, avg_num_generated_successors_other)
 
         # get the num evaluated successors average ratio
-        (num_evaluated_successors_ratio, num_common) = self.aggregate_env_stat('num_evaluated_successors', other)
-        print 'Average num_evaluated_successors_ratio (%s/%s):\t %f' %(self.planner_name, other.planner_name, num_evaluated_successors_ratio)
+        (avg_num_evaluated_successors_this, avg_num_evaluated_successors_other, num_common) = self.aggregate_env_stat('num_evaluated_successors', other)
+        print 'Average num_evaluated_successors (%s/%s):\t %0.2f & %0.2f' %(self.planner_name, other.planner_name, avg_num_evaluated_successors_this, avg_num_evaluated_successors_other)
 
     def __init__(self, planner_name):
         super(StatsAggregator, self).__init__()
